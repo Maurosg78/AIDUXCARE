@@ -22,7 +22,8 @@
     "audit:maple": "node scripts/auditMapleResiduals.js",
     "audit:term": "node scripts/auditByTerm.js",
     "eval:visits": "node scripts/runVisitEval.js",
-    "test:visit-alerts": "node scripts/testVisitAlerts.js"
+    "test:visit-alerts": "node scripts/testVisitAlerts.js",
+    "test:visit-structured": "node scripts/testStructuredVisit.js"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",
