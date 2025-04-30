@@ -23,7 +23,8 @@
     "audit:term": "node scripts/auditByTerm.js",
     "eval:visits": "node scripts/runVisitEval.js",
     "test:visit-alerts": "node scripts/testVisitAlerts.js",
-    "test:visit-structured": "node scripts/testStructuredVisit.js"
+    "test:visit-structured": "node scripts/testStructuredVisit.js",
+    "eval:structured": "ts-node-esm --project tsconfig.eval.json scripts/runAllEvals.ts"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",
@@ -31,6 +32,8 @@
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.4.1",
     "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
     "vite": "^6.3.3"
-  }
+  },
+  "type": "module"
 }
