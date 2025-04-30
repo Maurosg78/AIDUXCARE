@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { TextField, Button, Box, MenuItem, Paper, Typography } from "@mui/material";
-import { Patient } from "../../models/Patient";
+import { Patient } from "../../models";
 
 interface PatientFormProps {
   initialData?: Patient;

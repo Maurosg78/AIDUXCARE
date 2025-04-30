@@ -1,0 +1,34 @@
+[
+  {
+    "description": "Visita completa de prueba para paciente A",
+    "input": {
+      "id": "visit-test-001",
+      "patientId": "patient-001",
+      "date": "2025-05-01",
+      "anamnesis": "Paciente refiere dolor lumbar irradiado a pierna derecha.",
+      "physicalExam": "Limitación en flexión lumbar, prueba de Lasègue positiva.",
+      "diagnosis": "Ciática derecha por probable hernia discal L5-S1.",
+      "treatmentPlan": "Fisioterapia 3x/semana, ejercicios McKenzie, control en 2 semanas."
+    },
+    "expectedOutput": {
+      "saved": true,
+      "retrievableByPatientId": true
+    }
+  },
+  {
+    "description": "Visita incompleta (falta diagnóstico)",
+    "input": {
+      "id": "visit-test-002",
+      "patientId": "patient-001",
+      "date": "2025-05-01",
+      "anamnesis": "Dolor cervical irradiado a brazo izquierdo.",
+      "physicalExam": "Disminución de fuerza en tríceps izquierdo.",
+      "diagnosis": "",
+      "treatmentPlan": "Derivación a neurología, reposo laboral 7 días."
+    },
+    "expectedOutput": {
+      "saved": true,
+      "validationWarning": true
+    }
+  }
+]

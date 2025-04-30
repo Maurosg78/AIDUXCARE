@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Table, TableHead, TableBody, TableRow, TableCell, Paper, TableContainer } from "@mui/material";
-import { Patient } from "../../models/Patient";
+import { Patient } from "../../models";
 import { ROUTES } from "../../../../core/config/routes";
 
 interface PatientListProps {

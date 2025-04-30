@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Container, Typography } from "@mui/material";
 import PatientForm from "../components/patients/PatientForm";
 import PatientService from "../services/PatientService";
-import { Patient } from "../models/Patient";
+import { Patient } from "../models";
 
 const PatientCreatePage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleCreate = async (newPatient: Patient) => {
-    await PatientService.getInstance().addPatient(newPatient);
+    await PatientService.create(newPatient);
     navigate("/assistant/patients");
   };
 

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Container, Typography, CircularProgress, Alert } from "@mui/material";
-import { Patient } from "../../models/Patient";
 import PatientService from "../../services/PatientService";
-import PatientForm from "./PatientForm";
+import { Patient } from "../../models";
 
 const PatientDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,11 +11,8 @@ const PatientDetailPage: React.FC = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!id) return;
-
-    PatientService.getInstance()
-      .getPatientById(id)
-      .then(data => {
+    PatientService.getById(id!)
+      .then((data: Patient | undefined) => {
         if (data) {
           setPatient(data);
         } else {
@@ -25,7 +21,7 @@ const PatientDetailPage: React.FC = () => {
         setLoading(false);
       })
       .catch(() => {
-        setError("Error cargando el paciente");
+        setError("Error al cargar el paciente");
         setLoading(false);
       });
   }, [id]);

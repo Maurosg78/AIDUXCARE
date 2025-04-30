@@ -8,13 +8,5 @@ export interface Patient {
   phone?: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface PatientVisit {
-  id: string;
-  patientId: string;
-  visitDate: string;
-  visitType: 'initial' | 'follow-up' | 'evaluation' | 'treatment' | 'discharge' | 'consultation';
-  status: 'scheduled' | 'checked-in' | 'in-progress' | 'completed' | 'cancelled' | 'no-show';
-  notes?: string;
+  medicalRecordNumber?: string;
 }

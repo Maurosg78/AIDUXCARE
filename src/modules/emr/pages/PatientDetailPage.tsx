@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Container, Typography, CircularProgress, Alert, List, ListItem, ListItemText } from "@mui/material";
 import PatientService from "../services/PatientService";
-import type { Patient, PatientVisit } from "../models/Patient";
+import VisitService from "../services/VisitService";
+import { Patient, PatientVisit } from "../models";
 
 const PatientDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,8 +14,8 @@ const PatientDetailPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
-      const fetchedPatient = await PatientService.getInstance().getPatientById(id);
-      const fetchedVisits = await PatientService.getInstance().getPatientVisits(id);
+      const fetchedPatient = await PatientService.getById(id);
+      const fetchedVisits = await VisitService.getByPatientId(id);
       setPatient(fetchedPatient || null);
       setVisits(fetchedVisits || []);
       setLoading(false);
@@ -27,8 +28,8 @@ const PatientDetailPage = () => {
 
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>{patient.name}</Typography>
-      <Typography variant="body1">Edad: {patient.age}</Typography>
+      <Typography variant="h4" gutterBottom>{patient.firstName} {patient.lastName}</Typography>
+      <Typography variant="body1">Fecha de nacimiento: {patient.dateOfBirth}</Typography>
       <Typography variant="body1">Sexo: {patient.gender}</Typography>
       <Typography variant="body2" color="textSecondary">ID: {patient.id}</Typography>
       <Typography variant="h6" sx={{ mt: 4 }}>Visitas clínicas</Typography>

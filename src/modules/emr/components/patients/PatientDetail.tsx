@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Paper, Typography, CircularProgress, Alert, List, ListItem, ListItemText } from "@mui/material";
 import PatientService from "../../services/PatientService";
-import { Patient, PatientVisit } from "../../models/Patient";
+import VisitService from "../../services/VisitService";
+import { Patient, PatientVisit } from "../../models";
 
 const PatientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,8 +15,8 @@ const PatientDetail: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const patientData = await PatientService.getInstance().getPatientById(id!);
-        const patientVisits = await PatientService.getInstance().getPatientVisits(id!);
+        const patientData = await PatientService.getById(id!);
+        const patientVisits = await VisitService.getByPatientId(id!);
         if (!patientData) {
           setError("Paciente no encontrado");
         } else {

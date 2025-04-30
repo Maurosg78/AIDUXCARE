@@ -3,20 +3,25 @@ import { Container, Typography, CircularProgress, Alert, Button } from "@mui/mat
 import { useNavigate } from "react-router-dom";
 import PatientService from "../services/PatientService";
 import PatientList from "../components/patients/PatientList";
-import { Patient } from "../models/Patient";
+import { Patient } from "../models";
 
 const PatientListPage: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    PatientService.getInstance()
-      .getPatients()
-      .then(setPatients)
-      .catch(err => setError("Error al cargar los pacientes"))
-      .finally(() => setLoading(false));
+    setLoading(true);
+    PatientService.getAll()
+      .then((data: Patient[]) => {
+        setPatients(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Error al cargar los pacientes");
+        setLoading(false);
+      });
   }, []);
 
   return (
