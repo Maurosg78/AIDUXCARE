@@ -1,61 +1,95 @@
+import React, { useState } from "react";
+import VisitAlert from "../../components/alerts/VisitAlert";
+import { TextField, Button, MenuItem, Stack, Typography } from "@mui/material";
+import { useParams, useNavigate } from "react-router-dom";
+import { PatientVisit } from "../../models/PatientVisit";
 import VisitService from "../../services/VisitService";
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { PatientVisit } from '../../models';
-import { v4 as uuid } from 'uuid';
 
-interface NewVisitFormProps {
-  patientId?: string;
-  onSuccess?: () => void;
+const visitTypes = ["Consulta inicial", "Control", "Reevaluación", "Alta"];
+
+
+function validateVisit(visit) {
+  const warnings = [];
+  if (!visit.visitDate) warnings.push("Falta la fecha de la visita.");
+  if (!visit.visitType) warnings.push("Falta el tipo de visita.");
+  if (!visit.status) warnings.push("Falta el estado de la visita.");
+  return warnings;
 }
-
-const NewVisitForm: React.FC<NewVisitFormProps> = ({ patientId, onSuccess }) => {
-  const { id: patientIdFromParams } = useParams<{ id: string }>();
+export default function NewVisitForm() {
+  const { id: patientId } = useParams();
   const navigate = useNavigate();
-  const actualPatientId = patientId || patientIdFromParams || '';
-  
-  const [form, setForm] = useState({
-    date: new Date().toISOString().split('T')[0],
-    anamnesis: '',
-    physicalExam: '',
-    diagnosis: '',
-    treatmentPlan: ''
+
+  const [visit, setVisit] = useState<Partial<PatientVisit>>({
+    patientId: patientId || "",
+    visitDate: new Date().toISOString().split("T")[0],
+    visitType: "",
+    status: "Abierta",
+    notes: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setVisit((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const visit: PatientVisit = {
-      id: uuid(),
-      patientId: actualPatientId,
-      visitDate: form.date,
-      visitType: "treatment",
-      status: "completed",
-      notes: `${form.anamnesis}\n${form.physicalExam}\n${form.diagnosis}\n${form.treatmentPlan}`
-    };
+  const handleSubmit = () => {
+    if (!visit.visitType || !visit.visitDate || !visit.patientId) {
+      alert("Faltan campos obligatorios.");
+      return;
+    }
 
-    VisitService.create(visit);
-    if (onSuccess) onSuccess();
-    navigate(`/assistant/patient/${actualPatientId}`);
+    VisitService.create({
+      ...visit,
+      id: crypto.randomUUID(),
+    } as PatientVisit);
+
+    navigate(`/assistant/patient/${patientId}`);
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      <div>
-        <label htmlFor="date">Fecha de visita:</label>
-        <input id="date" type="date" name="date" value={form.date} onChange={handleChange} required />
-      </div>
-      <textarea name="anamnesis" placeholder="Anamnesis" value={form.anamnesis} onChange={handleChange} required />
-      <textarea name="physicalExam" placeholder="Exploración física" value={form.physicalExam} onChange={handleChange} required />
-      <textarea name="diagnosis" placeholder="Diagnóstico" value={form.diagnosis} onChange={handleChange} required />
-      <textarea name="treatmentPlan" placeholder="Plan de tratamiento" value={form.treatmentPlan} onChange={handleChange} required />
-      <button type="submit">Guardar visita</button>
-    </form>
-  );
-};
+    <Stack spacing={2}>
+      <Typography variant="h5">Nueva Visita Clínica</Typography>
 
-export default NewVisitForm;
+      <TextField
+        select
+        label="Tipo de visita"
+        name="visitType"
+        value={visit.visitType}
+        onChange={handleChange}
+        required
+      >
+        {visitTypes.map((type) => (
+          <MenuItem key={type} value={type}>
+            {type}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      <TextField
+        label="Fecha"
+        type="date"
+        name="visitDate"
+        value={visit.visitDate}
+        onChange={handleChange}
+        InputLabelProps={{ shrink: true }}
+        required
+      />
+
+      <TextField
+        label="Notas"
+        name="notes"
+        value={visit.notes}
+        onChange={handleChange}
+        multiline
+        rows={4}
+      />
+
+      <Button variant="contained" onClick={handleSubmit}>
+        Guardar visita
+      </Button>
+    </Stack>
+  );
+}
+

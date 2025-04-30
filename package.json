@@ -11,6 +11,7 @@
     "uuid": "^11.1.0"
   },
   "scripts": {
+    "eval:all": "node scripts/evalAll.js",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
@@ -20,7 +21,8 @@
     "fix:imports": "ts-node scripts/fixBrokenImports.ts",
     "audit:maple": "node scripts/auditMapleResiduals.js",
     "audit:term": "node scripts/auditByTerm.js",
-    "eval:visits": "node scripts/runVisitEval.js"
+    "eval:visits": "node scripts/runVisitEval.js",
+    "test:visit-alerts": "node scripts/testVisitAlerts.js"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",
