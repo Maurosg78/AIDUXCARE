@@ -1,17 +1,23 @@
 import React from 'react';
-import PatientService from '../../services/PatientService';
+import { Box, Button, Typography } from '@mui/material';
 
-export const DevTools: React.FC = () => {
-  if (!import.meta.env.DEV) return null;
-
-  const handleClear = () => {
-    PatientService.clearAll();
-    window.location.reload();
-  };
+const DevTools: React.FC = () => {
+  const isDev = import.meta.env.DEV || false;
+  
+  if (!isDev) {
+    return null;
+  }
 
   return (
-    <div style={{ position: 'fixed', bottom: 10, right: 10, background: '#eee', padding: '8px', borderRadius: '8px' }}>
-      <button onClick={handleClear}>🧹 Limpiar pacientes</button>
-    </div>
+    <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+      <Typography variant="h6" gutterBottom>
+        Dev Tools
+      </Typography>
+      <Button variant="contained" color="primary" onClick={() => console.log('Dev action')}>
+        Test Action
+      </Button>
+    </Box>
   );
 };
+
+export default DevTools;

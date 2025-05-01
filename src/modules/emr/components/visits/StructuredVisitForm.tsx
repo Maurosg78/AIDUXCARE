@@ -45,18 +45,124 @@ const StructuredVisitForm = () => {
   };
 
   return (
-    <Stack spacing={2}>
-      <Typography variant="h5">Evaluación Clínica</Typography>
-      {warnings.length > 0 && <VisitAlert warnings={warnings} />}
-      <TextField label="Fecha" name="visitDate" type="date" InputLabelProps={{ shrink: true }} value={formData.visitDate} onChange={handleChange} />
-      <TextField label="Tipo de Visita" name="visitType" value={formData.visitType} onChange={handleChange} />
-      <TextField label="Estado" name="status" value={formData.status} onChange={handleChange} />
-      <TextField label="Anamnesis" name="anamnesis" multiline minRows={3} value={formData.anamnesis} onChange={handleChange} />
-      <TextField label="Exploración Física" name="physicalExam" multiline minRows={3} value={formData.physicalExam} onChange={handleChange} />
-      <TextField label="Diagnóstico" name="diagnosis" multiline minRows={3} value={formData.diagnosis} onChange={handleChange} />
-      <TextField label="Plan de Tratamiento" name="treatmentPlan" multiline minRows={3} value={formData.treatmentPlan} onChange={handleChange} />
-      <TextField label="Notas Adicionales" name="notes" multiline minRows={2} value={formData.notes} onChange={handleChange} />
-      <Button variant="contained" onClick={handleSave}>Guardar Evaluación</Button>
+    <Stack 
+      component="form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSave();
+      }}
+      spacing={2}
+      aria-labelledby="structured-visit-title"
+    >
+      <Typography 
+        id="structured-visit-title"
+        variant="h6" 
+        component="h2"
+      >
+        Visita Estructurada
+      </Typography>
+
+      <TextField
+        label="Fecha de Visita"
+        type="date"
+        name="visitDate"
+        value={formData.visitDate}
+        onChange={handleChange}
+        required
+        InputLabelProps={{ shrink: true }}
+        id="visit-date-input"
+        aria-label="Fecha de la visita"
+      />
+
+      <TextField
+        label="Tipo de Visita"
+        name="visitType"
+        value={formData.visitType}
+        onChange={handleChange}
+        required
+        id="visit-type-input"
+        aria-label="Tipo de visita"
+      />
+
+      <TextField
+        label="Estado"
+        name="status"
+        value={formData.status}
+        onChange={handleChange}
+        required
+        id="visit-status-input"
+        aria-label="Estado de la visita"
+      />
+
+      <TextField
+        label="Anamnesis"
+        name="anamnesis"
+        value={formData.anamnesis}
+        onChange={handleChange}
+        required
+        multiline
+        rows={4}
+        id="visit-anamnesis-input"
+        aria-label="Anamnesis de la visita"
+      />
+
+      <TextField
+        label="Exploración Física"
+        name="physicalExam"
+        value={formData.physicalExam}
+        onChange={handleChange}
+        required
+        multiline
+        rows={4}
+        id="visit-physical-exam-input"
+        aria-label="Exploración física de la visita"
+      />
+
+      <TextField
+        label="Diagnóstico"
+        name="diagnosis"
+        value={formData.diagnosis}
+        onChange={handleChange}
+        required
+        multiline
+        rows={2}
+        id="visit-diagnosis-input"
+        aria-label="Diagnóstico de la visita"
+      />
+
+      <TextField
+        label="Plan de Tratamiento"
+        name="treatmentPlan"
+        value={formData.treatmentPlan}
+        onChange={handleChange}
+        required
+        multiline
+        rows={4}
+        id="visit-treatment-plan-input"
+        aria-label="Plan de tratamiento de la visita"
+      />
+
+      <TextField
+        label="Notas Adicionales"
+        name="notes"
+        value={formData.notes}
+        onChange={handleChange}
+        multiline
+        rows={2}
+        id="visit-notes-input"
+        aria-label="Notas adicionales de la visita"
+      />
+
+      <VisitAlert warnings={warnings} />
+
+      <Button 
+        type="submit"
+        variant="contained" 
+        color="primary"
+        aria-label="Guardar visita estructurada"
+      >
+        Guardar Visita
+      </Button>
     </Stack>
   );
 };

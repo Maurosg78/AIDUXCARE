@@ -12,47 +12,55 @@ interface NewVisitFormProps {
 
 const NewVisitForm: FC<NewVisitFormProps> = ({ patientId }) => {
   const navigate = useNavigate();
-
-  const [visit, setVisit] = useState<Partial<PatientVisit>>({
-    patientId,
-    visitDate: new Date().toISOString().split("T")[0],
+  const [formData, setFormData] = useState({
     visitType: "",
-    status: "Abierta",
-    notes: "",
+    motivo: "",
+    observaciones: "",
+    diagnostico: ""
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setVisit((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const handleSubmit = () => {
-    if (!visit.visitType || !visit.visitDate || !visit.patientId) {
-      alert("Faltan campos obligatorios.");
-      return;
-    }
-
-    VisitService.create({
-      ...visit,
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const visit: PatientVisit = {
       id: crypto.randomUUID(),
-    } as PatientVisit);
+      patientId,
+      ...formData,
+      visitDate: new Date().toISOString(),
+      alertas: [],
+      status: "Abierta"
+    };
 
-    navigate(`/assistant/patient/${patientId}`);
+    try {
+      await VisitService.create(visit);
+      navigate(`/patients/${patientId}`);
+    } catch (error) {
+      console.error("Error creating visit:", error);
+    }
   };
 
   return (
-    <Stack spacing={2}>
-      <Typography variant="h5">Nueva Visita Clínica</Typography>
+    <Stack 
+      component="form"
+      onSubmit={handleSubmit}
+      spacing={2}
+      aria-labelledby="new-visit-title"
+    >
+      <Typography 
+        id="new-visit-title"
+        variant="h6" 
+        component="h2"
+      >
+        Nueva Visita
+      </Typography>
 
       <TextField
         select
-        label="Tipo de visita"
-        name="visitType"
-        value={visit.visitType}
-        onChange={handleChange}
+        label="Tipo de Visita"
+        value={formData.visitType}
+        onChange={(e) => setFormData({ ...formData, visitType: e.target.value })}
         required
+        id="visit-type-select"
+        aria-label="Seleccionar tipo de visita"
       >
         {visitTypes.map((type) => (
           <MenuItem key={type} value={type}>
@@ -62,26 +70,45 @@ const NewVisitForm: FC<NewVisitFormProps> = ({ patientId }) => {
       </TextField>
 
       <TextField
-        label="Fecha"
-        type="date"
-        name="visitDate"
-        value={visit.visitDate}
-        onChange={handleChange}
-        InputLabelProps={{ shrink: true }}
+        label="Motivo de la Visita"
+        value={formData.motivo}
+        onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
         required
+        multiline
+        rows={2}
+        id="visit-reason-input"
+        aria-label="Motivo de la visita"
       />
 
       <TextField
-        label="Notas"
-        name="notes"
-        value={visit.notes}
-        onChange={handleChange}
+        label="Observaciones"
+        value={formData.observaciones}
+        onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
+        required
         multiline
         rows={4}
+        id="visit-observations-input"
+        aria-label="Observaciones de la visita"
       />
 
-      <Button variant="contained" onClick={handleSubmit}>
-        Guardar visita
+      <TextField
+        label="Diagnóstico"
+        value={formData.diagnostico}
+        onChange={(e) => setFormData({ ...formData, diagnostico: e.target.value })}
+        required
+        multiline
+        rows={2}
+        id="visit-diagnosis-input"
+        aria-label="Diagnóstico de la visita"
+      />
+
+      <Button 
+        type="submit" 
+        variant="contained" 
+        color="primary"
+        aria-label="Guardar visita"
+      >
+        Guardar Visita
       </Button>
     </Stack>
   );

@@ -5,7 +5,8 @@ import { AuthProvider } from './context/AuthContext';
 import routes from "./core/config/routes";
 
 function AppRouter() {
-  return useRoutes(routes);
+  const element = useRoutes(routes);
+  return element;
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);

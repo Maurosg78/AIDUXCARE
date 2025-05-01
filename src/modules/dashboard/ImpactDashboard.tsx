@@ -7,15 +7,13 @@ import {
   List,
   ListItem,
   ListItemText,
-  Alert,
   Divider,
   Paper
 } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import EvalService from '../emr/services/EvalService';
-import { processMetrics, DashboardMetrics } from './metrics';
+import { processMetrics, DashboardMetrics, PatientAlert, DiagnosticCount } from './metrics';
 
-// Componente para las tarjetas de métricas
 interface MetricCardProps {
   title: string;
   value: number | string;
@@ -25,10 +23,10 @@ interface MetricCardProps {
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, isError }) => (
   <Card>
     <CardContent>
-      <Typography color="textSecondary" gutterBottom>
+      <Typography variant="h6" gutterBottom>
         {title}
       </Typography>
-      <Typography variant="h4" color={isError ? 'error' : 'inherit'}>
+      <Typography variant="h3" color={isError ? 'error' : 'primary'}>
         {value}
       </Typography>
     </CardContent>
@@ -36,74 +34,78 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, isError }) => (
 );
 
 const ImpactDashboard: React.FC = () => {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<DashboardMetrics>({
+    totalEvaluations: 0,
+    withFeedback: 0,
+    withAlerts: 0,
+    feedbackTypes: {
+      omission: 0,
+      suggestion: 0,
+      diagnostic: 0,
+      risk: 0
+    },
+    patientsWithAlerts: [],
+    topDiagnostics: []
+  });
 
   useEffect(() => {
-    const loadMetrics = async () => {
+    const loadEvaluations = async () => {
       try {
-        const evaluations = await EvalService.getAllEvals();
-        const processedMetrics = processMetrics(evaluations);
-        setMetrics(processedMetrics);
-      } catch (err) {
-        setError('Error al cargar las métricas');
-        console.error(err);
+        const evaluations = await EvalService.getEvaluations();
+        const newMetrics = processMetrics(evaluations);
+        setMetrics(newMetrics);
+      } catch (error) {
+        console.error('Error loading evaluations:', error);
       }
     };
-    loadMetrics();
+    loadEvaluations();
   }, []);
 
-  if (error) {
-    return <Alert severity="error">{error}</Alert>;
-  }
-
-  if (!metrics) {
-    return <Alert severity="info">Cargando métricas...</Alert>;
-  }
-
   const feedbackData = [
-    { name: 'Omisiones', value: metrics.feedbackByType.omission },
-    { name: 'Sugerencias', value: metrics.feedbackByType.suggestion },
-    { name: 'Diagnósticos', value: metrics.feedbackByType.diagnostic },
-    { name: 'Riesgos', value: metrics.feedbackByType.risk }
+    { name: 'Omisiones', value: metrics.feedbackTypes.omission },
+    { name: 'Sugerencias', value: metrics.feedbackTypes.suggestion },
+    { name: 'Diagnósticos', value: metrics.feedbackTypes.diagnostic },
+    { name: 'Riesgos', value: metrics.feedbackTypes.risk }
   ];
 
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Dashboard de Impacto
+        Dashboard de Impacto Clínico
       </Typography>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3 }}>
-        <Box sx={{ gridColumn: { xs: 'span 12', md: 'span 6', lg: 'span 3' } }}>
-          <MetricCard 
-            title="Total Evaluaciones"
+      <Box sx={{ 
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: '1fr',
+          md: 'repeat(3, 1fr)'
+        },
+        gap: 3
+      }}>
+        <Box>
+          <MetricCard
+            title="Total de Evaluaciones"
             value={metrics.totalEvaluations}
           />
         </Box>
 
-        <Box sx={{ gridColumn: { xs: 'span 12', md: 'span 6', lg: 'span 3' } }}>
-          <MetricCard 
+        <Box>
+          <MetricCard
             title="Con Feedback"
-            value={metrics.evaluationsWithFeedback}
+            value={`${((metrics.withFeedback / metrics.totalEvaluations) * 100).toFixed(1)}%`}
           />
         </Box>
 
-        <Box sx={{ gridColumn: { xs: 'span 12', md: 'span 6', lg: 'span 3' } }}>
-          <MetricCard 
-            title="Alertas Críticas"
-            value={metrics.criticalAlerts}
+        <Box>
+          <MetricCard
+            title="Con Alertas"
+            value={`${((metrics.withAlerts / metrics.totalEvaluations) * 100).toFixed(1)}%`}
             isError
           />
         </Box>
+      </Box>
 
-        <Box sx={{ gridColumn: { xs: 'span 12', md: 'span 6', lg: 'span 3' } }}>
-          <MetricCard 
-            title="Pacientes con Alertas"
-            value={metrics.patientsWithAlerts.length}
-          />
-        </Box>
-
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3, mt: 3 }}>
         <Box sx={{ gridColumn: { xs: 'span 12', md: 'span 8' } }}>
           <Paper elevation={1} sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
@@ -129,7 +131,7 @@ const ImpactDashboard: React.FC = () => {
               Pacientes con Alertas Activas
             </Typography>
             <List>
-              {metrics.patientsWithAlerts.map((patient, index) => (
+              {metrics.patientsWithAlerts.map((patient: PatientAlert, index: number) => (
                 <React.Fragment key={patient.patientId}>
                   <ListItem>
                     <ListItemText
@@ -150,7 +152,7 @@ const ImpactDashboard: React.FC = () => {
               Top 3 Diagnósticos Sugeridos
             </Typography>
             <List>
-              {metrics.topDiagnostics.map((diagnostic, index) => (
+              {metrics.topDiagnostics.map((diagnostic: DiagnosticCount, index: number) => (
                 <React.Fragment key={diagnostic.diagnosis}>
                   <ListItem>
                     <ListItemText

@@ -29,22 +29,46 @@ const LoginPage: React.FC = () => {
 
   return (
     <Container maxWidth="sm">
-      <Box sx={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-      }}>
-        <Card sx={{ width: '100%' }}>
+      <Box 
+        component="main"
+        sx={{ 
+          minHeight: '100vh', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center' 
+        }}
+      >
+        <Card 
+          component="section"
+          sx={{ width: '100%' }}
+          aria-labelledby="login-title"
+        >
           <CardContent>
-            <Typography variant="h5" component="h1" gutterBottom align="center">
+            <Typography 
+              id="login-title"
+              variant="h5" 
+              component="h1" 
+              gutterBottom 
+              align="center"
+            >
               AiDuxCare
             </Typography>
-            <Typography variant="subtitle1" gutterBottom align="center" color="text.secondary">
+            <Typography 
+              variant="subtitle1" 
+              gutterBottom 
+              align="center" 
+              color="text.secondary"
+              id="login-description"
+            >
               Iniciar Sesión
             </Typography>
 
-            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+            <Box 
+              component="form" 
+              onSubmit={handleSubmit} 
+              sx={{ mt: 3 }}
+              aria-describedby="login-description"
+            >
               <TextField
                 fullWidth
                 label="Nombre de usuario"
@@ -52,6 +76,11 @@ const LoginPage: React.FC = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 margin="normal"
                 required
+                id="username-input"
+                aria-required="true"
+                inputProps={{
+                  'aria-label': 'Nombre de usuario'
+                }}
               />
 
               <FormControl fullWidth margin="normal">
@@ -61,6 +90,8 @@ const LoginPage: React.FC = () => {
                   value={role}
                   label="Rol"
                   onChange={(e) => setRole(e.target.value as UserRole)}
+                  id="role-select"
+                  aria-label="Seleccionar rol"
                 >
                   <MenuItem value="fisioterapeuta">Fisioterapeuta</MenuItem>
                   <MenuItem value="auditor">Auditor</MenuItem>
@@ -74,6 +105,7 @@ const LoginPage: React.FC = () => {
                 variant="contained"
                 sx={{ mt: 3, mb: 2 }}
                 disabled={!username.trim()}
+                aria-label="Iniciar sesión"
               >
                 Iniciar Sesión
               </Button>

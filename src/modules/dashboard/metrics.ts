@@ -1,76 +1,87 @@
-import { PatientEval } from '../emr/services/EvalService';
-import CopilotService, { CopilotFeedback } from '../ai/CopilotService';
+import { Evaluation } from '../emr/types/Evaluation';
+
+export interface PatientAlert {
+  patientId: string;
+  patientName: string;
+  alerts: Array<{ message: string }>;
+}
+
+export interface DiagnosticCount {
+  diagnosis: string;
+  count: number;
+}
 
 export interface DashboardMetrics {
   totalEvaluations: number;
-  evaluationsWithFeedback: number;
-  feedbackByType: {
+  withFeedback: number;
+  withAlerts: number;
+  feedbackTypes: {
     omission: number;
     suggestion: number;
     diagnostic: number;
     risk: number;
   };
-  criticalAlerts: number;
-  patientsWithAlerts: Array<{
-    patientId: string;
-    patientName: string;
-    alerts: CopilotFeedback[];
-  }>;
-  topDiagnostics: Array<{
-    diagnosis: string;
-    count: number;
-  }>;
+  patientsWithAlerts: PatientAlert[];
+  topDiagnostics: DiagnosticCount[];
 }
 
-export function processMetrics(evaluations: PatientEval[]): DashboardMetrics {
-  const feedbackByType = {
-    omission: 0,
-    suggestion: 0,
-    diagnostic: 0,
-    risk: 0
+export function processMetrics(evaluations: Evaluation[]): DashboardMetrics {
+  const metrics: DashboardMetrics = {
+    totalEvaluations: evaluations.length,
+    withFeedback: 0,
+    withAlerts: 0,
+    feedbackTypes: {
+      omission: 0,
+      suggestion: 0,
+      diagnostic: 0,
+      risk: 0
+    },
+    patientsWithAlerts: [],
+    topDiagnostics: []
   };
 
-  const patientsWithAlerts: DashboardMetrics['patientsWithAlerts'] = [];
+  const patientAlerts = new Map<string, PatientAlert>();
   const diagnosticCounts = new Map<string, number>();
 
   evaluations.forEach(evaluation => {
-    const feedbacks = CopilotService.analyzeEval(evaluation);
-    
-    // Contar por tipo
-    feedbacks.forEach(feedback => {
-      feedbackByType[feedback.type]++;
-      
-      // Contar diagnósticos sugeridos
-      if (feedback.type === 'diagnostic') {
-        const currentCount = diagnosticCounts.get(feedback.message) || 0;
-        diagnosticCounts.set(feedback.message, currentCount + 1);
-      }
-    });
-
-    // Recolectar pacientes con alertas
-    const criticalFeedbacks = feedbacks.filter(f => f.severity === 'critical');
-    if (criticalFeedbacks.length > 0) {
-      const patientName = evaluation.observaciones.split(',')[0].replace('Paciente ', '');
-      patientsWithAlerts.push({
-        patientId: evaluation.patientId,
-        patientName,
-        alerts: criticalFeedbacks
+    // Contar evaluaciones con feedback
+    if (evaluation.feedback && evaluation.feedback.length > 0) {
+      metrics.withFeedback++;
+      evaluation.feedback.forEach(f => {
+        if (f.type in metrics.feedbackTypes) {
+          metrics.feedbackTypes[f.type as keyof typeof metrics.feedbackTypes]++;
+        }
       });
+    }
+
+    // Contar evaluaciones con alertas
+    if (evaluation.alertas && evaluation.alertas.length > 0) {
+      metrics.withAlerts++;
+      
+      // Agrupar alertas por paciente
+      const existing = patientAlerts.get(evaluation.patientId) || {
+        patientId: evaluation.patientId,
+        patientName: `Paciente ${evaluation.patientId}`,
+        alerts: []
+      };
+      
+      existing.alerts = evaluation.alertas.map(alerta => ({ message: alerta }));
+      patientAlerts.set(evaluation.patientId, existing);
+    }
+
+    // Contar diagnósticos
+    if (evaluation.diagnostico) {
+      const count = diagnosticCounts.get(evaluation.diagnostico) || 0;
+      diagnosticCounts.set(evaluation.diagnostico, count + 1);
     }
   });
 
-  // Ordenar diagnósticos por frecuencia
-  const topDiagnostics = Array.from(diagnosticCounts.entries())
+  // Convertir mapas a arrays
+  metrics.patientsWithAlerts = Array.from(patientAlerts.values());
+  metrics.topDiagnostics = Array.from(diagnosticCounts.entries())
     .map(([diagnosis, count]) => ({ diagnosis, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 3);
 
-  return {
-    totalEvaluations: evaluations.length,
-    evaluationsWithFeedback: evaluations.filter(e => CopilotService.analyzeEval(e).length > 0).length,
-    feedbackByType,
-    criticalAlerts: feedbackByType.risk,
-    patientsWithAlerts,
-    topDiagnostics
-  };
+  return metrics;
 } 

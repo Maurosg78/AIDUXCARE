@@ -57,8 +57,9 @@ const EvalTimeline: React.FC<EvalTimelineProps> = ({ patientId }) => {
 
   const getAlertSeverity = (severity: CopilotFeedback['severity']) => {
     switch (severity) {
-      case 'critical': return 'error';
-      default: return severity;
+      case 'error': return 'error';
+      case 'warning': return 'warning';
+      default: return 'info';
     }
   };
 

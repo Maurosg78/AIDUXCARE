@@ -1,0 +1,122 @@
+{
+  "evaluations": [
+    {
+      "id": "eval-001",
+      "patientId": "paciente-a",
+      "patientName": "Paciente A",
+      "visitDate": "2025-04-15T10:30:00Z",
+      "motivo": "Dolor lumbar agudo",
+      "observaciones": "Paciente refiere dolor intenso en región lumbar derecha",
+      "diagnostico": "Lumbalgia mecánica",
+      "feedback": [
+        {
+          "type": "omission",
+          "severity": "warning",
+          "message": "No se registró escala de dolor"
+        },
+        {
+          "type": "suggestion",
+          "severity": "info",
+          "message": "Considerar evaluación de movilidad pélvica"
+        }
+      ],
+      "alertas": ["Dolor > 7/10"]
+    },
+    {
+      "id": "eval-002",
+      "patientId": "paciente-b",
+      "patientName": "Paciente B",
+      "visitDate": "2025-04-16T14:15:00Z",
+      "motivo": "Recuperación post-quirúrgica rodilla",
+      "observaciones": "Paciente en fase inicial de rehabilitación",
+      "diagnostico": "Artroscopia rodilla derecha",
+      "feedback": [
+        {
+          "type": "diagnostic",
+          "severity": "info",
+          "message": "Considerar evaluación de marcha"
+        }
+      ],
+      "alertas": []
+    },
+    {
+      "id": "eval-003",
+      "patientId": "paciente-c",
+      "patientName": "Paciente C",
+      "visitDate": "2025-04-17T09:45:00Z",
+      "motivo": "Dolor cervical crónico",
+      "observaciones": "Paciente con historia de 6 meses de dolor",
+      "diagnostico": "Cervicalgia crónica",
+      "feedback": [
+        {
+          "type": "risk",
+          "severity": "warning",
+          "message": "Posible compromiso radicular"
+        },
+        {
+          "type": "suggestion",
+          "severity": "info",
+          "message": "Evaluar fuerza muscular"
+        }
+      ],
+      "alertas": ["Parestesias en brazo derecho"]
+    },
+    {
+      "id": "eval-004",
+      "patientId": "paciente-d",
+      "patientName": "Paciente D",
+      "visitDate": "2025-04-18T11:20:00Z",
+      "motivo": "Esguince tobillo",
+      "observaciones": "Lesión deportiva hace 3 días",
+      "diagnostico": "Esguince grado II",
+      "feedback": [
+        {
+          "type": "omission",
+          "severity": "warning",
+          "message": "No se registró estabilidad articular"
+        }
+      ],
+      "alertas": ["Edema importante"]
+    },
+    {
+      "id": "eval-005",
+      "patientId": "paciente-e",
+      "patientName": "Paciente E",
+      "visitDate": "2025-04-19T16:00:00Z",
+      "motivo": "Dolor hombro",
+      "observaciones": "Limitación en movimientos por encima de la cabeza",
+      "diagnostico": "Síndrome subacromial",
+      "feedback": [
+        {
+          "type": "diagnostic",
+          "severity": "info",
+          "message": "Considerar evaluación de fuerza rotadores"
+        },
+        {
+          "type": "suggestion",
+          "severity": "info",
+          "message": "Evaluar postura escapular"
+        }
+      ],
+      "alertas": []
+    }
+  ],
+  "metrics": {
+    "totalEvaluations": 5,
+    "withFeedback": 5,
+    "withAlerts": 3,
+    "feedbackTypes": {
+      "omission": 2,
+      "suggestion": 3,
+      "diagnostic": 2,
+      "risk": 1
+    },
+    "diagnosticosAlternativos": [
+      "Síndrome facetario lumbar",
+      "Compromiso radicular C5-C6",
+      "Lesión ligamento lateral externo",
+      "Tendinitis del manguito rotador",
+      "Síndrome de pinzamiento subacromial"
+    ]
+  }
+} 
