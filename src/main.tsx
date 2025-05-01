@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, useRoutes } from "react-router-dom";
+import { AuthProvider } from './context/AuthContext';
 import routes from "./core/config/routes";
 
 function AppRouter() {
@@ -11,7 +12,9 @@ const root = ReactDOM.createRoot(document.getElementById("root")!);
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <AppRouter />
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

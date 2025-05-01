@@ -1,0 +1,36 @@
+{
+  "patientId": "javier-ruiz-1966",
+  "visitDate": "2025-05-01T16:47:33.311Z",
+  "motivo": "postoperatorio",
+  "observaciones": "Paciente Javier Ruiz, nacido en 1966, con diagnóstico de Postoperatorio de prótesis total de cadera. Presenta dolor moderado y fiebre de 38.2°C.",
+  "exploracionFisica": {
+    "inspeccion": "Inspección general del paciente",
+    "movilidad": "Rango de movimiento evaluado",
+    "hallazgos": []
+  },
+  "escalasUtilizadas": [
+    "Escala Visual Analógica (VAS)"
+  ],
+  "diagnostico": "Postoperatorio de prótesis total de cadera",
+  "plan": "Plan de tratamiento genérico: seguimiento y revisiones periódicas",
+  "alertas": [
+    "Alerta: falta prueba complementaria recomendada"
+  ],
+  "copilotFeedback": [
+    {
+      "type": "omission",
+      "message": "No se documentaron hallazgos en la exploración física",
+      "severity": "warning"
+    },
+    {
+      "type": "suggestion",
+      "message": "Recomendado usar Harris Hip Score para evaluar la recuperación post-operatoria",
+      "severity": "info"
+    },
+    {
+      "type": "risk",
+      "message": "Posible infección post-operatoria. Considerar evaluación urgente",
+      "severity": "critical"
+    }
+  ]
+} 

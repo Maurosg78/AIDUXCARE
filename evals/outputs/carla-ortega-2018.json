@@ -1,0 +1,34 @@
+{
+  "patientId": "carla-ortega-2018",
+  "visitDate": "2025-05-01T16:47:33.313Z",
+  "motivo": "trauma",
+  "observaciones": "Paciente Carla Ortega, nacido en 2018, con diagnóstico de Dolor lumbar persistente post caída. Presenta dolor al movimiento y limitación funcional.",
+  "exploracionFisica": {
+    "inspeccion": "Inspección general del paciente",
+    "movilidad": "Rango de movimiento evaluado",
+    "hallazgos": [
+      "Dolor a la palpación lumbar",
+      "Limitación de movimientos"
+    ]
+  },
+  "escalasUtilizadas": [
+    "Escala Visual Analógica (VAS)"
+  ],
+  "diagnostico": "Dolor lumbar persistente post caída",
+  "plan": "Plan de tratamiento genérico: seguimiento y revisiones periódicas",
+  "alertas": [
+    "Alerta: falta prueba complementaria recomendada"
+  ],
+  "copilotFeedback": [
+    {
+      "type": "suggestion",
+      "message": "Considerar usar la Escala de Oswestry para evaluar la discapacidad lumbar",
+      "severity": "info"
+    },
+    {
+      "type": "diagnostic",
+      "message": "Considerar evaluación para posible hernia discal lumbar",
+      "severity": "warning"
+    }
+  ]
+} 
