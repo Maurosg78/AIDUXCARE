@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, useRoutes } from "react-router-dom";
-import { routes } from "./core/config/routes";
+import routes from "./core/config/routes";
 
 function AppRouter() {
   return useRoutes(routes);

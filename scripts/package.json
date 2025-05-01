@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "description": "Scripts para evaluar la funcionalidad de AIDUXCARE",
   "type": "module",
-  "private": true
+  "private": true,
+  "scripts": {
+    "eval:all": "tsx scripts/runAllEvals.ts"
+  }
 }

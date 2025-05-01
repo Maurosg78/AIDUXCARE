@@ -9,7 +9,7 @@ const PatientVisitCreatePage: React.FC = () => {
   return (
     <Container>
       <Typography variant="h4" gutterBottom>Nueva Visita Clínica</Typography>
-      <NewVisitForm patientId={id} />
+      <NewVisitForm patientId={id!} />
     </Container>
   );
 };

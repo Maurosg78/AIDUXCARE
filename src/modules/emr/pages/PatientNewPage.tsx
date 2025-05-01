@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../../core/config/routes';
 
 const PatientNewPage: React.FC = () => {
   const navigate = useNavigate();
@@ -9,7 +8,7 @@ const PatientNewPage: React.FC = () => {
     <div>
       <h1>Nuevo Paciente</h1>
       {/* Aquí irá el formulario de nuevo paciente */}
-      <button onClick={() => navigate(ROUTES.EMR.PATIENT_LIST)}>
+      <button onClick={() => navigate('/')}>
         Volver a la lista
       </button>
     </div>

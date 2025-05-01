@@ -1,5 +1,5 @@
 import { PatientVisit } from '../models';
-import { StorageService } from './StorageService';
+import { StorageService } from './StorageService.js';
 
 const STORAGE_KEY = 'visits';
 

@@ -1,26 +1,20 @@
-import React, { useState } from "react";
-import VisitAlert from "../../components/alerts/VisitAlert";
+import React, { FC, useState } from "react";
 import { TextField, Button, MenuItem, Stack, Typography } from "@mui/material";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { PatientVisit } from "../../models/PatientVisit";
 import VisitService from "../../services/VisitService";
 
 const visitTypes = ["Consulta inicial", "Control", "Reevaluación", "Alta"];
 
-
-function validateVisit(visit) {
-  const warnings = [];
-  if (!visit.visitDate) warnings.push("Falta la fecha de la visita.");
-  if (!visit.visitType) warnings.push("Falta el tipo de visita.");
-  if (!visit.status) warnings.push("Falta el estado de la visita.");
-  return warnings;
+interface NewVisitFormProps {
+  patientId: string;
 }
-export default function NewVisitForm() {
-  const { id: patientId } = useParams();
+
+const NewVisitForm: FC<NewVisitFormProps> = ({ patientId }) => {
   const navigate = useNavigate();
 
   const [visit, setVisit] = useState<Partial<PatientVisit>>({
-    patientId: patientId || "",
+    patientId,
     visitDate: new Date().toISOString().split("T")[0],
     visitType: "",
     status: "Abierta",
@@ -91,5 +85,7 @@ export default function NewVisitForm() {
       </Button>
     </Stack>
   );
-}
+};
+
+export default NewVisitForm;
 
