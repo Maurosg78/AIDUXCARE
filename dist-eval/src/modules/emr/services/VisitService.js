@@ -1,4 +1,4 @@
-import { StorageService } from './StorageService';
+import { StorageService } from './StorageService.js';
 const STORAGE_KEY = 'visits';
 class VisitService {
     static async getAll() {

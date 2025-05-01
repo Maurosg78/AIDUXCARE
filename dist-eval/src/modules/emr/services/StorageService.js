@@ -2,6 +2,10 @@ export class StorageService {
     static save(key, data) {
         try {
             const serialized = JSON.stringify(data);
+            if (typeof localStorage === 'undefined') {
+                StorageService.memoryStorage[key] = serialized;
+                return;
+            }
             localStorage.setItem(key, serialized);
         }
         catch (error) {
@@ -10,6 +14,10 @@ export class StorageService {
     }
     static load(key) {
         try {
+            if (typeof localStorage === 'undefined') {
+                const ser = StorageService.memoryStorage[key];
+                return ser ? JSON.parse(ser) : null;
+            }
             const serialized = localStorage.getItem(key);
             if (!serialized)
                 return null;
@@ -22,6 +30,10 @@ export class StorageService {
     }
     static remove(key) {
         try {
+            if (typeof localStorage === 'undefined') {
+                delete StorageService.memoryStorage[key];
+                return;
+            }
             localStorage.removeItem(key);
         }
         catch (error) {
@@ -30,6 +42,10 @@ export class StorageService {
     }
     static clear() {
         try {
+            if (typeof localStorage === 'undefined') {
+                StorageService.memoryStorage = {};
+                return;
+            }
             localStorage.clear();
         }
         catch (error) {
@@ -37,3 +53,9 @@ export class StorageService {
         }
     }
 }
+Object.defineProperty(StorageService, "memoryStorage", {
+    enumerable: true,
+    configurable: true,
+    writable: true,
+    value: {}
+});
