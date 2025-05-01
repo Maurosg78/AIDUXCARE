@@ -1,12 +1,12 @@
-// import React from "react";
 import { RouteObject } from "react-router-dom";
+import HomePage from "@/modules/core/pages/HomePage";
 import PatientVisitListPage from "@/modules/emr/pages/PatientVisitListPage";
 import VisitDetailPage from "@/modules/emr/pages/VisitDetailPage";
 
 const routes: RouteObject[] = [
   {
     path: "/",
-    element: <div>Inicio de AiDuxCare</div>,
+    element: <HomePage />,
   },
   {
     path: "/patients/:patientId/visits",

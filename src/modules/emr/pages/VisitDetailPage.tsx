@@ -1,34 +1,33 @@
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import VisitService from "../services/VisitService";
-import { PatientVisit } from "../models/PatientVisit";
-import { Typography, Stack, Paper, Divider } from "@mui/material";
+import VisitService from "@/modules/emr/services/VisitService";
+import { PatientVisit } from "@/modules/emr/models/PatientVisit";
 
-const VisitDetailPage: React.FC = () => {
+export default function VisitDetailPage() {
   const { visitId } = useParams<{ visitId: string }>();
   const [visit, setVisit] = useState<PatientVisit | null>(null);
 
   useEffect(() => {
-    if (!visitId) return;
-    VisitService.getByVisitId(visitId).then((data) => setVisit(data || null));
+    async function fetchVisit() {
+      if (visitId) {
+        const fetched = await VisitService.getByVisitId(visitId);
+        setVisit(fetched ?? null);
+      }
+    }
+    fetchVisit();
   }, [visitId]);
 
-  if (!visit) return <div>Cargando visita...</div>;
+  if (!visit) return <div>❌ No se encontró la visita.</div>;
 
   return (
-    <Paper elevation={3} sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Detalle de Visita
-      </Typography>
-      <Divider sx={{ mb: 2 }} />
-      <Stack spacing={2}>
-        <Typography><strong>Fecha:</strong> {visit.visitDate}</Typography>
-        <Typography><strong>Tipo:</strong> {visit.visitType}</Typography>
-        <Typography><strong>Estado:</strong> {visit.status}</Typography>
-        <Typography><strong>Notas:</strong> {visit.notes || "Sin notas"}</Typography>
-      </Stack>
-    </Paper>
+    <div>
+      <h1>🩺 Detalle de Visita</h1>
+      <p><strong>ID:</strong> {visit.id}</p>
+      <p><strong>Paciente:</strong> {visit.patientId}</p>
+      <p><strong>Fecha:</strong> {visit.visitDate}</p>
+      <p><strong>Tipo:</strong> {visit.visitType}</p>
+      <p><strong>Estado:</strong> {visit.status}</p>
+      <p><strong>Notas:</strong> {visit.notes}</p>
+    </div>
   );
-};
-
-export default VisitDetailPage; 
+}
