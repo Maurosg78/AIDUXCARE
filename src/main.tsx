@@ -9,6 +9,10 @@ function AppRouter() {
   return element;
 }
 
+console.log('🔥 VITE_LANGFUSE_PUBLIC_KEY →', import.meta.env.VITE_LANGFUSE_PUBLIC_KEY);
+console.log('🔥 VITE_LANGFUSE_SECRET_KEY →', import.meta.env.VITE_LANGFUSE_SECRET_KEY);
+console.log('🔥 VITE_LANGFUSE_BASE_URL →', import.meta.env.VITE_LANGFUSE_BASE_URL);
+
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 root.render(
   <React.StrictMode>
