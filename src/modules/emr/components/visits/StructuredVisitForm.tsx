@@ -1,25 +1,67 @@
-import React, { useState } from "react";
-import { TextField, Button, Stack, Typography } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { TextField, Button, Stack, Typography, Drawer, Box, useTheme, useMediaQuery, IconButton } from "@mui/material";
 import { useParams } from "react-router-dom";
 import VisitAlert from "../alerts/VisitAlert";
 import VisitService from "../../services/VisitService";
+import CopilotPanel from "../../../assistant/components/CopilotPanel";
+import { CopilotFeedback } from "../../../ai/CopilotService";
+import { trackEvent } from '@/core/services/langfuseClient';
+
+const drawerWidth = 340;
 
 const StructuredVisitForm = () => {
   const { patientId } = useParams();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [formData, setFormData] = useState({
+    id: crypto.randomUUID(),
+    patientId: patientId || "unknown",
     visitDate: "",
+    motivo: "",
+    observaciones: "",
+    diagnostico: "",
+    alertas: [] as string[],
+    feedback: [] as CopilotFeedback[],
     visitType: "",
     status: "",
     anamnesis: "",
     physicalExam: "",
-    diagnosis: "",
     treatmentPlan: "",
-    notes: ""
+    notes: "",
+    traceId: crypto.randomUUID()
   });
   const [warnings, setWarnings] = useState<string[]>([]);
 
+  useEffect(() => {
+    const trackFormUpdate = async () => {
+      if (formData.motivo || formData.observaciones || formData.diagnostico) {
+        await trackEvent('form.update', {
+          patientId: formData.patientId,
+          formData: {
+            visitType: formData.visitType,
+            motivo: formData.motivo,
+            observaciones: formData.observaciones,
+            diagnostico: formData.diagnostico,
+            anamnesis: formData.anamnesis,
+            physicalExam: formData.physicalExam,
+            treatmentPlan: formData.treatmentPlan
+          }
+        }, formData.traceId);
+      }
+    };
+
+    const timeoutId = setTimeout(trackFormUpdate, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [formData]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSuggestionApply = (feedback: CopilotFeedback) => {
+    // TODO: Implementar la lógica para aplicar sugerencias
+    console.log('Aplicando sugerencia:', feedback);
   };
 
   const handleSave = () => {
@@ -29,141 +71,164 @@ const StructuredVisitForm = () => {
     if (!formData.status) newWarnings.push("Falta el estado de la visita.");
     if (!formData.anamnesis) newWarnings.push("Falta la anamnesis.");
     if (!formData.physicalExam) newWarnings.push("Falta la exploración física.");
-    if (!formData.diagnosis) newWarnings.push("Falta el diagnóstico.");
+    if (!formData.diagnostico) newWarnings.push("Falta el diagnóstico.");
     if (!formData.treatmentPlan) newWarnings.push("Falta el plan de tratamiento.");
 
     setWarnings(newWarnings);
 
     if (newWarnings.length === 0) {
-      VisitService.create({
-        id: crypto.randomUUID(),
-        patientId: patientId || "unknown",
-        ...formData
-      });
+      VisitService.create(formData);
       alert("Visita guardada correctamente.");
     }
   };
 
   return (
-    <Stack 
-      component="form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleSave();
-      }}
-      spacing={2}
-      aria-labelledby="structured-visit-title"
-    >
-      <Typography 
-        id="structured-visit-title"
-        variant="h6" 
-        component="h2"
+    <Box sx={{ display: 'flex' }}>
+      <Stack 
+        component="form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSave();
+        }}
+        spacing={2}
+        aria-labelledby="structured-visit-title"
+        sx={{ 
+          flexGrow: 1,
+          mr: { md: `${drawerWidth}px` },
+          p: 2
+        }}
       >
-        Visita Estructurada
-      </Typography>
+        <Typography 
+          id="structured-visit-title"
+          variant="h6" 
+          component="h2"
+        >
+          Visita Estructurada
+        </Typography>
 
-      <TextField
-        label="Fecha de Visita"
-        type="date"
-        name="visitDate"
-        value={formData.visitDate}
-        onChange={handleChange}
-        required
-        InputLabelProps={{ shrink: true }}
-        id="visit-date-input"
-        aria-label="Fecha de la visita"
-      />
+        <TextField
+          label="Fecha de Visita"
+          type="date"
+          name="visitDate"
+          value={formData.visitDate}
+          onChange={handleChange}
+          required
+          InputLabelProps={{ shrink: true }}
+          id="visit-date-input"
+          aria-label="Fecha de la visita"
+        />
 
-      <TextField
-        label="Tipo de Visita"
-        name="visitType"
-        value={formData.visitType}
-        onChange={handleChange}
-        required
-        id="visit-type-input"
-        aria-label="Tipo de visita"
-      />
+        <TextField
+          label="Tipo de Visita"
+          name="visitType"
+          value={formData.visitType}
+          onChange={handleChange}
+          required
+          id="visit-type-input"
+          aria-label="Tipo de visita"
+        />
 
-      <TextField
-        label="Estado"
-        name="status"
-        value={formData.status}
-        onChange={handleChange}
-        required
-        id="visit-status-input"
-        aria-label="Estado de la visita"
-      />
+        <TextField
+          label="Estado"
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          required
+          id="visit-status-input"
+          aria-label="Estado de la visita"
+        />
 
-      <TextField
-        label="Anamnesis"
-        name="anamnesis"
-        value={formData.anamnesis}
-        onChange={handleChange}
-        required
-        multiline
-        rows={4}
-        id="visit-anamnesis-input"
-        aria-label="Anamnesis de la visita"
-      />
+        <TextField
+          label="Anamnesis"
+          name="anamnesis"
+          value={formData.anamnesis}
+          onChange={handleChange}
+          required
+          multiline
+          rows={4}
+          id="visit-anamnesis-input"
+          aria-label="Anamnesis de la visita"
+        />
 
-      <TextField
-        label="Exploración Física"
-        name="physicalExam"
-        value={formData.physicalExam}
-        onChange={handleChange}
-        required
-        multiline
-        rows={4}
-        id="visit-physical-exam-input"
-        aria-label="Exploración física de la visita"
-      />
+        <TextField
+          label="Exploración Física"
+          name="physicalExam"
+          value={formData.physicalExam}
+          onChange={handleChange}
+          required
+          multiline
+          rows={4}
+          id="visit-physical-exam-input"
+          aria-label="Exploración física de la visita"
+        />
 
-      <TextField
-        label="Diagnóstico"
-        name="diagnosis"
-        value={formData.diagnosis}
-        onChange={handleChange}
-        required
-        multiline
-        rows={2}
-        id="visit-diagnosis-input"
-        aria-label="Diagnóstico de la visita"
-      />
+        <TextField
+          label="Diagnóstico"
+          name="diagnostico"
+          value={formData.diagnostico}
+          onChange={handleChange}
+          required
+          multiline
+          rows={2}
+          id="visit-diagnosis-input"
+          aria-label="Diagnóstico de la visita"
+        />
 
-      <TextField
-        label="Plan de Tratamiento"
-        name="treatmentPlan"
-        value={formData.treatmentPlan}
-        onChange={handleChange}
-        required
-        multiline
-        rows={4}
-        id="visit-treatment-plan-input"
-        aria-label="Plan de tratamiento de la visita"
-      />
+        <TextField
+          label="Plan de Tratamiento"
+          name="treatmentPlan"
+          value={formData.treatmentPlan}
+          onChange={handleChange}
+          required
+          multiline
+          rows={4}
+          id="visit-treatment-plan-input"
+          aria-label="Plan de tratamiento de la visita"
+        />
 
-      <TextField
-        label="Notas Adicionales"
-        name="notes"
-        value={formData.notes}
-        onChange={handleChange}
-        multiline
-        rows={2}
-        id="visit-notes-input"
-        aria-label="Notas adicionales de la visita"
-      />
+        <TextField
+          label="Notas Adicionales"
+          name="notes"
+          value={formData.notes}
+          onChange={handleChange}
+          multiline
+          rows={2}
+          id="visit-notes-input"
+          aria-label="Notas adicionales de la visita"
+        />
 
-      <VisitAlert warnings={warnings} />
+        <VisitAlert warnings={warnings} />
 
-      <Button 
-        type="submit"
-        variant="contained" 
-        color="primary"
-        aria-label="Guardar visita estructurada"
+        <Button 
+          type="submit"
+          variant="contained" 
+          color="primary"
+          aria-label="Guardar visita estructurada"
+        >
+          Guardar Visita
+        </Button>
+      </Stack>
+
+      <Drawer
+        variant="permanent"
+        anchor="right"
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          width: drawerWidth,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            p: 2
+          },
+        }}
       >
-        Guardar Visita
-      </Button>
-    </Stack>
+        <Typography variant="h6" gutterBottom>
+          Copiloto Clínico
+        </Typography>
+        <CopilotPanel formData={formData} onApplySuggestion={handleSuggestionApply} />
+      </Drawer>
+    </Box>
   );
 };
 
