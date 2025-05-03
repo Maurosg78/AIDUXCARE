@@ -19,6 +19,7 @@ import VisitDetailPage from "@/modules/emr/pages/VisitDetailPage";
 import StructuredVisitForm from "@/modules/emr/components/visits/StructuredVisitForm";
 import PatientActivityDashboard from "@/pages/admin/activity";
 import EMRStatsDashboard from "@/pages/admin/stats";
+import ReportsPage from "@/pages/admin/reports";
 
 const routes: RouteObject[] = [
   {
@@ -52,6 +53,12 @@ const routes: RouteObject[] = [
         <EMRStatsDashboard />
       </ProtectedRoute>
     )
+  },
+  {
+    path: '/admin/reports',
+    element: <ReportsPage />,
+    protected: true,
+    roles: ['admin']
   },
   {
     path: '/patients',
