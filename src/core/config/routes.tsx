@@ -17,6 +17,7 @@ import HomePage from "@/modules/core/pages/HomePage";
 import PatientVisitListPage from "@/modules/emr/pages/PatientVisitListPage";
 import VisitDetailPage from "@/modules/emr/pages/VisitDetailPage";
 import StructuredVisitForm from "@/modules/emr/components/visits/StructuredVisitForm";
+import PatientActivityDashboard from "@/pages/admin/activity";
 
 const routes: RouteObject[] = [
   {
@@ -32,6 +33,14 @@ const routes: RouteObject[] = [
     element: (
       <ProtectedRoute requiredRoles={['admin', 'auditor'] as UserRole[]}>
         <ImpactDashboard />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: '/admin/activity',
+    element: (
+      <ProtectedRoute requiredRoles={['admin'] as UserRole[]}>
+        <PatientActivityDashboard />
       </ProtectedRoute>
     )
   },
