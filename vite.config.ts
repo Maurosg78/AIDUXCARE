@@ -1,51 +1,68 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
+import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react()],
-  base: '/',
+  base: './',
   publicDir: 'public',
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': resolve(__dirname, './src'),
     },
   },
   define: {
-    'process.env.VITE_LANGFUSE_PUBLIC_KEY': JSON.stringify(process.env.VITE_LANGFUSE_PUBLIC_KEY),
-    'process.env.VITE_LANGFUSE_SECRET_KEY': JSON.stringify(process.env.VITE_LANGFUSE_SECRET_KEY),
-    'process.env.VITE_LANGFUSE_BASE_URL': JSON.stringify(process.env.VITE_LANGFUSE_BASE_URL),
-    'process.env.NEXTAUTH_SECRET': JSON.stringify(process.env.NEXTAUTH_SECRET),
+    'process.env.VITE_LANGFUSE_PUBLIC_KEY': JSON.stringify(process.env.VITE_LANGFUSE_PUBLIC_KEY || 'dummy'),
+    'process.env.VITE_LANGFUSE_SECRET_KEY': JSON.stringify(process.env.VITE_LANGFUSE_SECRET_KEY || 'dummy'),
+    'process.env.VITE_LANGFUSE_BASE_URL': JSON.stringify(process.env.VITE_LANGFUSE_BASE_URL || 'https://cloud.langfuse.com'),
+    'process.env.NEXTAUTH_SECRET': JSON.stringify(process.env.NEXTAUTH_SECRET || 'nextauthdummy'),
   },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    sourcemap: true,
+    sourcemap: process.env.NODE_ENV !== 'production',
+    target: 'es2020',
     assetsDir: 'assets',
+    manifest: true,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: process.env.NODE_ENV === 'production',
+        drop_debugger: process.env.NODE_ENV === 'production',
+      },
+    },
     rollupOptions: {
       input: {
-        main: path.resolve(__dirname, 'index.html'),
+        main: resolve(__dirname, 'index.html'),
       },
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'next-auth'],
-          ui: ['@mui/material', '@mui/icons-material'],
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['@headlessui/react', '@heroicons/react'],
         },
-        entryFileNames: 'assets/[name]-[hash].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]'
       }
-    }
+    },
   },
   server: {
-    port: 5174,
+    port: 3000,
     strictPort: true,
-    open: true
+    open: true,
+    fs: {
+      strict: true,
+    },
+    host: true,
+  },
+  preview: {
+    port: 4173,
+    strictPort: true,
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'next-auth']
+    include: ['react', 'react-dom', 'next-auth', '@mui/material', '@mui/icons-material']
   },
   css: {
-    postcss: './postcss.config.mjs'
+    postcss: './postcss.config.cjs'
   }
 });

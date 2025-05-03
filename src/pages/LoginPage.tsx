@@ -12,13 +12,11 @@ export const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    
     try {
-      await login(email, password);
+      await login({ email, password });
       navigate('/dashboard');
-    } catch (err) {
-      setError('Credenciales inválidas');
+    } catch (error) {
+      setError('Error al iniciar sesión');
     }
   };
 

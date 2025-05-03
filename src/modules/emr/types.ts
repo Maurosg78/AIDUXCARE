@@ -14,4 +14,6 @@ export interface ValidationErrors {
   diagnosis?: string;
   treatmentPlan?: string;
   followUp?: string;
+  general?: string;
+  [key: string]: string | undefined;
 } 

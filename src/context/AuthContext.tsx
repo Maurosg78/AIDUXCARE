@@ -135,4 +135,19 @@ export const ProtectedRoute: React.FC<{
   }
 
   return <>{children}</>;
+};
+
+const mockUsers = {
+  doctor: {
+    id: '1',
+    name: 'Dr. Smith',
+    email: 'doctor@example.com',
+    role: UserRole.DOCTOR,
+  },
+  admin: {
+    id: '2',
+    name: 'Admin User',
+    email: 'admin@example.com',
+    role: UserRole.ADMIN,
+  }
 }; 

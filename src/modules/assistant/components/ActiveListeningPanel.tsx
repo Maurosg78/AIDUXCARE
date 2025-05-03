@@ -169,6 +169,8 @@ export const ActiveListeningPanel: React.FC<Props> = ({ onPhrasesValidated }) =>
                   checked={phrase.isSelected}
                   onChange={() => togglePhrase(phrase.id)}
                   style={styles.checkbox}
+                  title={`Seleccionar frase: ${phrase.text}`}
+                  aria-label={`Seleccionar frase: ${phrase.text}`}
                 />
                 <span style={styles.phraseText}>{phrase.text}</span>
                 <span style={styles.timestamp}>

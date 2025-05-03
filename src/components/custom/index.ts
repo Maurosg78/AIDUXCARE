@@ -1,3 +1,3 @@
-export { Button } from '../ui/Button';
-export { Input } from '../ui/Input';
-export { Label } from '../ui/Label'; 
+export { Button } from '../ui/button';
+export { Input } from '../ui/input';
+export { Label } from '../ui/label'; 

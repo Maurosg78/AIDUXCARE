@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { UserRole } from '../modules/auth/authService';
 
 // Wrapper para rutas protegidas
 interface ProtectedRouteProps {
@@ -16,8 +17,8 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   }
 
   // Si se requiere admin y el usuario no es admin, redirigir
-  if (requireAdmin && user?.role !== 'admin') {
-    return <Navigate to="/dashboard" replace />;
+  if (requireAdmin && user?.role !== UserRole.ADMIN) {
+    return <Navigate to="/unauthorized" />;
   }
 
   return <>{children}</>;

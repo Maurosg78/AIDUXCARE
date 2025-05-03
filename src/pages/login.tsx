@@ -1,23 +1,23 @@
 import { useState } from 'react';
-import { useRouter } from 'next/router';
-import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { useAuth } from '../context/AuthContext';
 
 const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  email: z.string().email('Correo electrónico inválido'),
+  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormValues = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
-  const router = useRouter();
+export default function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,29 +25,25 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
+  } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormValues) => {
+    setError(null);
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-      setError(null);
-
-      const result = await signIn('credentials', {
-        redirect: false,
-        email: data.email,
-        password: data.password,
-      });
-
-      if (result?.error) {
-        setError('Credenciales inválidas');
-        return;
+      const success = await login(data.email, data.password);
+      
+      if (success) {
+        navigate('/dashboard');
+      } else {
+        setError('Credenciales inválidas. Por favor intenta nuevamente.');
       }
-
-      router.push('/dashboard');
-    } catch (error) {
-      setError('Ocurrió un error al iniciar sesión');
+    } catch (err) {
+      setError('Ocurrió un error durante el inicio de sesión.');
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -55,53 +51,61 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Iniciar sesión
-          </h2>
+      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-md">
+        <div className="text-center">
+          <h2 className="text-3xl font-extrabold text-gray-900">AiDuxCare</h2>
+          <p className="mt-2 text-gray-600">Iniciar sesión en tu cuenta</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          {error && (
-            <div className="text-red-600 text-sm">
-              {error}
-            </div>
-          )}
-          <div className="rounded-md shadow-sm -space-y-px">
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" required>Correo electrónico</Label>
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
+                error={!!errors.email}
+                errorMessage={errors.email?.message}
                 {...register('email')}
-                className={errors.email ? 'border-red-500' : ''}
               />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
             </div>
+
             <div>
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password" required>Contraseña</Label>
               <Input
                 id="password"
                 type="password"
+                autoComplete="current-password"
+                error={!!errors.password}
+                errorMessage={errors.password?.message}
                 {...register('password')}
-                className={errors.password ? 'border-red-500' : ''}
               />
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-              )}
             </div>
           </div>
+
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="text-sm text-red-700">{error}</div>
+            </div>
+          )}
 
           <div>
             <Button
               type="submit"
-              className="w-full"
-              disabled={isLoading}
+              fullWidth
+              isLoading={isLoading}
             >
-              {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+              Iniciar sesión
             </Button>
+          </div>
+          
+          <div className="mt-4">
+            <div className="text-sm text-center text-gray-600">
+              <p className="mb-2">Credenciales de prueba:</p>
+              <p>Doctor: demo@example.com / password123</p>
+              <p>Admin: admin@example.com / admin123</p>
+            </div>
           </div>
         </form>
       </div>
