@@ -5,7 +5,8 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "buildCommand": "npm run build",
+        "outputDirectory": "dist"
       }
     }
   ],
@@ -26,7 +27,9 @@
     }
   },
   "env": {
-    "VITE_LANGFUSE_PUBLIC_KEY": "@langfuse_public_key",
-    "VITE_LANGFUSE_BASE_URL": "https://cloud.langfuse.com"
+    "VITE_LANGFUSE_PUBLIC_KEY": "pk-lf-57c6e2ec-8603-44cf-b030-cddcef1f1f3d",
+    "VITE_LANGFUSE_SECRET_KEY": "sk-lf-c1872960-86af-4899-b275-b7de8d536794",
+    "VITE_LANGFUSE_BASE_URL": "https://cloud.langfuse.com",
+    "NEXTAUTH_SECRET": "8cbd83a9409a407ea2d43a6db7e1fc2a96cf367fa2055c7ceaf3d58b66bbda0f"
   }
 } 
