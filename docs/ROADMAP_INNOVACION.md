@@ -1,10 +1,29 @@
 # 🚀 Roadmap de Innovación Técnica — AiDuxCare
 
-Este documento recoge las funcionalidades estratégicas futuras definidas por el CTO para guiar el crecimiento estructurado, clínicamente relevante, legalmente sólido y escalable de AiDuxCare.
+Este documento recoge las funcionalidades estratégicas definidas por el CTO para que AiDuxCare sea una plataforma clínica inteligente, legalmente sólida y escalable desde su MVP.
 
 ---
 
-## 🔝 PRIORIDAD 1: Mejora Visual y Experiencia de Usuario
+## 🗣️ PRIORIDAD 1: Escucha Activa e Interacción por Voz (**Parte del MVP**)
+
+**Objetivo:** Capturar información clínica a través del ambiente en tiempo real, mediante micrófono, sin interrumpir la consulta.
+
+**Componentes clave:**
+- Módulo de escucha activa por micrófono (durante la atención)
+- Transcripción automática en tiempo real (ej: Whisper, Deepgram)
+- Integración directa con la ficha clínica
+- Reconocimiento de acentos y términos técnicos multilingües (inglés y español)
+
+**Requisitos legales:**
+- Consentimiento explícito del paciente antes de activar micrófono
+- Cumplimiento con GDPR (UE), HIPAA (EE.UU.) y PIPEDA (Canadá)
+- Política de retención de audio + anonimización de voz opcional
+
+**Estado:** Prioridad crítica e integrada al MVP validado en España
+
+---
+
+## 🔝 PRIORIDAD 2: Mejora Visual y Experiencia de Usuario
 
 **Objetivo:** Alinear la interfaz y organización documental con los EMRs más avanzados de Europa, EE.UU. y Canadá.
 
@@ -22,7 +41,7 @@ Este documento recoge las funcionalidades estratégicas futuras definidas por el
 
 ---
 
-## 🔐 PRIORIDAD 2: Normativas Internacionales de Seguridad y Confidencialidad
+## 🔐 PRIORIDAD 3: Normativas Internacionales de Seguridad y Confidencialidad
 
 **Objetivo:** Garantizar cumplimiento legal y protección para el profesional y el paciente según normativas internacionales.
 
@@ -39,7 +58,7 @@ Este documento recoge las funcionalidades estratégicas futuras definidas por el
 
 ---
 
-## 🧠 PRIORIDAD 3: Reportes Automatizados para Pacientes
+## 🧠 PRIORIDAD 4: Reportes Automatizados para Pacientes
 
 **Objetivo:** Generar y entregar automáticamente al paciente un resumen de su visita con información relevante para su seguimiento.
 
@@ -56,7 +75,7 @@ Este documento recoge las funcionalidades estratégicas futuras definidas por el
 
 ---
 
-## 📊 PRIORIDAD 4: Módulo Administrativo — Facturación + Continuidad Asistencial
+## 📊 PRIORIDAD 5: Módulo Administrativo — Facturación + Continuidad Asistencial
 
 **Objetivo:** Mejorar la eficiencia administrativa y prevenir el abandono de tratamientos.
 
@@ -79,7 +98,7 @@ Este documento recoge las funcionalidades estratégicas futuras definidas por el
 
 ---
 
-## 💰 PRIORIDAD 5: Módulo de Cálculo de Honorarios Profesionales
+## 💰 PRIORIDAD 6: Módulo de Cálculo de Honorarios Profesionales
 
 **Objetivo:** Automatizar el cálculo del pago a cada profesional según sus prestaciones realizadas y porcentaje asignado.
 
@@ -93,7 +112,7 @@ Este documento recoge las funcionalidades estratégicas futuras definidas por el
 
 ---
 
-## 📱 PRIORIDAD 6: App Multiplataforma (Mobile y Desktop)
+## 📱 PRIORIDAD 7: App Multiplataforma (Mobile y Desktop)
 
 **Objetivo:** Permitir el acceso total a AiDuxCare desde cualquier dispositivo, para profesionales y administrativos.
 
@@ -107,35 +126,8 @@ Este documento recoge las funcionalidades estratégicas futuras definidas por el
 
 ---
 
-## 🎤 PRIORIDAD 7: Escucha Activa y Transcripción Inteligente
-
-**Objetivo:** Implementar un sistema de captura y procesamiento de audio durante las consultas médicas para mejorar la documentación y reducir la carga administrativa.
-
-**Características principales:**
-- Captura de audio ambiental con consentimiento explícito
-- Transcripción en tiempo real usando modelos de IA especializados
-- Integración automática con la ficha clínica
-- Resumen estructurado de la consulta
-
-**Consideraciones técnicas:**
-- Procesamiento local cuando sea posible
-- Encriptación end-to-end del audio
-- Control granular de permisos por profesional
-- Opción de edición manual post-consulta
-
-**Integración con el sistema:**
-- Botón de activación/desactivación en la interfaz
-- Indicador visual de grabación activa
-- Almacenamiento temporal con auto-eliminación
-- Exportación de transcripciones en formatos estándar
-
-**Etapa estimada:** v2.1+
-
----
-
 ## 🔁 Notas Finales
 
-Todas estas funcionalidades seguirán:
-- Los principios de modularidad del sistema
-- Estándares clínicos y legales internacionales
-- Ciclos de desarrollo testeado y validado antes de producción 
+La escucha activa por voz pasa a formar parte del MVP obligatorio.  
+Ninguna versión será considerada final sin este componente operativo y auditado.  
+Todos los módulos seguirán principios legales, clínicos y de escalabilidad técnica. 
