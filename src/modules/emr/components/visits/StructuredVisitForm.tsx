@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { TextField, Button, Stack, Typography, Drawer, Box, useTheme, useMediaQuery, IconButton } from "@mui/material";
 import { useParams } from "react-router-dom";
 import VisitAlert from "../alerts/VisitAlert";
@@ -6,10 +6,15 @@ import VisitService from "../../services/VisitService";
 import CopilotPanel from "../../../assistant/components/CopilotPanel";
 import { CopilotFeedback } from "../../../ai/CopilotService";
 import { trackEvent } from '@/core/services/langfuseClient';
+import { PatientEval } from '@/modules/emr/types/Evaluation';
+import debounce from 'lodash/debounce';
+import TextareaAutosize from '@mui/material/TextareaAutosize';
 
 const drawerWidth = 340;
 
 const StructuredVisitForm = () => {
+  console.log("✅ RENDER STRUCTURED VISIT FORM");
+  
   const { patientId } = useParams();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -33,31 +38,17 @@ const StructuredVisitForm = () => {
   });
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  useEffect(() => {
-    const trackFormUpdate = async () => {
-      if (formData.motivo || formData.observaciones || formData.diagnostico) {
-        await trackEvent('form.update', {
-          patientId: formData.patientId,
-          formData: {
-            visitType: formData.visitType,
-            motivo: formData.motivo,
-            observaciones: formData.observaciones,
-            diagnostico: formData.diagnostico,
-            anamnesis: formData.anamnesis,
-            physicalExam: formData.physicalExam,
-            treatmentPlan: formData.treatmentPlan
-          }
-        }, formData.traceId);
-      }
-    };
-
-    const timeoutId = setTimeout(trackFormUpdate, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [formData]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (field: keyof PatientEval) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    console.log(`[Langfuse] Cambio en campo '${field}' →`, value);
+    trackEvent("form.update", { field, value, patientId: formData.patientId }, formData.traceId);
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  // Sincronizar formData local con props
+  useEffect(() => {
+    setFormData(formData);
+  }, [formData]);
 
   const handleSuggestionApply = (feedback: CopilotFeedback) => {
     // TODO: Implementar la lógica para aplicar sugerencias
@@ -111,7 +102,7 @@ const StructuredVisitForm = () => {
           type="date"
           name="visitDate"
           value={formData.visitDate}
-          onChange={handleChange}
+          onChange={handleChange('visitDate')}
           required
           InputLabelProps={{ shrink: true }}
           id="visit-date-input"
@@ -122,7 +113,7 @@ const StructuredVisitForm = () => {
           label="Tipo de Visita"
           name="visitType"
           value={formData.visitType}
-          onChange={handleChange}
+          onChange={handleChange('visitType')}
           required
           id="visit-type-input"
           aria-label="Tipo de visita"
@@ -132,41 +123,33 @@ const StructuredVisitForm = () => {
           label="Estado"
           name="status"
           value={formData.status}
-          onChange={handleChange}
+          onChange={handleChange('status')}
           required
           id="visit-status-input"
           aria-label="Estado de la visita"
         />
 
-        <TextField
-          label="Anamnesis"
+        <TextareaAutosize
           name="anamnesis"
           value={formData.anamnesis}
-          onChange={handleChange}
-          required
-          multiline
-          rows={4}
-          id="visit-anamnesis-input"
-          aria-label="Anamnesis de la visita"
+          onChange={handleChange("anamnesis")}
+          placeholder="Anamnesis"
+          style={{ width: '100%', minHeight: '100px', padding: '8px' }}
         />
 
-        <TextField
-          label="Exploración Física"
+        <TextareaAutosize
           name="physicalExam"
           value={formData.physicalExam}
-          onChange={handleChange}
-          required
-          multiline
-          rows={4}
-          id="visit-physical-exam-input"
-          aria-label="Exploración física de la visita"
+          onChange={handleChange("physicalExam")}
+          placeholder="Exploración Física"
+          style={{ width: '100%', minHeight: '100px', padding: '8px' }}
         />
 
         <TextField
           label="Diagnóstico"
           name="diagnostico"
           value={formData.diagnostico}
-          onChange={handleChange}
+          onChange={handleChange('diagnostico')}
           required
           multiline
           rows={2}
@@ -178,7 +161,7 @@ const StructuredVisitForm = () => {
           label="Plan de Tratamiento"
           name="treatmentPlan"
           value={formData.treatmentPlan}
-          onChange={handleChange}
+          onChange={handleChange('treatmentPlan')}
           required
           multiline
           rows={4}
@@ -190,7 +173,7 @@ const StructuredVisitForm = () => {
           label="Notas Adicionales"
           name="notes"
           value={formData.notes}
-          onChange={handleChange}
+          onChange={handleChange('notes')}
           multiline
           rows={2}
           id="visit-notes-input"
