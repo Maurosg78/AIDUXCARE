@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Typography, Box, Paper, Divider, IconButton, Collapse } from '@mui/material';
+import { TextField, Button, IconButton, Collapse } from '@mui/material';
 import { trackEvent } from '@/core/services/langfuseClient';
 import { PatientEval } from '@/types/Evaluation';
 import { useCopilot } from '@/modules/assistant/hooks/useCopilot';

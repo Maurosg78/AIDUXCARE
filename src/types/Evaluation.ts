@@ -33,7 +33,7 @@ export interface EvalResult {
 
 export interface EvalRule {
   name: string;
-  check: (fields: Record<string, any>) => boolean;
+  check: (fields: Record<string, unknown>) => boolean;
   message: string;
 }
 

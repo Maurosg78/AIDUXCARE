@@ -40,7 +40,8 @@
     "eval:structured": "ts-node-esm --project tsconfig.eval.json scripts/runAllEvals.ts",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "clean": "rimraf dist",
-    "test": "jest --cache"
+    "test": "jest --cache",
+    "test:clinical-flow": "ts-node scripts/testClinicalFlow.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
