@@ -107,6 +107,32 @@ Este documento recoge las funcionalidades estratégicas futuras definidas por el
 
 ---
 
+## 🎤 PRIORIDAD 7: Escucha Activa y Transcripción Inteligente
+
+**Objetivo:** Implementar un sistema de captura y procesamiento de audio durante las consultas médicas para mejorar la documentación y reducir la carga administrativa.
+
+**Características principales:**
+- Captura de audio ambiental con consentimiento explícito
+- Transcripción en tiempo real usando modelos de IA especializados
+- Integración automática con la ficha clínica
+- Resumen estructurado de la consulta
+
+**Consideraciones técnicas:**
+- Procesamiento local cuando sea posible
+- Encriptación end-to-end del audio
+- Control granular de permisos por profesional
+- Opción de edición manual post-consulta
+
+**Integración con el sistema:**
+- Botón de activación/desactivación en la interfaz
+- Indicador visual de grabación activa
+- Almacenamiento temporal con auto-eliminación
+- Exportación de transcripciones en formatos estándar
+
+**Etapa estimada:** v2.1+
+
+---
+
 ## 🔁 Notas Finales
 
 Todas estas funcionalidades seguirán:
