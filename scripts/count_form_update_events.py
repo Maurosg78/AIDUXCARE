@@ -20,19 +20,30 @@ auth = (PUBLIC_KEY, SECRET_KEY)
 
 def main():
     print("🔍 Buscando eventos 'form.update' en Langfuse...")
+    print("📝 Usando parámetros:", params)
+    
     with httpx.Client() as client:
-        response = client.get(BASE_URL, params=params, auth=auth)
-        response.raise_for_status()
-        data = response.json()
-        observations = data.get("data", data)
+        try:
+            response = client.get(BASE_URL, params=params, auth=auth)
+            response.raise_for_status()
+            data = response.json()
+            print("🔄 Respuesta de Langfuse:", data)
+            
+            observations = data.get("data", data)
 
-        if not observations:
-            print("⚠️ No se encontraron eventos 'form.update'.")
-            return
+            if not observations:
+                print("⚠️ No se encontraron eventos 'form.update'.")
+                return
 
-        print(f"✅ Encontrados {len(observations)} eventos 'form.update':\n")
-        for obs in observations:
-            print(f"- ID: {obs.get('id')} | traceId: {obs.get('traceId')} | input: {obs.get('input')}")
+            print(f"✅ Encontrados {len(observations)} eventos 'form.update':\n")
+            for obs in observations:
+                print(f"- ID: {obs.get('id')} | traceId: {obs.get('traceId')} | input: {obs.get('input')}")
+                
+        except httpx.HTTPError as e:
+            print("❌ Error al hacer la petición:", e)
+            print("Respuesta:", e.response.text if hasattr(e, 'response') else 'No hay respuesta')
+        except Exception as e:
+            print("❌ Error inesperado:", e)
 
 if __name__ == "__main__":
     main() 
