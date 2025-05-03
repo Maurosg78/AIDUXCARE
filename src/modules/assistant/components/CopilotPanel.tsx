@@ -29,7 +29,9 @@ const CopilotPanel: React.FC<CopilotPanelProps> = ({ formData, onApplySuggestion
           diagnostico: formData.diagnostico
         }
       };
-      await trackEvent('copilot.feedback', payload, formData.traceId);
+      if (formData.traceId) {
+        await trackEvent('copilot.feedback', payload, formData.traceId);
+      }
     };
     analyzeFeedback();
   }, [formData]);

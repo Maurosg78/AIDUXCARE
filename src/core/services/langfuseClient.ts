@@ -19,19 +19,20 @@ export const langfuse = new Langfuse({
   baseUrl: process.env.VITE_LANGFUSE_BASE_URL || 'https://cloud.langfuse.com',
 });
 
-export function trackEvent(field: string, value: string, traceId: string) {
-  console.log("[Langfuse] Ejecutando trackEvent con:", { field, value, traceId });
+export function trackEvent(name: string, payload: Record<string, any>, traceId: string) {
+  console.log("[Langfuse] Ejecutando trackEvent con:", { name, payload, traceId });
 
   // Crea explícitamente el trace si no existe
   const trace = langfuse.trace({ id: traceId });
 
   // Luego registra un span o evento dentro del trace
-  trace.span({
-    name: "form.update",
-    input: { field, value },
+  const span = trace.span({
+    name,
+    input: payload,
     startTime: new Date(),
   });
 
-  // Alternativamente, puedes usar trace.event si lo prefieres
-  // trace.event({ name: "form.update", input: { field, value } });
+  console.log("[Langfuse] Span creado:", span);
+
+  return span;
 } 
