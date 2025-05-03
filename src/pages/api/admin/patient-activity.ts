@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Langfuse } from 'langfuse-node';
+import { evaluatePatientVisit } from '@/utils/evals/structuredVisit';
 
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
@@ -7,68 +8,54 @@ const langfuse = new Langfuse({
   baseUrl: process.env.VITE_LANGFUSE_HOST || 'https://cloud.langfuse.com'
 });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Método no permitido' });
+    return res.status(405).json({ message: 'Método no permitido' });
   }
 
   try {
-    // Obtener todos los traces
+    // Obtener traces de los últimos 7 días
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
     const traces = await langfuse.getTraces({
-      limit: 1000, // Ajustar según necesidad
+      startTime: sevenDaysAgo.toISOString(),
+      limit: 100,
+      name: 'form.update'
     });
 
-    // Agrupar por patientId
-    const patientActivity = traces.data.reduce((acc: any, trace) => {
+    // Agrupar por paciente y obtener evaluaciones
+    const patientTraces = new Map<string, any>();
+    for (const trace of traces.data) {
       const patientId = trace.metadata?.patientId;
-      if (!patientId) return acc;
+      if (patientId && !patientTraces.has(patientId)) {
+        patientTraces.set(patientId, trace);
+      }
+    }
 
-      if (!acc[patientId]) {
-        acc[patientId] = {
+    // Realizar evaluaciones para cada paciente
+    const patientActivity = await Promise.all(
+      Array.from(patientTraces.entries()).map(async ([patientId, trace]) => {
+        const evaluation = await evaluatePatientVisit(langfuse, trace.id);
+        return {
           patientId,
-          patientName: trace.metadata?.patientName || 'Sin nombre',
-          lastUpdateDate: null,
-          totalFieldsUpdated: 0,
-          feedbackCount: 0
+          traceId: trace.id,
+          lastUpdate: trace.startTime,
+          completenessScore: evaluation.completenessScore,
+          missingFields: evaluation.missingFields,
+          warnings: evaluation.warnings
         };
-      }
+      })
+    );
 
-      // Contar eventos form.update
-      const formUpdates = trace.observations?.filter(obs => 
-        obs.name === 'form.update'
-      ) || [];
-
-      if (formUpdates.length > 0) {
-        const lastUpdate = formUpdates[formUpdates.length - 1];
-        const updateDate = new Date(lastUpdate.startTime);
-        
-        if (!acc[patientId].lastUpdateDate || updateDate > new Date(acc[patientId].lastUpdateDate)) {
-          acc[patientId].lastUpdateDate = updateDate.toISOString();
-        }
-        
-        acc[patientId].totalFieldsUpdated += formUpdates.length;
-      }
-
-      // Contar eventos copilot.feedback
-      const feedbacks = trace.observations?.filter(obs => 
-        obs.name === 'copilot.feedback'
-      ) || [];
-      
-      acc[patientId].feedbackCount += feedbacks.length;
-
-      return acc;
-    }, {});
-
-    // Convertir a array y ordenar por última fecha de actualización
-    const activityArray = Object.values(patientActivity).sort((a: any, b: any) => {
-      if (!a.lastUpdateDate) return 1;
-      if (!b.lastUpdateDate) return -1;
-      return new Date(b.lastUpdateDate).getTime() - new Date(a.lastUpdateDate).getTime();
+    return res.status(200).json({
+      patients: patientActivity
     });
-
-    res.status(200).json(activityArray);
   } catch (error) {
     console.error('Error al obtener actividad de pacientes:', error);
-    res.status(500).json({ error: 'Error al obtener datos de actividad' });
+    return res.status(500).json({ message: 'Error interno del servidor' });
   }
 } 

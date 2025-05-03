@@ -114,36 +114,36 @@ describe('Evaluaciones de Visitas Estructuradas', () => {
   test('debe detectar campos faltantes', async () => {
     const result = await evaluatePatientVisit(testTraceId);
     
-    expect(result).toHaveProperty('patientId');
+    expect(result).toHaveProperty('patientId', 'test-patient-id');
     expect(result).toHaveProperty('completenessScore');
     expect(result).toHaveProperty('missingFields');
     expect(result).toHaveProperty('warnings');
     
-    expect(result.completenessScore).toBeGreaterThanOrEqual(0);
-    expect(result.completenessScore).toBeLessThanOrEqual(100);
+    // Verificar que el score es 50% (3 campos presentes de 6)
+    expect(result.completenessScore).toBe(50);
     
-    expect(Array.isArray(result.missingFields)).toBe(true);
+    // Verificar que faltan los campos esperados
+    expect(result.missingFields).toContain('treatmentPlan');
+    expect(result.missingFields).toContain('prognosis');
+    expect(result.missingFields).toContain('followUp');
+    
     expect(Array.isArray(result.warnings)).toBe(true);
   });
 
   test('debe detectar inconsistencias en los datos', async () => {
     const result = await evaluatePatientVisit(testTraceId);
     
-    // Verificar que las advertencias son coherentes
-    result.warnings.forEach(warning => {
-      expect(typeof warning).toBe('string');
-      expect(warning.length).toBeGreaterThan(0);
-    });
+    // Verificar que no hay advertencias ya que los datos son consistentes
+    expect(result.warnings).toHaveLength(0);
   });
 
   test('debe calcular correctamente el score de completitud', async () => {
     const result = await evaluatePatientVisit(testTraceId);
     
-    // El score debe ser proporcional a los campos faltantes
-    const expectedScore = Math.round(
-      ((CRITICAL_FIELDS.length - result.missingFields.length) / CRITICAL_FIELDS.length) * 100
-    );
+    // El score debe ser 50% (3 campos presentes de 6)
+    expect(result.completenessScore).toBe(50);
     
-    expect(result.completenessScore).toBe(expectedScore);
+    // Verificar que el número de campos faltantes es correcto
+    expect(result.missingFields).toHaveLength(3);
   });
 }); 
