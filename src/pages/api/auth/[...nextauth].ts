@@ -2,6 +2,7 @@ import NextAuth, { NextAuthOptions, DefaultSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { validateCredentials } from '@/modules/auth/authService';
 import { UserRole } from '@/modules/auth/authService';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 declare module 'next-auth' {
   interface User {
@@ -78,4 +79,13 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
 };
 
-export default NextAuth(authOptions); 
+const handler = NextAuth(authOptions);
+
+// Asegurarnos de que las respuestas sean JSON
+export default async function wrappedHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  res.setHeader('Content-Type', 'application/json');
+  return handler(req, res);
+} 
