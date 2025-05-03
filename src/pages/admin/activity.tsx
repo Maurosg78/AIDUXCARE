@@ -1,143 +1,264 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  CheckCircleIcon, 
-  ExclamationCircleIcon, 
-  XCircleIcon,
-  DownloadIcon,
-  InformationCircleIcon
-} from '@heroicons/react/solid';
-import { Tooltip } from '@/components/ui/Tooltip';
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+} from 'recharts';
+import {
+  Activity,
+  Users,
+  Calendar,
+  Clock,
+  Download,
+  AlertCircle,
+  TrendingUp,
+  FileText,
+} from 'lucide-react';
+import { StatCard, StatCardSkeleton } from '@/components/ui/StatCard';
+import { ChartCard } from '@/components/ui/ChartCard';
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/Alert';
+import { trackEvent } from '@/core/services/langfuseClient';
 
-interface PatientActivity {
-  patientId: string;
-  traceId: string;
-  lastUpdate: string;
-  completenessScore: number;
-  missingFields: string[];
-  warnings: string[];
+interface ActivityMetrics {
+  totalVisits: number;
+  activePatients: number;
+  averageVisitDuration: number;
+  visitsByDay: Array<{
+    date: string;
+    count: number;
+  }>;
+  visitsByType: Array<{
+    type: string;
+    count: number;
+  }>;
+  recentVisits: Array<{
+    patientId: string;
+    type: string;
+    date: string;
+    duration: number;
+  }>;
+  lastUpdated: string;
 }
 
-export default function PatientActivityDashboard() {
-  const [selectedPatient, setSelectedPatient] = useState<PatientActivity | null>(null);
+export default function ActivityPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [metrics, setMetrics] = useState<ActivityMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data, isLoading, error } = useQuery<{ patients: PatientActivity[] }>({
-    queryKey: ['patientActivity'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/patient-activity');
-      if (!response.ok) {
-        throw new Error('Error al cargar datos');
-      }
-      return response.json();
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
     }
-  });
+  }, [status, router]);
 
-  const getScoreColor = (score: number) => {
-    if (score > 80) return 'text-green-500';
-    if (score >= 60) return 'text-yellow-500';
-    return 'text-red-500';
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const response = await fetch('/api/admin/activity');
+        if (!response.ok) {
+          throw new Error('Error al obtener métricas');
+        }
+        const data = await response.json();
+        setMetrics(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error desconocido');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (session?.user) {
+      fetchMetrics();
+    }
+  }, [session]);
+
+  const handleExport = async () => {
+    if (!metrics) return;
+    
+    const csvContent = [
+      ['Métrica', 'Valor'],
+      ['Total de Visitas', metrics.totalVisits],
+      ['Pacientes Activos', metrics.activePatients],
+      ['Duración Promedio', `${metrics.averageVisitDuration} minutos`],
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `activity-metrics-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+
+    trackEvent('admin.export.activity', {
+      format: 'csv',
+      dataSize: csvContent.length,
+      timestamp: new Date().toISOString(),
+    }, 'admin');
   };
 
-  const getScoreIcon = (score: number) => {
-    if (score > 80) return <CheckCircleIcon className="w-6 h-6 text-green-500" />;
-    if (score >= 60) return <ExclamationCircleIcon className="w-6 h-6 text-yellow-500" />;
-    return <XCircleIcon className="w-6 h-6 text-red-500" />;
-  };
-
-  const downloadEvaluation = (patient: PatientActivity) => {
-    const jsonStr = JSON.stringify(patient, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `eval-${patient.patientId}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  if (isLoading) {
-    return <div className="p-4">Cargando actividad de pacientes...</div>;
+  if (status === 'loading' || loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+        {[...Array(4)].map((_, i) => (
+          <StatCardSkeleton key={i} />
+        ))}
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-4 text-red-500">Error al cargar datos</div>;
+    return (
+      <div className="p-6">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <span className="ml-2">{error}</span>
+        </Alert>
+      </div>
+    );
   }
 
+  if (!metrics) return null;
+
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Actividad de Pacientes</h1>
-      
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow-sm rounded-lg">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ID Paciente
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Última Actualización
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Score de Completitud
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Advertencias
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {data?.patients.map((patient) => (
-              <tr key={patient.patientId}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {patient.patientId}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {new Date(patient.lastUpdate).toLocaleString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    {getScoreIcon(patient.completenessScore)}
-                    <span className={`ml-2 ${getScoreColor(patient.completenessScore)}`}>
-                      {patient.completenessScore}%
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <span className="mr-2">{patient.warnings.length}</span>
-                    {patient.warnings.length > 0 && (
-                      <Tooltip
-                        content={
-                          <ul className="list-disc pl-4">
-                            {patient.warnings.map((warning, idx) => (
-                              <li key={idx}>{warning}</li>
-                            ))}
-                          </ul>
-                        }
-                      >
-                        <InformationCircleIcon className="w-5 h-5 text-blue-500 cursor-help" />
-                      </Tooltip>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => downloadEvaluation(patient)}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    <DownloadIcon className="w-4 h-4 mr-2" />
-                    Descargar
-                  </button>
-                </td>
+    <div className="space-y-6 p-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-slate-900">
+          Actividad de Pacientes
+        </h1>
+        <Button onClick={handleExport} className="flex items-center gap-2">
+          <Download className="w-4 h-4" />
+          Exportar
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total de Visitas"
+          value={metrics.totalVisits}
+          icon={Activity}
+          subtitle="Últimos 30 días"
+        />
+        <StatCard
+          title="Pacientes Activos"
+          value={metrics.activePatients}
+          icon={Users}
+          subtitle="Pacientes con visitas recientes"
+        />
+        <StatCard
+          title="Duración Promedio"
+          value={`${metrics.averageVisitDuration} min`}
+          icon={Clock}
+          subtitle="Tiempo promedio por visita"
+        />
+        <StatCard
+          title="Visitas por Día"
+          value={Math.round(metrics.totalVisits / 30)}
+          icon={Calendar}
+          subtitle="Promedio diario"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ChartCard title="Visitas por Día">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={metrics.visitsByDay}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="count"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={{ fill: '#3b82f6' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Visitas por Tipo">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={metrics.visitsByType}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="type" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="count" fill="#3b82f6" name="Cantidad" />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-md p-6">
+        <h2 className="text-xl font-semibold text-slate-700 mb-4">
+          Visitas Recientes
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
+                  Paciente
+                </th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
+                  Tipo
+                </th>
+                <th className="text-right py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
+                  Fecha
+                </th>
+                <th className="text-right py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
+                  Duración
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {metrics.recentVisits.map((visit, index) => (
+                <tr
+                  key={index}
+                  className="border-b border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-slate-400" />
+                      <span className="font-medium text-slate-900">
+                        {visit.patientId}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-600">{visit.type}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right text-slate-600">
+                    <div className="flex items-center justify-end gap-2">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      {new Date(visit.date).toLocaleDateString()}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right text-slate-600">
+                    <div className="flex items-center justify-end gap-2">
+                      <Clock className="w-4 h-4 text-slate-400" />
+                      {visit.duration} min
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

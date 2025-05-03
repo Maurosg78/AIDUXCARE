@@ -1,21 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import {
-  PieChart,
-  Pie,
-  Cell,
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import {
+  Activity,
+  Users,
+  ThumbsUp,
+  ThumbsDown,
+  Clock,
+  Download,
+  AlertCircle,
+} from 'lucide-react';
+import { StatCard, StatCardSkeleton } from '@/components/ui/StatCard';
+import { ChartCard } from '@/components/ui/ChartCard';
+import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/Alert';
 import { trackEvent } from '@/core/services/langfuseClient';
 
@@ -47,103 +56,73 @@ interface CopilotImpactMetrics {
   lastUpdated: string;
 }
 
-const COLORS = ['#10B981', '#EF4444', '#6B7280'];
+const COLORS = ['#3b82f6', '#ef4444', '#94a3b8'];
 
-export default function CopilotImpactDashboard() {
-  const { data: session } = useSession();
+export default function CopilotImpactPage() {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [metrics, setMetrics] = useState<CopilotImpactMetrics | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!session?.user?.isAdmin) {
-      router.push('/');
-      return;
+    if (status === 'unauthenticated') {
+      router.push('/login');
     }
+  }, [status, router]);
 
+  useEffect(() => {
     const fetchMetrics = async () => {
       try {
         const response = await fetch('/api/admin/copilot-impact');
-        if (!response.ok) throw new Error('Error al obtener métricas');
+        if (!response.ok) {
+          throw new Error('Error al obtener métricas');
+        }
         const data = await response.json();
         setMetrics(data);
       } catch (err) {
-        setError('Error al cargar las métricas del copiloto');
-        console.error(err);
+        setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchMetrics();
-  }, [session, router]);
-
-  const handleExport = async (format: 'csv' | 'json') => {
-    if (!metrics) return;
-
-    try {
-      const data = format === 'csv' 
-        ? convertToCSV(metrics)
-        : JSON.stringify(metrics, null, 2);
-
-      const blob = new Blob([data], { type: format === 'csv' ? 'text/csv' : 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `copilot-impact-${new Date().toISOString()}.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      trackEvent('admin.export.copilot-impact', {
-        format,
-        dataSize: data.length,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (err) {
-      console.error('Error al exportar:', err);
+    if (session?.user) {
+      fetchMetrics();
     }
+  }, [session]);
+
+  const handleExport = async () => {
+    if (!metrics) return;
+    
+    const csvContent = [
+      ['Métrica', 'Valor'],
+      ['Total de Sugerencias', metrics.totalSuggestions],
+      ['Sugerencias Aceptadas', metrics.acceptedSuggestions],
+      ['Feedback Positivo', metrics.feedbackByType.positive],
+      ['Feedback Negativo', metrics.feedbackByType.negative],
+      ['Feedback Ignorado', metrics.feedbackByType.ignored],
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `copilot-impact-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+
+    trackEvent('admin.export.copilot-impact', {
+      format: 'csv',
+      dataSize: csvContent.length,
+      timestamp: new Date().toISOString(),
+    }, 'admin');
   };
 
-  const convertToCSV = (metrics: CopilotImpactMetrics): string => {
-    const headers = [
-      'Métrica',
-      'Valor',
-      'Detalles',
-    ];
-
-    const rows = [
-      ['Total Sugerencias', metrics.totalSuggestions.toString(), ''],
-      ['Sugerencias Aceptadas', metrics.acceptedSuggestions.toString(), ''],
-      ['Tasa de Adopción', `${((metrics.acceptedSuggestions / metrics.totalSuggestions) * 100).toFixed(1)}%`, ''],
-      ['Feedback Positivo', metrics.feedbackByType.positive.toString(), ''],
-      ['Feedback Negativo', metrics.feedbackByType.negative.toString(), ''],
-      ['Feedback Ignorado', metrics.feedbackByType.ignored.toString(), ''],
-    ];
-
-    // Agregar campos por sugerencia
-    Object.entries(metrics.suggestionsByField).forEach(([field, data]) => {
-      rows.push([
-        `Campo: ${field}`,
-        data.total.toString(),
-        `Aceptadas: ${data.accepted}, Positivas: ${data.feedback.positive}, Negativas: ${data.feedback.negative}, Ignoradas: ${data.feedback.ignored}`,
-      ]);
-    });
-
-    return [headers, ...rows].map(row => row.join(',')).join('\n');
-  };
-
-  if (isLoading) {
+  if (status === 'loading' || loading) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Dashboard de Impacto del Copiloto IA</h1>
-        <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+        {[...Array(4)].map((_, i) => (
+          <StatCardSkeleton key={i} />
+        ))}
       </div>
     );
   }
@@ -151,8 +130,10 @@ export default function CopilotImpactDashboard() {
   if (error) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Dashboard de Impacto del Copiloto IA</h1>
-        <Alert type="error">{error}</Alert>
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <span className="ml-2">{error}</span>
+        </Alert>
       </div>
     );
   }
@@ -160,134 +141,150 @@ export default function CopilotImpactDashboard() {
   if (!metrics) return null;
 
   const feedbackData = [
-    { name: 'Útil', value: metrics.feedbackByType.positive },
-    { name: 'Incorrecta', value: metrics.feedbackByType.negative },
-    { name: 'Ignorada', value: metrics.feedbackByType.ignored },
+    { name: 'Positivo', value: metrics.feedbackByType.positive },
+    { name: 'Negativo', value: metrics.feedbackByType.negative },
+    { name: 'Ignorado', value: metrics.feedbackByType.ignored },
   ];
 
-  const fieldData = Object.entries(metrics.suggestionsByField).map(([field, data]) => ({
-    name: field,
-    sugeridas: data.total,
-    aceptadas: data.accepted,
-  }));
+  const suggestionsByFieldData = Object.entries(metrics.suggestionsByField)
+    .map(([field, data]) => ({
+      name: field,
+      total: data.total,
+      accepted: data.accepted,
+    }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5);
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Dashboard de Impacto del Copiloto IA</h1>
-        <div className="flex gap-2">
-          <Button onClick={() => handleExport('csv')}>Exportar CSV</Button>
-          <Button onClick={() => handleExport('json')}>Exportar JSON</Button>
-        </div>
+    <div className="space-y-6 p-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-slate-900">
+          Impacto del Copiloto
+        </h1>
+        <Button onClick={handleExport} className="flex items-center gap-2">
+          <Download className="w-4 h-4" />
+          Exportar
+        </Button>
       </div>
 
-      <div className="text-sm text-gray-500 mb-6">
-        Última actualización: {new Date(metrics.lastUpdated).toLocaleString()}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total de Sugerencias"
+          value={metrics.totalSuggestions}
+          icon={Activity}
+          subtitle="Últimos 30 días"
+        />
+        <StatCard
+          title="Sugerencias Aceptadas"
+          value={metrics.acceptedSuggestions}
+          icon={ThumbsUp}
+          subtitle={`${((metrics.acceptedSuggestions / metrics.totalSuggestions) * 100).toFixed(1)}% de aceptación`}
+        />
+        <StatCard
+          title="Feedback Positivo"
+          value={metrics.feedbackByType.positive}
+          icon={ThumbsUp}
+          subtitle="Sugerencias con feedback positivo"
+        />
+        <StatCard
+          title="Feedback Negativo"
+          value={metrics.feedbackByType.negative}
+          icon={ThumbsDown}
+          subtitle="Sugerencias con feedback negativo"
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-2">Total de Sugerencias</h3>
-          <p className="text-3xl font-bold">{metrics.totalSuggestions}</p>
-        </Card>
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-2">Sugerencias Aceptadas</h3>
-          <p className="text-3xl font-bold">{metrics.acceptedSuggestions}</p>
-        </Card>
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-2">Tasa de Adopción</h3>
-          <p className="text-3xl font-bold">
-            {((metrics.acceptedSuggestions / metrics.totalSuggestions) * 100).toFixed(1)}%
-          </p>
-        </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ChartCard title="Distribución de Feedback">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={feedbackData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {feedbackData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Sugerencias por Campo">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={suggestionsByFieldData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="total" fill="#3b82f6" name="Total" />
+              <Bar dataKey="accepted" fill="#22c55e" name="Aceptadas" />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-4">Feedback por Tipo</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={feedbackData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {feedbackData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-4">Sugerencias por Campo</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={fieldData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="sugeridas" name="Sugeridas" fill="#3B82F6" />
-                <Bar dataKey="aceptadas" name="Aceptadas" fill="#10B981" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
-
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-4">Top 10 Pacientes con Intervención IA</h3>
+      <div className="bg-white rounded-2xl shadow-md p-6">
+        <h2 className="text-xl font-semibold text-slate-700 mb-4">
+          Top 10 Pacientes
+        </h2>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID Paciente
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
+                  Paciente
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="text-right py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
                   Sugerencias
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="text-right py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
                   Aceptadas
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="text-right py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
                   Última Interacción
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
               {metrics.topPatients.map((patient) => (
-                <tr key={patient.patientId}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {patient.patientId}
+                <tr
+                  key={patient.patientId}
+                  className="border-b border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-slate-400" />
+                      <span className="font-medium text-slate-900">
+                        {patient.patientId}
+                      </span>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="py-3 px-4 text-right text-slate-600">
                     {patient.suggestions}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="py-3 px-4 text-right text-slate-600">
                     {patient.accepted}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(patient.lastInteraction).toLocaleString()}
+                  <td className="py-3 px-4 text-right text-slate-600">
+                    <div className="flex items-center justify-end gap-2">
+                      <Clock className="w-4 h-4 text-slate-400" />
+                      {new Date(patient.lastInteraction).toLocaleDateString()}
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 } 

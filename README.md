@@ -1,29 +1,82 @@
 # AiDuxCare
 
-Sistema de gestión clínica con IA integrada.
+Sistema de gestión clínica inteligente con asistente IA para fisioterapeutas.
 
-## Requisitos
+## 🚀 Configuración del Entorno
 
-- Node.js 18.x o superior
-- npm 9.x o superior
+### Variables de Entorno Requeridas
 
-## Instalación
+Copia `.env.example` a `.env` y configura las siguientes variables:
 
 ```bash
+# Langfuse - Trazabilidad y análisis
+VITE_LANGFUSE_PUBLIC_KEY="REQUIRED"
+VITE_LANGFUSE_SECRET_KEY="REQUIRED"
+VITE_LANGFUSE_HOST="https://cloud.langfuse.com"
+
+# NextAuth - Autenticación
+NEXTAUTH_SECRET="REQUIRED"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Vercel - Despliegue
+VERCEL_TOKEN="REQUIRED"
+VERCEL_ORG_ID="REQUIRED"
+VERCEL_PROJECT_ID="REQUIRED"
+```
+
+### Instalación
+
+```bash
+# Instalar dependencias
 npm install
-```
 
-## Desarrollo
-
-```bash
+# Ejecutar en desarrollo
 npm run dev
-```
 
-## Construcción para producción
-
-```bash
+# Construir para producción
 npm run build
 ```
+
+## 🧪 Testing
+
+```bash
+# Ejecutar linting
+npm run lint
+
+# Ejecutar tests
+npm run test
+
+# Ejecutar evaluaciones
+npm run eval:all
+```
+
+## 📊 Monitoreo
+
+El sistema utiliza Langfuse para monitoreo y análisis. Los siguientes eventos son trackeados:
+
+- `form.update`: Actualizaciones del formulario clínico
+- `copilot.feedback`: Feedback sobre sugerencias de IA
+- `copilot.suggestion.generated`: Nuevas sugerencias generadas
+- `copilot.context.updated`: Actualizaciones del contexto
+- `audio.transcript.validated`: Frases validadas por voz
+
+## 🔒 Seguridad
+
+- Todos los datos clínicos son procesados localmente
+- Las transcripciones de voz son validadas antes de almacenarse
+- El acceso a los dashboards administrativos requiere autenticación
+- Los eventos son anonimizados antes de enviarse a Langfuse
+
+## 🤝 Contribución
+
+1. Asegúrate de que el linting pase sin errores
+2. Añade tests para nuevas funcionalidades
+3. Actualiza la documentación según sea necesario
+4. Sigue las convenciones de commits:
+   - `feat:` para nuevas funcionalidades
+   - `fix:` para correcciones de bugs
+   - `chore:` para mantenimiento
+   - `docs:` para documentación
 
 ## Documentación
 
@@ -63,11 +116,4 @@ La documentación completa del proyecto se encuentra en la carpeta `/docs`:
 - `/login` - Página de inicio de sesión
 - `/dashboard` - Dashboard de impacto (admin, auditor)
 - `/patients` - Lista de pacientes (fisioterapeuta, admin)
-- `/patients/:patientId/visits/:visitId` - Detalle de visita (fisioterapeuta, admin)
-
-## Seguridad
-
-- Todas las rutas están protegidas por roles
-- No hay rutas públicas excepto `/login`
-- Las credenciales de API se manejan en el backend
-- Variables sensibles configuradas en el panel de Vercel 
+- `/patients/:patientId/visits/:visitId` - Detalle de visita (fisioterapeuta, admin) 

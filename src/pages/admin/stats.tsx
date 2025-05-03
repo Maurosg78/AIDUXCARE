@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/core/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
 import {
   BarChart,
   Bar,
@@ -8,54 +8,74 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
 } from 'recharts';
+import {
+  Activity,
+  Users,
+  Calendar,
+  Clock,
+  Download,
+  AlertCircle,
+  TrendingUp,
+  FileText,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
+import { StatCard, StatCardSkeleton } from '@/components/ui/StatCard';
+import { ChartCard } from '@/components/ui/ChartCard';
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/Alert';
+import { trackEvent } from '@/core/services/langfuseClient';
 
-interface DailyStats {
-  date: string;
-  formUpdates: number;
-  feedbacks: number;
-}
-
-interface FieldStats {
-  field: string;
-  count: number;
-}
-
-interface EMRStats {
-  dailyStats: DailyStats[];
-  topFields: FieldStats[];
-  averageEventsPerVisit: number;
+interface StatsMetrics {
+  totalPatients: number;
+  activePatients: number;
+  averageAge: number;
+  genderDistribution: Array<{
+    gender: string;
+    count: number;
+  }>;
+  ageDistribution: Array<{
+    range: string;
+    count: number;
+  }>;
+  recentRegistrations: Array<{
+    patientId: string;
+    age: number;
+    gender: string;
+    registrationDate: string;
+  }>;
   lastUpdated: string;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+const COLORS = ['#3b82f6', '#ef4444', '#94a3b8'];
 
-export default function EMRStatsDashboard() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+export default function StatsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [metrics, setMetrics] = useState<StatsMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<EMRStats | null>(null);
 
   useEffect(() => {
-    if (!user || user.role !== 'admin') {
-      navigate('/login');
-      return;
+    if (status === 'unauthenticated') {
+      router.push('/login');
     }
+  }, [status, router]);
 
-    const fetchStats = async () => {
+  useEffect(() => {
+    const fetchMetrics = async () => {
       try {
-        const response = await fetch('/api/admin/emr-stats');
+        const response = await fetch('/api/admin/stats');
         if (!response.ok) {
-          throw new Error('Error al obtener estadísticas');
+          throw new Error('Error al obtener métricas');
         }
         const data = await response.json();
-        setStats(data);
+        setMetrics(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
@@ -63,101 +83,196 @@ export default function EMRStatsDashboard() {
       }
     };
 
-    fetchStats();
-  }, [user, navigate]);
+    if (session?.user) {
+      fetchMetrics();
+    }
+  }, [session]);
 
-  if (loading) {
+  const handleExport = async () => {
+    if (!metrics) return;
+    
+    const csvContent = [
+      ['Métrica', 'Valor'],
+      ['Total de Pacientes', metrics.totalPatients],
+      ['Pacientes Activos', metrics.activePatients],
+      ['Edad Promedio', `${metrics.averageAge} años`],
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `stats-metrics-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+
+    trackEvent('admin.export.stats', {
+      format: 'csv',
+      dataSize: csvContent.length,
+      timestamp: new Date().toISOString(),
+    }, 'admin');
+  };
+
+  if (status === 'loading' || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+        {[...Array(4)].map((_, i) => (
+          <StatCardSkeleton key={i} />
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <p>{error}</p>
-        </div>
+      <div className="p-6">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <span className="ml-2">{error}</span>
+        </Alert>
       </div>
     );
   }
 
-  if (!stats) return null;
+  if (!metrics) return null;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Estadísticas de uso del sistema clínico
+    <div className="space-y-6 p-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-slate-900">
+          Estadísticas de Pacientes
         </h1>
-        <p className="text-sm text-gray-500">
-          Última actualización: {new Date(stats.lastUpdated).toLocaleString('es-ES')}
-        </p>
+        <Button onClick={handleExport} className="flex items-center gap-2">
+          <Download className="w-4 h-4" />
+          Exportar
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Gráfico de eventos diarios */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Eventos por día (últimos 7 días)</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.dailyStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={(date) => new Date(date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                />
-                <YAxis />
-                <Tooltip 
-                  labelFormatter={(date) => new Date(date).toLocaleDateString('es-ES', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  })}
-                />
-                <Legend />
-                <Bar dataKey="formUpdates" name="Actualizaciones de formulario" fill="#8884d8" />
-                <Bar dataKey="feedbacks" name="Feedbacks" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total de Pacientes"
+          value={metrics.totalPatients}
+          icon={Users}
+          subtitle="Pacientes registrados"
+        />
+        <StatCard
+          title="Pacientes Activos"
+          value={metrics.activePatients}
+          icon={Activity}
+          subtitle={`${((metrics.activePatients / metrics.totalPatients) * 100).toFixed(1)}% del total`}
+        />
+        <StatCard
+          title="Edad Promedio"
+          value={`${metrics.averageAge} años`}
+          icon={Calendar}
+          subtitle="Promedio de edad"
+        />
+        <StatCard
+          title="Nuevos Registros"
+          value={metrics.recentRegistrations.length}
+          icon={TrendingUp}
+          subtitle="Últimos 30 días"
+        />
+      </div>
 
-        {/* Gráfico de campos más modificados */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Campos más modificados</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={stats.topFields}
-                  dataKey="count"
-                  nameKey="field"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label={({ field, percent }) => `${field}: ${(percent * 100).toFixed(0)}%`}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ChartCard title="Distribución por Género">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={metrics.genderDistribution}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="count"
+              >
+                {metrics.genderDistribution.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Distribución por Edad">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={metrics.ageDistribution}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="range" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="count" fill="#3b82f6" name="Cantidad" />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-md p-6">
+        <h2 className="text-xl font-semibold text-slate-700 mb-4">
+          Registros Recientes
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
+                  Paciente
+                </th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
+                  Edad
+                </th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
+                  Género
+                </th>
+                <th className="text-right py-3 px-4 text-xs font-medium text-slate-600 uppercase tracking-wider">
+                  Fecha de Registro
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {metrics.recentRegistrations.map((patient, index) => (
+                <tr
+                  key={index}
+                  className="border-b border-slate-100 hover:bg-slate-50"
                 >
-                  {stats.topFields.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Promedio de eventos por visita */}
-        <div className="bg-white rounded-lg shadow p-6 md:col-span-2">
-          <h2 className="text-xl font-semibold mb-4">Promedio de eventos por visita</h2>
-          <div className="text-4xl font-bold text-blue-600">
-            {stats.averageEventsPerVisit.toFixed(2)}
-            <span className="text-lg font-normal text-gray-500 ml-2">eventos</span>
-          </div>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-slate-400" />
+                      <span className="font-medium text-slate-900">
+                        {patient.patientId}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-600">{patient.age} años</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      {patient.gender === 'M' ? (
+                        <CheckCircle className="w-4 h-4 text-blue-500" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-pink-500" />
+                      )}
+                      <span className="text-slate-600">
+                        {patient.gender === 'M' ? 'Masculino' : 'Femenino'}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right text-slate-600">
+                    <div className="flex items-center justify-end gap-2">
+                      <Clock className="w-4 h-4 text-slate-400" />
+                      {new Date(patient.registrationDate).toLocaleDateString()}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

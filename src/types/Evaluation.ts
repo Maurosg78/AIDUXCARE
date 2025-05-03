@@ -2,17 +2,26 @@ export interface PatientEval {
   id: string;
   patientId: string;
   visitDate: string;
-  chiefComplaint?: string;
-  symptoms?: string[];
-  diagnosis?: string;
-  treatmentPlan?: string;
-  prognosis?: string;
-  followUp?: string;
+  chiefComplaint: string;
+  symptoms: string[];
+  diagnosis: string;
+  treatmentPlan: string;
+  prognosis: string;
+  followUp: string;
   voiceApprovedNotes?: string[];
-  metadata?: {
+  metadata: {
+    lastUpdated: string;
     traceId?: string;
-    lastUpdated?: string;
+    source?: 'form' | 'voice' | 'copilot';
   };
+}
+
+export interface StructuredSuggestion {
+  field: keyof PatientEval;
+  value: string | string[];
+  confidence: number;
+  source: string;
+  metadata?: Record<string, string>;
 }
 
 export interface EvalResult {

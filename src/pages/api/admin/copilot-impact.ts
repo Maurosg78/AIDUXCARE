@@ -1,12 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/core/config/auth';
+import { authOptions } from '../../../core/config/auth';
 import { Langfuse } from 'langfuse-node';
+import { UserRole } from '../../../modules/auth/authService';
 
 const langfuse = new Langfuse({
-  publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
-  secretKey: process.env.VITE_LANGFUSE_SECRET_KEY || '',
-  baseUrl: process.env.VITE_LANGFUSE_HOST,
+  publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY ?? '',
+  secretKey: process.env.VITE_LANGFUSE_SECRET_KEY ?? '',
+  baseUrl: process.env.VITE_LANGFUSE_HOST ?? 'https://cloud.langfuse.com',
 });
 
 interface CopilotImpactMetrics {
@@ -37,119 +38,127 @@ interface CopilotImpactMetrics {
   lastUpdated: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const session = await getServerSession(req, res, authOptions);
+type FeedbackType = 'positive' | 'negative' | 'ignored';
 
-  if (!session?.user?.isAdmin) {
-    return res.status(403).json({ error: 'No autorizado' });
-  }
+// Función auxiliar para procesar eventos de sugerencias
+const processSuggestionEvents = (events: any[]) => {
+  const metrics: CopilotImpactMetrics = {
+    totalSuggestions: 0,
+    acceptedSuggestions: 0,
+    feedbackByType: {
+      positive: 0,
+      negative: 0,
+      ignored: 0,
+    },
+    suggestionsByField: {},
+    topPatients: [],
+    lastUpdated: new Date().toISOString(),
+  };
 
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Método no permitido' });
-  }
+  const patientStats = new Map<string, {
+    suggestions: number;
+    accepted: number;
+    lastInteraction: string;
+  }>();
 
-  try {
-    // Obtener eventos de los últimos 30 días
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const traces = await langfuse.getTraces({
-      startDate: thirtyDaysAgo,
-      endDate: new Date(),
-      tags: ['copilot'],
-    });
-
-    const metrics: CopilotImpactMetrics = {
-      totalSuggestions: 0,
-      acceptedSuggestions: 0,
-      feedbackByType: {
-        positive: 0,
-        negative: 0,
-        ignored: 0,
-      },
-      suggestionsByField: {},
-      topPatients: [],
-      lastUpdated: new Date().toISOString(),
-    };
-
-    // Procesar eventos
-    for (const trace of traces) {
-      const events = await langfuse.getTraceEvents(trace.id);
-      
-      for (const event of events) {
-        if (event.name === 'copilot.suggestion.generated') {
-          metrics.totalSuggestions++;
-          
-          const fields = event.metadata?.suggestedFields as string[] || [];
-          fields.forEach(field => {
-            if (!metrics.suggestionsByField[field]) {
-              metrics.suggestionsByField[field] = {
-                total: 0,
-                accepted: 0,
-                feedback: {
-                  positive: 0,
-                  negative: 0,
-                  ignored: 0,
-                },
-              };
-            }
-            metrics.suggestionsByField[field].total++;
-          });
+  events.forEach(event => {
+    if (event.name === 'copilot.suggestion') {
+      metrics.totalSuggestions++;
+      const field = event.input?.field;
+      if (field) {
+        if (!metrics.suggestionsByField[field]) {
+          metrics.suggestionsByField[field] = {
+            total: 0,
+            accepted: 0,
+            feedback: { positive: 0, negative: 0, ignored: 0 },
+          };
         }
-        
-        if (event.name === 'copilot.suggestion.feedback') {
-          const feedback = event.metadata?.feedback as string;
-          const field = event.metadata?.field as string;
-          
-          if (feedback && field) {
-            metrics.feedbackByType[feedback as keyof typeof metrics.feedbackByType]++;
-            
-            if (metrics.suggestionsByField[field]) {
-              metrics.suggestionsByField[field].feedback[feedback as keyof typeof metrics.feedbackByType]++;
-            }
-          }
-        }
-        
-        if (event.name === 'copilot.suggestion.accepted') {
+        metrics.suggestionsByField[field].total++;
+      }
+    } else if (event.name === 'copilot.feedback') {
+      const feedbackType = event.input?.feedback as FeedbackType;
+      if (feedbackType && feedbackType in metrics.feedbackByType) {
+        metrics.feedbackByType[feedbackType]++;
+        if (feedbackType === 'positive') {
           metrics.acceptedSuggestions++;
-          const field = event.metadata?.field as string;
-          
+          const field = event.input?.field;
           if (field && metrics.suggestionsByField[field]) {
             metrics.suggestionsByField[field].accepted++;
-          }
-        }
-      }
-
-      // Agregar a topPatients si hay sugerencias
-      const patientId = trace.metadata?.patientId as string;
-      if (patientId) {
-        const patientIndex = metrics.topPatients.findIndex(p => p.patientId === patientId);
-        if (patientIndex === -1) {
-          metrics.topPatients.push({
-            patientId,
-            suggestions: 1,
-            accepted: 0,
-            lastInteraction: trace.timestamp,
-          });
-        } else {
-          metrics.topPatients[patientIndex].suggestions++;
-          if (trace.timestamp > metrics.topPatients[patientIndex].lastInteraction) {
-            metrics.topPatients[patientIndex].lastInteraction = trace.timestamp;
+            metrics.suggestionsByField[field].feedback.positive++;
           }
         }
       }
     }
 
-    // Ordenar pacientes por número de sugerencias
-    metrics.topPatients.sort((a, b) => b.suggestions - a.suggestions);
-    metrics.topPatients = metrics.topPatients.slice(0, 10); // Top 10
+    // Actualizar estadísticas por paciente
+    const patientId = event.metadata?.patientId;
+    if (patientId) {
+      const stats = patientStats.get(patientId) || {
+        suggestions: 0,
+        accepted: 0,
+        lastInteraction: event.startTime,
+      };
+
+      if (event.name === 'copilot.suggestion') {
+        stats.suggestions++;
+      } else if (event.name === 'copilot.feedback' && event.input?.feedback === 'positive') {
+        stats.accepted++;
+      }
+
+      if (new Date(event.startTime) > new Date(stats.lastInteraction)) {
+        stats.lastInteraction = event.startTime;
+      }
+
+      patientStats.set(patientId, stats);
+    }
+  });
+
+  // Convertir estadísticas de pacientes a array y ordenar
+  metrics.topPatients = Array.from(patientStats.entries())
+    .map(([patientId, stats]) => ({
+      patientId,
+      ...stats,
+    }))
+    .sort((a, b) => b.suggestions - a.suggestions)
+    .slice(0, 10);
+
+  return metrics;
+};
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ message: 'Método no permitido' });
+  }
+
+  try {
+    const session = await getServerSession(req, res, authOptions);
+    if (!session?.user || (session.user as { role?: UserRole }).role !== 'admin') {
+      return res.status(403).json({ message: 'No autorizado' });
+    }
+
+    // Obtener eventos de los últimos 30 días
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const response = await langfuse.fetchObservations({
+      toStartTime: thirtyDaysAgo,
+      name: 'copilot.suggestion',
+    });
+
+    const feedbackResponse = await langfuse.fetchObservations({
+      toStartTime: thirtyDaysAgo,
+      name: 'copilot.feedback',
+    });
+
+    const allEvents = [...(response.data || []), ...(feedbackResponse.data || [])];
+    const metrics = processSuggestionEvents(allEvents);
 
     res.status(200).json(metrics);
   } catch (error) {
     console.error('Error al obtener métricas del copiloto:', error);
-    res.status(500).json({ error: 'Error al obtener métricas' });
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 } 

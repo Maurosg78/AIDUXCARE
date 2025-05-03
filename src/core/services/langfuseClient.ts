@@ -1,42 +1,62 @@
-import { Langfuse } from 'langfuse';
+import { Langfuse } from 'langfuse-node';
 
-console.log('🌐 Langfuse ENV:', {
-  PUBLIC_KEY: import.meta.env.VITE_LANGFUSE_PUBLIC_KEY,
-  SECRET_KEY: import.meta.env.VITE_LANGFUSE_SECRET_KEY,
-  BASE_URL:  import.meta.env.VITE_LANGFUSE_BASE_URL,
-});
+const REQUIRED_ENV_VARS = [
+  'VITE_LANGFUSE_PUBLIC_KEY',
+  'VITE_LANGFUSE_SECRET_KEY',
+  'VITE_LANGFUSE_HOST'
+];
 
-const LANGFUSE_PUBLIC_KEY = import.meta.env.VITE_LANGFUSE_PUBLIC_KEY;
-const LANGFUSE_SECRET_KEY = import.meta.env.VITE_LANGFUSE_SECRET_KEY;
-const LANGFUSE_BASE_URL = import.meta.env.VITE_LANGFUSE_BASE_URL || 'https://cloud.langfuse.com';
-
-if (!LANGFUSE_PUBLIC_KEY || !LANGFUSE_SECRET_KEY) {
-  console.warn('Langfuse keys no encontradas. El tracking estará deshabilitado.');
+function checkEnvVars(): boolean {
+  const missingVars = REQUIRED_ENV_VARS.filter(varName => !process.env[varName]);
+  if (missingVars.length > 0) {
+    console.warn(
+      `⚠️ Langfuse: Variables de entorno faltantes: ${missingVars.join(', ')}\n` +
+      'La trazabilidad estará deshabilitada. Consulta .env.example para más información.'
+    );
+    return false;
+  }
+  return true;
 }
 
-export const langfuse = new Langfuse({
-  publicKey: LANGFUSE_PUBLIC_KEY || '',
-  secretKey: LANGFUSE_SECRET_KEY || '',
-  baseUrl: LANGFUSE_BASE_URL,
+const langfuse = new Langfuse({
+  publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
+  secretKey: process.env.VITE_LANGFUSE_SECRET_KEY || '',
+  baseUrl: process.env.VITE_LANGFUSE_HOST || 'https://cloud.langfuse.com'
 });
 
-export function trackEvent(name: string, payload: Record<string, any>, traceId: string) {
-  console.log("[Langfuse] Ejecutando trackEvent con:", { name, payload, traceId });
+export async function trackEvent(
+  name: string,
+  metadata: Record<string, string | number | boolean>,
+  traceId?: string
+): Promise<void> {
+  if (!checkEnvVars()) return;
 
   try {
-    // Crea explícitamente el trace si no existe
-    const trace = langfuse.trace({ id: traceId });
-
-    // Registra un evento en lugar de un span
-    const event = trace.event({
+    await langfuse.trace(traceId || 'default').observation({
       name,
-      input: payload,
-      startTime: new Date(),
+      metadata,
+      startTime: new Date().toISOString()
     });
-
-    console.log("[Langfuse] Evento creado:", event);
-    return event;
   } catch (error) {
-    console.error("[Langfuse] Error al crear evento:", error);
+    console.error('Error al registrar evento en Langfuse:', error);
   }
-} 
+}
+
+// Función de diagnóstico para verificar conectividad
+export async function verifyLangfuseConnection(): Promise<boolean> {
+  if (!checkEnvVars()) return false;
+
+  try {
+    await trackEvent('diagnostic.ping', {
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+    console.log('✅ Langfuse: Conexión verificada correctamente');
+    return true;
+  } catch (error) {
+    console.error('❌ Langfuse: Error de conexión:', error);
+    return false;
+  }
+}
+
+export { langfuse }; 
