@@ -26,6 +26,6 @@ export const demoVisitData: Partial<PatientEval> = {
   followUp: 'Control en 2 semanas',
   metadata: {
     lastUpdated: new Date().toISOString(),
-    source: 'demo'
+    source: 'form' as const
   }
 }; 

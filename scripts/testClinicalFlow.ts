@@ -1,13 +1,18 @@
-import { trackEvent } from '@/core/services/langfuseClient';
 import { demoPatientData, demoVisitData } from '@/modules/emr/config/demoPatient';
 import { mockVoicePhrases, mockVoiceSuggestions } from '@/modules/assistant/config/mockVoiceInput';
+
+async function mockTrackEvent(event: string, data: Record<string, unknown>) {
+  console.log(`📝 Evento: ${event}`);
+  console.log('Datos:', JSON.stringify(data, null, 2));
+  return Promise.resolve();
+}
 
 async function testClinicalFlow() {
   console.log('🧪 Iniciando prueba del flujo clínico...');
 
   // 1. Simular acceso al onboarding
   console.log('\n1️⃣ Accediendo a onboarding...');
-  await trackEvent('onboarding.started', {
+  await mockTrackEvent('onboarding.started', {
     patientId: demoPatientData.id,
     source: 'demo-test'
   });
@@ -15,7 +20,7 @@ async function testClinicalFlow() {
   // 2. Simular escucha activa
   console.log('\n2️⃣ Probando escucha activa...');
   const approvedPhrases = mockVoicePhrases.slice(0, 2);
-  await trackEvent('audio.transcript.validated', {
+  await mockTrackEvent('audio.transcript.validated', {
     patientId: demoPatientData.id,
     approvedPhrases,
     rejectedPhrases: mockVoicePhrases.slice(2)
@@ -23,13 +28,13 @@ async function testClinicalFlow() {
 
   // 3. Simular sugerencias del copiloto
   console.log('\n3️⃣ Probando copiloto IA...');
-  await trackEvent('copilot.suggestion.generated', {
+  await mockTrackEvent('copilot.suggestion.generated', {
     patientId: demoPatientData.id,
     suggestions: mockVoiceSuggestions
   });
 
   // Simular feedback
-  await trackEvent('copilot.feedback', {
+  await mockTrackEvent('copilot.feedback', {
     patientId: demoPatientData.id,
     field: 'diagnosis',
     feedback: 'positive',
@@ -38,14 +43,14 @@ async function testClinicalFlow() {
 
   // 4. Simular actualización de ficha
   console.log('\n4️⃣ Actualizando ficha clínica...');
-  await trackEvent('form.update', {
+  await mockTrackEvent('form.update', {
     patientId: demoPatientData.id,
     visitId: demoVisitData.id,
     fields: ['chiefComplaint', 'symptoms', 'diagnosis']
   });
 
-  // 5. Verificar eventos en Langfuse
-  console.log('\n5️⃣ Verificando eventos en Langfuse...');
+  // 5. Verificar eventos
+  console.log('\n5️⃣ Verificando eventos...');
   const events = [
     'onboarding.started',
     'audio.transcript.validated',

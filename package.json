@@ -41,7 +41,8 @@
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "clean": "rimraf dist",
     "test": "jest --cache",
-    "test:clinical-flow": "ts-node scripts/testClinicalFlow.ts"
+    "test:clinical-flow": "tsx scripts/testClinicalFlow.ts",
+    "test:clinical-flow:watch": "tsx watch scripts/testClinicalFlow.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
