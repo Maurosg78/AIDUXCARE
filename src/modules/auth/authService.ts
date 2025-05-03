@@ -46,21 +46,40 @@ const users: User[] = [
   },
 ];
 
+// Inicializar passwords hasheados
+(async () => {
+  const defaultPassword = 'Test1234!';
+  const hashedPassword = await hash(defaultPassword, 10);
+  users.forEach(user => {
+    user.password = hashedPassword;
+  });
+})();
+
 export async function validateCredentials(email: string, password: string): Promise<User | null> {
   const user = users.find((u) => u.email === email);
   if (!user) return null;
 
+  // En desarrollo, permitir password de prueba
   if (process.env.NODE_ENV === 'development' && password === 'Test1234!') {
     return user;
   }
 
-  const isValid = await compare(password, user.password);
-  if (!isValid) return null;
-
-  return user;
+  try {
+    const isValid = await compare(password, user.password);
+    if (!isValid) return null;
+    return user;
+  } catch (error) {
+    console.error('Error validando credenciales:', error);
+    return null;
+  }
 }
 
 export function generateToken(user: User): string {
+  const secret = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET o NEXTAUTH_SECRET no está configurado');
+  }
+
   return jwt.sign(
     {
       id: user.id,
@@ -68,7 +87,7 @@ export function generateToken(user: User): string {
       name: user.name,
       role: user.role,
     },
-    process.env.JWT_SECRET || 'default-secret',
+    secret,
     { expiresIn: '24h' }
   );
 }
@@ -86,41 +105,53 @@ class AuthService {
   private static users: User[] = users;
 
   static async login(email: string, password: string): Promise<User | null> {
-    const user = this.users.find(u => u.email === email);
-    if (!user) return null;
-
-    const isValidPassword = await compare(password, user.password);
-    if (!isValidPassword) return null;
-
-    return user;
+    try {
+      const user = await validateCredentials(email, password);
+      if (user) {
+        // Almacenar en sessionStorage solo información no sensible
+        const sessionUser = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role
+        };
+        sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(sessionUser));
+      }
+      return user;
+    } catch (error) {
+      console.error('Error en login:', error);
+      return null;
+    }
   }
 
   static logout(): void {
-    sessionStorage.removeItem(this.SESSION_KEY);
+    try {
+      sessionStorage.removeItem(this.SESSION_KEY);
+    } catch (error) {
+      console.error('Error en logout:', error);
+    }
   }
 
-  static getCurrentUser(): User | null {
-    const userStr = sessionStorage.getItem(this.SESSION_KEY);
-    if (!userStr) return null;
-    
+  static getCurrentUser(): Omit<User, 'password'> | null {
     try {
-      return JSON.parse(userStr) as User;
-    } catch {
+      const userStr = sessionStorage.getItem(this.SESSION_KEY);
+      if (!userStr) return null;
+      return JSON.parse(userStr);
+    } catch (error) {
+      console.error('Error obteniendo usuario actual:', error);
       return null;
     }
   }
 
   static isAuthorized(requiredRoles: UserRole[]): boolean {
-    const user = this.getCurrentUser();
-    if (!user) return false;
-    return requiredRoles.includes(user.role);
-  }
-
-  static async initializeUsers() {
-    const hashedPassword = await hash('password123', 10);
-    this.users.forEach(user => {
-      user.password = hashedPassword;
-    });
+    try {
+      const user = this.getCurrentUser();
+      if (!user) return false;
+      return requiredRoles.includes(user.role);
+    } catch (error) {
+      console.error('Error en autorización:', error);
+      return false;
+    }
   }
 }
 

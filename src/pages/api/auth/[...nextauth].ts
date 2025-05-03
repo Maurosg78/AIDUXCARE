@@ -32,7 +32,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          throw new Error('Se requieren credenciales');
         }
 
         const user = await validateCredentials(
@@ -41,7 +41,7 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!user) {
-          return null;
+          throw new Error('Credenciales inválidas');
         }
 
         return {
@@ -70,6 +70,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
     error: '/login',
+    signOut: '/',
   },
   session: {
     strategy: 'jwt',
@@ -79,13 +80,43 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
 };
 
+// Crear instancia del handler
 const handler = NextAuth(authOptions);
 
-// Asegurarnos de que las respuestas sean JSON
+// Middleware simplificado
 export default async function wrappedHandler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Asegurar headers de respuesta JSON
   res.setHeader('Content-Type', 'application/json');
-  return handler(req, res);
+
+  // Verificar variables de entorno críticas
+  if (!process.env.NEXTAUTH_URL || !process.env.NEXTAUTH_SECRET) {
+    return res.status(500).json({
+      error: true,
+      message: 'Configuración incompleta del servidor'
+    });
+  }
+
+  // Para endpoints de sesión
+  if (req.url?.includes('/session')) {
+    const hasSessionToken = req.headers.cookie?.includes('next-auth.session-token') ||
+                          req.headers.cookie?.includes('__Secure-next-auth.session-token');
+    
+    if (!hasSessionToken) {
+      return res.status(200).json({ user: null });
+    }
+  }
+
+  // Manejar la solicitud con NextAuth
+  try {
+    await handler(req, res);
+  } catch (error) {
+    console.error('Error en autenticación:', error);
+    return res.status(500).json({
+      error: true,
+      message: error instanceof Error ? error.message : 'Error interno del servidor'
+    });
+  }
 } 
