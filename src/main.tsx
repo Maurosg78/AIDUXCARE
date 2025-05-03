@@ -1,25 +1,11 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter, useRoutes } from "react-router-dom";
-import { AuthProvider } from './context/AuthContext';
-import routes from "./core/config/routes";
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
 
-function AppRouter() {
-  const element = useRoutes(routes);
-  return element;
-}
-
-console.log('🔥 VITE_LANGFUSE_PUBLIC_KEY →', import.meta.env.VITE_LANGFUSE_PUBLIC_KEY);
-console.log('🔥 VITE_LANGFUSE_SECRET_KEY →', import.meta.env.VITE_LANGFUSE_SECRET_KEY);
-console.log('🔥 VITE_LANGFUSE_BASE_URL →', import.meta.env.VITE_LANGFUSE_BASE_URL);
-
-const root = ReactDOM.createRoot(document.getElementById("root")!);
-root.render(
+// Montamos la aplicación en el elemento root
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRouter />
-      </AuthProvider>
-    </BrowserRouter>
+    <App />
   </React.StrictMode>
-);
+)

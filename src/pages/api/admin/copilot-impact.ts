@@ -172,7 +172,7 @@ export default async function handler(
 
   try {
     const session = await getServerSession(req, res, authOptions);
-    if (!session?.user || (session.user as { role?: UserRole }).role !== 'admin') {
+    if (!session?.user || (session.user as { role?: UserRole }).role !== UserRole.ADMIN) {
       return res.status(403).json({ message: 'No autorizado' });
     }
 

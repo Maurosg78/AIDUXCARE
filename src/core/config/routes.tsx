@@ -1,40 +1,60 @@
-/**
- * AiDuxCare es un copiloto clínico que se diferencia por:
- * 1. Evaluación en tiempo real de la calidad de las visitas
- * 2. Sugerencias contextuales basadas en evidencia clínica
- * 3. Detección temprana de omisiones o riesgos
- * 4. Integración con sistemas de trazabilidad para auditoría
- * 5. Interfaz adaptativa que se ajusta al flujo de trabajo clínico
- */
+import { RouteObject } from 'react-router-dom';
+import { UserRole } from '@/modules/auth/authService';
+import { lazy } from 'react';
+import React from 'react';
+import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 
-import { RouteObject } from "react-router-dom";
-import HomePage from "@/modules/core/pages/HomePage";
-import LoginPage from "@/modules/auth/LoginPage";
-import OnboardingPage from "@/modules/auth/OnboardingPage";
-import FeedbackForm from "@/modules/feedback/components/FeedbackForm";
+const Dashboard = lazy(() => import('@/pages/PublicImpactDashboard'));
 
-const routes: RouteObject[] = [
+function AdminLayout() {
+  return <ProtectedLayout allowedRoles={[UserRole.ADMIN]}>{<></>}</ProtectedLayout>;
+}
+function DoctorLayout() {
+  return <ProtectedLayout allowedRoles={[UserRole.DOCTOR]}>{<></>}</ProtectedLayout>;
+}
+function PatientLayout() {
+  return <ProtectedLayout allowedRoles={[UserRole.PATIENT]}>{<></>}</ProtectedLayout>;
+}
+
+const LoginPage = lazy(() => import('@/pages/login'));
+const UnauthorizedPage = lazy(() => import('@/pages/unauthorized'));
+
+export const protectedRoutes: RouteObject[] = [
   {
-    path: '/',
-    element: <HomePage />,
+    path: '/dashboard',
+    element: <Dashboard />,
   },
+  {
+    path: '/admin/*',
+    element: <AdminLayout />,
+    children: [],
+  },
+  {
+    path: '/doctor/*',
+    element: <DoctorLayout />,
+    children: [],
+  },
+  {
+    path: '/patient/*',
+    element: <PatientLayout />,
+    children: [],
+  },
+];
+
+export const publicRoutes: RouteObject[] = [
   {
     path: '/login',
     element: <LoginPage />,
   },
   {
-    path: '/onboarding',
-    element: <OnboardingPage />,
-  },
-  {
-    path: '/feedback',
-    element: <FeedbackForm />,
-  },
-  {
-    path: '*',
-    element: <div>404 - Página no encontrada</div>,
+    path: '/unauthorized',
+    element: <UnauthorizedPage />,
   },
 ];
 
-export default routes;
+export const routes: RouteObject[] = [
+  ...protectedRoutes,
+  ...publicRoutes,
+];
 
+export default routes; 

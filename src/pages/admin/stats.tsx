@@ -24,10 +24,7 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import { StatCard, StatCardSkeleton } from '@/components/ui/StatCard';
-import { ChartCard } from '@/components/ui/ChartCard';
-import { Button } from '@/components/ui/button';
-import { Alert } from '@/components/ui/Alert';
+import { Button, StatCard, ChartCard, Alert, StatCardSkeleton } from '@/components/ui';
 import { trackEvent } from '@/core/services/langfuseClient';
 
 interface StatsMetrics {

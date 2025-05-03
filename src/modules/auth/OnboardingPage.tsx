@@ -2,12 +2,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { UserRole } from './authService';
+import { UserRole } from '@/modules/auth/authService';
 
 const OnboardingPage: React.FC = () => {
   const { data: session } = useSession();
   const userRole = (session?.user as { role?: UserRole })?.role;
-  const showFeedback = userRole === 'fisioterapeuta' || userRole === 'admin';
+  const showFeedback = userRole === UserRole.DOCTOR || userRole === UserRole.ADMIN;
 
   return (
     <div className="container mx-auto px-4 py-8">

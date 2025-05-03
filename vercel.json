@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "github": {
+    "enabled": true,
+    "silent": true
+  },
+  "git": {
+    "deploymentEnabled": {
+      "pre-clinical-test": true,
+      "main": false
+    }
+  },
+  "env": {
+    "VITE_LANGFUSE_PUBLIC_KEY": "@langfuse_public_key",
+    "VITE_LANGFUSE_BASE_URL": "https://cloud.langfuse.com"
+  }
+} 

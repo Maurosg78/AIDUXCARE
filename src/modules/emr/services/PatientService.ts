@@ -1,6 +1,7 @@
 import { Patient } from '../models/Patient';
 import { StorageService } from './StorageService';
 import VisitService from './VisitService';
+import { VisitData } from '../types';
 
 const STORAGE_KEY = 'patients';
 
@@ -33,6 +34,37 @@ class PatientService {
 
   static async clearAll(): Promise<void> {
     StorageService.remove(STORAGE_KEY);
+  }
+
+  static async saveVisitData(patientId: string, data: Omit<VisitData, 'patientId' | 'createdAt'>): Promise<VisitData> {
+    // Simular delay de red
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const visitData: VisitData = {
+      ...data,
+      patientId,
+      createdAt: new Date().toISOString()
+    };
+
+    // Obtener visitas existentes
+    const storedVisits = localStorage.getItem(STORAGE_KEY);
+    const visits = storedVisits ? JSON.parse(storedVisits) : [];
+
+    // Agregar nueva visita
+    visits.push(visitData);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(visits));
+
+    return visitData;
+  }
+
+  static async getVisits(patientId: string): Promise<VisitData[]> {
+    // Simular delay de red
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const storedVisits = localStorage.getItem(STORAGE_KEY);
+    const visits = storedVisits ? JSON.parse(storedVisits) : [];
+
+    return visits.filter((visit: VisitData) => visit.patientId === patientId);
   }
 }
 

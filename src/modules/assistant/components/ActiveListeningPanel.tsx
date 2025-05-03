@@ -1,197 +1,202 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { useLangfuse } from '@/core/hooks/useLangfuse';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/Checkbox';
-import { Alert } from '@/components/ui/Alert';
+import React, { useState, useCallback } from 'react';
+import { VoicePhrase } from '../types';
 
-interface DetectedPhrase {
-  id: string;
-  text: string;
-  category?: 'Síntoma' | 'Diagnóstico' | 'Comentario';
-  approved: boolean;
+const styles = {
+  container: {
+    padding: '20px',
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px'
+  },
+  title: {
+    fontSize: '18px',
+    color: '#333',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  button: {
+    padding: '8px 16px',
+    backgroundColor: '#0066cc',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer'
+  },
+  buttonDanger: {
+    backgroundColor: '#dc3545'
+  },
+  phraseList: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '10px'
+  },
+  phraseItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '10px',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '4px'
+  },
+  checkbox: {
+    width: '18px',
+    height: '18px'
+  },
+  phraseText: {
+    flex: 1,
+    fontSize: '14px',
+    color: '#333'
+  },
+  timestamp: {
+    fontSize: '12px',
+    color: '#666'
+  },
+  actions: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '10px',
+    marginTop: '20px'
+  },
+  micActive: {
+    color: '#dc3545',
+    animation: 'pulse 2s infinite'
+  }
+};
+
+// Frases simuladas para demostración
+const DEMO_PHRASES = [
+  "El paciente presenta dolor lumbar agudo con irradiación a pierna derecha",
+  "Se observa limitación en la flexión de columna y espasmo muscular",
+  "Diagnóstico probable: lumbalgia aguda con componente radicular",
+  "Se recomienda terapia manual y ejercicios de estabilización",
+  "Control en 7 días para evaluar evolución del tratamiento"
+];
+
+interface Props {
+  onPhrasesValidated: (phrases: string[]) => void;
 }
 
-interface ActiveListeningPanelProps {
-  onPhrasesValidated: (result: {
-    approvedPhrases: string[];
-    rejectedPhrases: string[];
-    traceId: string;
-  }) => void;
-}
-
-export const ActiveListeningPanel: React.FC<ActiveListeningPanelProps> = ({
-  onPhrasesValidated,
-}) => {
+export const ActiveListeningPanel: React.FC<Props> = ({ onPhrasesValidated }) => {
   const [isListening, setIsListening] = useState(false);
-  const [hasConsent, setHasConsent] = useState(false);
-  const [detectedPhrases, setDetectedPhrases] = useState<DetectedPhrase[]>([]);
-  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  const { } = useLangfuse();
+  const [phrases, setPhrases] = useState<VoicePhrase[]>([]);
 
-  // Simulación de detección de frases clínicas
-  const mockPhrases = [
-    { text: "Me duele el brazo derecho desde hace dos semanas", category: "Síntoma" as const },
-    { text: "Tomo ibuprofeno dos veces al día", category: "Comentario" as const },
-    { text: "Soy alérgico a la penicilina", category: "Diagnóstico" as const },
-  ];
+  const startListening = useCallback(() => {
+    setIsListening(true);
+    console.log('🎤 Iniciando escucha activa...');
 
-  const startListening = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setMediaStream(stream);
-      setIsListening(true);
-      
-      // Simulación de detección de frases
-      const interval = setInterval(() => {
-        if (detectedPhrases.length < mockPhrases.length) {
-          const newPhrase = mockPhrases[detectedPhrases.length];
-          setDetectedPhrases(prev => [...prev, {
-            id: Date.now().toString(),
-            text: newPhrase.text,
-            category: newPhrase.category,
-            approved: true
-          }]);
-        } else {
-          clearInterval(interval);
-        }
-      }, 3000);
+    // Simular captura de audio agregando frases cada 2 segundos
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index < DEMO_PHRASES.length) {
+        const newPhrase: VoicePhrase = {
+          id: `phrase-${Date.now()}`,
+          text: DEMO_PHRASES[index],
+          isSelected: false,
+          timestamp: new Date().toISOString()
+        };
+        setPhrases(prev => [...prev, newPhrase]);
+        index++;
+      } else {
+        clearInterval(interval);
+        setIsListening(false);
+      }
+    }, 2000);
 
-      return () => clearInterval(interval);
-    } catch (error) {
-      console.error('Error al acceder al micrófono:', error);
-      setIsListening(false);
-    }
-  }, [detectedPhrases.length]);
+    return () => clearInterval(interval);
+  }, []);
 
   const stopListening = useCallback(() => {
-    if (mediaStream) {
-      mediaStream.getTracks().forEach(track => track.stop());
-      setMediaStream(null);
-    }
     setIsListening(false);
-  }, [mediaStream]);
+    console.log('🎤 Escucha activa detenida');
+  }, []);
 
-  const togglePhraseApproval = (phraseId: string) => {
-    setDetectedPhrases(prev =>
-      prev.map(phrase =>
-        phrase.id === phraseId
-          ? { ...phrase, approved: !phrase.approved }
+  const togglePhrase = useCallback((id: string) => {
+    setPhrases(prev => 
+      prev.map(phrase => 
+        phrase.id === id 
+          ? { ...phrase, isSelected: !phrase.isSelected }
           : phrase
       )
     );
-  };
+  }, []);
 
-  const approveAllPhrases = () => {
-    setDetectedPhrases(prev =>
-      prev.map(phrase => ({ ...phrase, approved: true }))
-    );
-  };
-
-  const handleValidation = () => {
-    const approvedPhrases = detectedPhrases
-      .filter(phrase => phrase.approved)
-      .map(phrase => phrase.text);
-    
-    const rejectedPhrases = detectedPhrases
-      .filter(phrase => !phrase.approved)
+  const handleValidate = useCallback(() => {
+    const validatedPhrases = phrases
+      .filter(phrase => phrase.isSelected)
       .map(phrase => phrase.text);
 
-    onPhrasesValidated({
-      approvedPhrases,
-      rejectedPhrases,
-      traceId: 'active-listening',
-    });
+    console.log('✅ Frases validadas:', validatedPhrases);
+    onPhrasesValidated(validatedPhrases);
+    setPhrases([]);
+  }, [phrases, onPhrasesValidated]);
 
-    stopListening();
-  };
-
-  useEffect(() => {
-    return () => {
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [mediaStream]);
-
-  if (!hasConsent) {
-    return (
-      <Card className="p-4">
-        <Alert type="warning" className="mb-4">
-          Para activar la escucha clínica, se requiere su consentimiento explícito.
-          El audio será procesado localmente y solo se guardarán las frases clínicas relevantes.
-        </Alert>
-        <Button
-          onClick={() => setHasConsent(true)}
-          className="w-full"
-        >
-          🎤 Dar consentimiento para escucha clínica
-        </Button>
-      </Card>
-    );
-  }
+  const selectAll = useCallback(() => {
+    setPhrases(prev => prev.map(phrase => ({ ...phrase, isSelected: true })));
+  }, []);
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${isListening ? 'bg-green-500' : 'bg-gray-300'}`} />
-          <span className="text-sm">
-            {isListening ? 'Escuchando...' : 'Micrófono inactivo'}
-          </span>
-        </div>
-        {!isListening ? (
-          <Button
-            onClick={startListening}
-            className="bg-blue-500 hover:bg-blue-600"
-          >
-            🎤 Activar escucha clínica
-          </Button>
-        ) : (
-          <Button
-            onClick={stopListening}
-            className="bg-red-500 hover:bg-red-600"
-          >
-            🛑 Detener escucha
-          </Button>
-        )}
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <h3 style={styles.title}>
+          🎤 Escucha Activa
+          {isListening && <span style={styles.micActive}>●</span>}
+        </h3>
+        <button
+          style={{
+            ...styles.button,
+            ...(isListening ? styles.buttonDanger : {})
+          }}
+          onClick={isListening ? stopListening : startListening}
+        >
+          {isListening ? 'Detener' : 'Iniciar'} Escucha
+        </button>
       </div>
 
-      <div className="space-y-4">
-        {detectedPhrases.map(phrase => (
-          <div key={phrase.id} className="flex items-start gap-2 p-2 bg-gray-50 rounded">
-            <Checkbox
-              checked={phrase.approved}
-              onChange={() => togglePhraseApproval(phrase.id)}
-            />
-            <div className="flex-1">
-              <p className="text-sm">{phrase.text}</p>
-              {phrase.category && (
-                <span className="text-xs text-gray-500">
-                  {phrase.category}
+      {phrases.length > 0 && (
+        <>
+          <div style={styles.phraseList}>
+            {phrases.map(phrase => (
+              <div key={phrase.id} style={styles.phraseItem}>
+                <input
+                  type="checkbox"
+                  checked={phrase.isSelected}
+                  onChange={() => togglePhrase(phrase.id)}
+                  style={styles.checkbox}
+                />
+                <span style={styles.phraseText}>{phrase.text}</span>
+                <span style={styles.timestamp}>
+                  {new Date(phrase.timestamp).toLocaleTimeString()}
                 </span>
-              )}
-            </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {detectedPhrases.length > 0 && (
-        <div className="mt-4 flex gap-2">
-          <Button
-            onClick={approveAllPhrases}
-            className="flex-1"
-          >
-            ✅ Aprobar todo
-          </Button>
-          <Button
-            onClick={handleValidation}
-            className="flex-1 bg-green-500 hover:bg-green-600"
-          >
-            Guardar frases aprobadas
-          </Button>
-        </div>
+          <div style={styles.actions}>
+            <button
+              style={styles.button}
+              onClick={selectAll}
+            >
+              Seleccionar Todo
+            </button>
+            <button
+              style={{
+                ...styles.button,
+                backgroundColor: '#198754'
+              }}
+              onClick={handleValidate}
+            >
+              Validar Seleccionadas
+            </button>
+          </div>
+        </>
       )}
-    </Card>
+    </div>
   );
 }; 

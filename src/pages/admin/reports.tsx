@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/router';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui';
 import { Loader2, Download } from 'lucide-react';
+import { UserRole } from '@/modules/auth/authService';
 
 interface WeeklyStats {
   period: {
@@ -26,7 +26,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(false);
 
   // Verificar autenticación y rol de administrador
-  if (!user || user?.role !== 'admin') {
+  if (!user || user?.role !== UserRole.ADMIN) {
     router.push('/login');
     return null;
   }

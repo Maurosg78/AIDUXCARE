@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { trackEvent } from '@/core/services/langfuseClient';
 import { PatientEval } from '@/types/patient';
+import { CopilotSuggestion } from '../types';
 
 interface StructuredSuggestion {
   symptoms?: string[];
@@ -12,13 +13,23 @@ interface StructuredSuggestion {
   treatmentPlan?: string;
 }
 
+// Simulación de análisis basado en palabras clave
+const KEYWORDS = {
+  chiefComplaint: ['dolor', 'molestia', 'dificultad', 'limitación'],
+  symptoms: ['inflamación', 'rigidez', 'debilidad', 'espasmo'],
+  diagnosis: ['tendinitis', 'esguince', 'contractura', 'lumbalgia'],
+  treatmentPlan: ['ejercicios', 'terapia', 'movilización', 'estiramientos']
+};
+
 interface UseCopilotProps {
   patientEval: PatientEval;
+  onSuggestionAccepted?: (field: string, value: string) => void;
 }
 
-export const useCopilot = ({ patientEval }: UseCopilotProps) => {
+export const useCopilot = ({ patientEval, onSuggestionAccepted }: UseCopilotProps) => {
   const [isLoading] = useState(false);
-  const [suggestions] = useState<StructuredSuggestion | null>(null);
+  const [suggestions, setSuggestions] = useState<CopilotSuggestion[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const submitSuggestionFeedback = useCallback(async (field: string, feedback: string, value: string | string[]) => {
     trackEvent({
@@ -33,26 +44,58 @@ export const useCopilot = ({ patientEval }: UseCopilotProps) => {
     });
   }, [patientEval]);
 
-  const analyzeVoiceNotes = useCallback(async () => {
-    if (!patientEval.voiceApprovedNotes?.length) return;
+  const analyzeVoiceNotes = useCallback(async (notes: string[]) => {
+    setIsAnalyzing(true);
+    console.log('🤖 Analizando notas de voz:', notes);
 
-    const notes = patientEval.voiceApprovedNotes;
-    const hasVoiceNotes = notes.length > 0;
+    // Simular delay de procesamiento
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    trackEvent({
-      name: 'copilot.voice.notes.analyzed',
-      payload: {
-        notesCount: notes.length,
-        hasVoiceNotes
-      },
-      traceId: patientEval.metadata?.traceId || ''
+    const newSuggestions: CopilotSuggestion[] = [];
+
+    notes.forEach(note => {
+      const noteLower = note.toLowerCase();
+
+      // Analizar cada campo buscando palabras clave
+      Object.entries(KEYWORDS).forEach(([field, keywords]) => {
+        const matchingKeywords = keywords.filter(keyword => 
+          noteLower.includes(keyword.toLowerCase())
+        );
+
+        if (matchingKeywords.length > 0) {
+          newSuggestions.push({
+            field: field as CopilotSuggestion['field'],
+            text: note
+          });
+        }
+      });
     });
-  }, [patientEval]);
+
+    console.log('🤖 Sugerencias generadas:', newSuggestions);
+    setSuggestions(newSuggestions);
+    setIsAnalyzing(false);
+
+    return newSuggestions;
+  }, []);
+
+  const acceptSuggestion = useCallback((suggestion: CopilotSuggestion) => {
+    console.log('🤖 Sugerencia aceptada:', suggestion);
+    onSuggestionAccepted?.(suggestion.field, suggestion.text);
+    setSuggestions(prev => prev.filter(s => s !== suggestion));
+  }, [onSuggestionAccepted]);
+
+  const rejectSuggestion = useCallback((suggestion: CopilotSuggestion) => {
+    console.log('🤖 Sugerencia rechazada:', suggestion);
+    setSuggestions(prev => prev.filter(s => s !== suggestion));
+  }, []);
 
   return {
     suggestions,
     isLoading,
+    isAnalyzing,
     submitSuggestionFeedback,
-    analyzeVoiceNotes
+    analyzeVoiceNotes,
+    acceptSuggestion,
+    rejectSuggestion
   };
 }; 

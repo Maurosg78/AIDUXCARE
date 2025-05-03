@@ -22,10 +22,10 @@ const hashPassword = async (password: string): Promise<string> => {
 export const seedUsers: SeedUser[] = [
   {
     id: '1',
-    email: 'mauricio@axonvalencia.es',
-    password: 'Test1234!', // Se hasheará al inicializar
-    name: 'Mauricio Sobarzo',
-    role: 'fisioterapeuta',
+    email: 'doctor@aiduxcare.com',
+    password: 'doctor123',
+    name: 'Doctor',
+    role: UserRole.DOCTOR,
     clinic: 'Clínica AXON - Valencia',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -33,10 +33,20 @@ export const seedUsers: SeedUser[] = [
   {
     id: '2',
     email: 'admin@aiduxcare.com',
-    password: 'Admin1234!',
-    name: 'Administrador',
-    role: 'admin',
+    password: 'admin123',
+    name: 'Admin',
+    role: UserRole.ADMIN,
     clinic: 'AiDuxCare',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: '3',
+    email: 'patient@aiduxcare.com',
+    password: 'patient123',
+    name: 'Patient',
+    role: UserRole.PATIENT,
+    clinic: 'Clínica AXON - Valencia',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }

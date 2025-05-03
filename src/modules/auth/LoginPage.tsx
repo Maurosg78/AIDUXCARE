@@ -1,46 +1,67 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { signIn } from 'next-auth/react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Alert } from '@/components/ui/Alert';
-import { AlertCircle } from 'lucide-react';
-import AuthService from './authService';
+import { Label } from '@/components/ui/label';
+import { UserRole } from '@/modules/auth/authService';
+
+const loginSchema = z.object({
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
 
+  const onSubmit = async (data: LoginFormData) => {
     try {
-      const user = await AuthService.login(email, password);
-      if (!user) {
+      setIsLoading(true);
+      setError(null);
+
+      const result = await signIn('credentials', {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
+
+      if (result?.error) {
         setError('Credenciales inválidas');
         return;
       }
 
-      // Redirigir según el rol
-      switch (user.role) {
-        case 'fisioterapeuta':
-          router.push('/emr');
-          break;
-        case 'admin':
+      // Redirección según el rol del usuario
+      const user = await fetch('/api/auth/session').then(res => res.json());
+      switch (user?.user?.role) {
+        case UserRole.ADMIN:
           router.push('/admin');
           break;
-        case 'auditor':
-          router.push('/audit');
+        case UserRole.DOCTOR:
+          router.push('/doctor');
+          break;
+        case UserRole.PATIENT:
+          router.push('/patient');
           break;
         default:
-          router.push('/');
+          router.push('/dashboard');
       }
-    } catch (err) {
-      setError('Error al iniciar sesión');
+    } catch (error) {
+      setError('Ocurrió un error al iniciar sesión');
     } finally {
       setIsLoading(false);
     }
@@ -51,61 +72,49 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Iniciar Sesión
+            Iniciar sesión
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Accede a tu cuenta de AiDuxCare
-          </p>
         </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {error && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <span className="ml-2">{error}</span>
-            </Alert>
+            <div className="text-red-600 text-sm">
+              {error}
+            </div>
           )}
-
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email
-              </label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                name="email"
                 type="email"
-                required
-                value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                placeholder="Email"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                {...register('email')}
+                className={errors.email ? 'border-red-500' : ''}
               />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+              )}
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
-                Contraseña
-              </label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
-                name="password"
                 type="password"
-                required
-                value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                placeholder="Contraseña"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                {...register('password')}
+                className={errors.password ? 'border-red-500' : ''}
               />
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+              )}
             </div>
           </div>
 
           <div>
             <Button
               type="submit"
+              className="w-full"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </Button>
           </div>
         </form>
