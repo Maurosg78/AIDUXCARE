@@ -6,6 +6,7 @@ import debounce from 'lodash/debounce';
 import { ActiveListeningPanel } from '@/modules/assistant/components/ActiveListeningPanel';
 import { Card } from '@/components/ui/Card';
 import { Alert } from '@/components/ui/Alert';
+import { useCopilot } from '@/modules/assistant/hooks/useCopilot';
 
 interface StructuredVisitFormProps {
   patientId: string;
@@ -33,6 +34,10 @@ export const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({
     },
   });
 
+  const { analyzeVoiceNotes, suggestions, isLoading } = useCopilot({
+    patientEval: formData,
+  });
+
   const handleChange = useCallback(
     debounce((field: keyof PatientEval, value: string | string[]) => {
       setFormData(prev => ({
@@ -48,7 +53,7 @@ export const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({
         field,
         value,
         patientId,
-      }, formData.metadata?.traceId);
+      }, formData.metadata?.traceId || '');
     }, 500),
     [patientId]
   );
@@ -73,11 +78,70 @@ export const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({
       rejectedCount: result.rejectedPhrases.length,
       patientId,
     }, result.traceId);
+
+    // Analizar las frases validadas
+    analyzeVoiceNotes();
+  };
+
+  const handleSuggestionAccept = (field: keyof PatientEval, value: string | string[]) => {
+    handleChange(field, value);
+    trackEvent('copilot.suggestion.accepted', {
+      field,
+      value,
+      patientId,
+    }, formData.metadata?.traceId || '');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
+  };
+
+  const renderFieldWithSuggestion = (
+    field: keyof PatientEval,
+    label: string,
+    rows: number = 2,
+    isMultiline: boolean = true
+  ) => {
+    const suggestion = suggestions?.[field as keyof typeof suggestions];
+    const hasSuggestion = suggestion !== undefined && suggestion !== null;
+
+    return (
+      <div>
+        <label className="block text-sm font-medium mb-1">
+          {label}
+        </label>
+        <div className="relative">
+          <TextField
+            value={formData[field] as string}
+            onChange={(e) => handleChange(field, e.target.value)}
+            fullWidth
+            multiline={isMultiline}
+            rows={rows}
+            className={hasSuggestion ? 'border-blue-500' : ''}
+          />
+          {hasSuggestion && (
+            <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+              <div className="flex items-center gap-2 text-sm text-blue-700 mb-2">
+                <span className="text-blue-500">🤖</span>
+                Sugerencia del copiloto IA
+              </div>
+              <div className="text-sm mb-2">
+                {Array.isArray(suggestion) ? suggestion.join(', ') : suggestion}
+              </div>
+              <Button
+                size="small"
+                variant="outlined"
+                color="primary"
+                onClick={() => handleSuggestionAccept(field, suggestion)}
+              >
+                Aceptar sugerencia
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -115,83 +179,12 @@ export const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({
         <h2 className="text-lg font-semibold mb-4">Evaluación Clínica</h2>
         
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Motivo de Consulta
-            </label>
-            <TextField
-              value={formData.chiefComplaint}
-              onChange={(e) => handleChange('chiefComplaint', e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Síntomas
-            </label>
-            <TextField
-              value={formData.symptoms?.join('\n')}
-              onChange={(e) => handleChange('symptoms', e.target.value.split('\n'))}
-              fullWidth
-              multiline
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Diagnóstico
-            </label>
-            <TextField
-              value={formData.diagnosis}
-              onChange={(e) => handleChange('diagnosis', e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Plan de Tratamiento
-            </label>
-            <TextField
-              value={formData.treatmentPlan}
-              onChange={(e) => handleChange('treatmentPlan', e.target.value)}
-              fullWidth
-              multiline
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Pronóstico
-            </label>
-            <TextField
-              value={formData.prognosis}
-              onChange={(e) => handleChange('prognosis', e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Seguimiento
-            </label>
-            <TextField
-              value={formData.followUp}
-              onChange={(e) => handleChange('followUp', e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-            />
-          </div>
+          {renderFieldWithSuggestion('chiefComplaint', 'Motivo de Consulta')}
+          {renderFieldWithSuggestion('symptoms', 'Síntomas', 3)}
+          {renderFieldWithSuggestion('diagnosis', 'Diagnóstico')}
+          {renderFieldWithSuggestion('treatmentPlan', 'Plan de Tratamiento', 3)}
+          {renderFieldWithSuggestion('prognosis', 'Pronóstico')}
+          {renderFieldWithSuggestion('followUp', 'Seguimiento')}
         </div>
 
         <div className="mt-6">
@@ -200,8 +193,9 @@ export const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({
             variant="contained"
             color="primary"
             fullWidth
+            disabled={isLoading}
           >
-            Guardar Evaluación
+            {isLoading ? 'Analizando...' : 'Guardar Evaluación'}
           </Button>
         </div>
       </Card>
