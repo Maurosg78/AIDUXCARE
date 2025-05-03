@@ -1,119 +1,14 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "cleanUrls": true,
-  "trailingSlash": false,
   "routes": [
     {
-      "src": "/assets/(.*)",
-      "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
-      },
-      "continue": true
-    },
-    {
-      "src": "/(.*)\\.js",
-      "headers": {
-        "content-type": "application/javascript; charset=utf-8",
-        "cache-control": "public, max-age=31536000, immutable"
-      },
-      "continue": true
-    },
-    {
-      "src": "/(.*)\\.css",
-      "headers": {
-        "content-type": "text/css; charset=utf-8",
-        "cache-control": "public, max-age=31536000, immutable"
-      },
-      "continue": true
-    },
-    {
-      "src": "/(.*)\\.map",
-      "headers": {
-        "content-type": "application/json; charset=utf-8",
-        "cache-control": "public, max-age=31536000, immutable"
-      },
-      "continue": true
-    },
-    {
-      "src": "/(.*)\\.html",
-      "headers": {
-        "cache-control": "public, max-age=0, must-revalidate"
-      },
-      "continue": true
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/index.html",
-      "headers": {
-        "x-frame-options": "DENY",
-        "x-content-type-options": "nosniff",
-        "x-xss-protection": "1; mode=block",
-        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://cloud.langfuse.com https://api.vercel.com;"
-      }
-    }
-  ],
-  "github": {
-    "enabled": true,
-    "silent": true,
-    "autoAlias": true
-  },
-  "git": {
-    "deploymentEnabled": {
-      "pre-clinical-test": true,
-      "main": false
-    }
-  },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        },
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://cloud.langfuse.com https://api.vercel.com;"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).js",
-      "headers": [{ "key": "Content-Type", "value": "application/javascript" }]
+      "dest": "/index.html"
     }
   ],
   "env": {
     "VITE_LANGFUSE_PUBLIC_KEY": "pk-lf-57c6e2ec-8603-44cf-b030-cddcef1f1f3d",
     "VITE_LANGFUSE_SECRET_KEY": "sk-lf-c1872960-86af-4899-b275-b7de8d536794",
     "VITE_LANGFUSE_BASE_URL": "https://cloud.langfuse.com"
-  },
-  "build": {
-    "env": {
-      "VITE_LANGFUSE_PUBLIC_KEY": "@vite_langfuse_public_key",
-      "VITE_LANGFUSE_SECRET_KEY": "@vite_langfuse_secret_key",
-      "NEXTAUTH_SECRET": "@nextauth_secret",
-      "NEXTAUTH_URL": "https://aiduxcare-test.vercel.app"
-    }
   }
 } 
