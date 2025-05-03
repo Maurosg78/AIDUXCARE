@@ -2,6 +2,10 @@
   "version": 2,
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
@@ -9,6 +13,7 @@
   "env": {
     "VITE_LANGFUSE_PUBLIC_KEY": "pk-lf-57c6e2ec-8603-44cf-b030-cddcef1f1f3d",
     "VITE_LANGFUSE_SECRET_KEY": "sk-lf-c1872960-86af-4899-b275-b7de8d536794",
-    "VITE_LANGFUSE_BASE_URL": "https://cloud.langfuse.com"
+    "VITE_LANGFUSE_BASE_URL": "https://cloud.langfuse.com",
+    "NEXTAUTH_URL": "https://aiduxcare-gbxte11qp-mauricio-sobarzos-projects.vercel.app"
   }
 } 

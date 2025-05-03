@@ -1,59 +1,26 @@
-import axios from 'axios';
-import { Langfuse } from 'langfuse-node';
+import fetch from 'node-fetch';
 
-const BASE_URL = 'https://aiduxcare-test.vercel.app';
-const LANGFUSE_BASE_URL = 'https://cloud.langfuse.com';
+const ENDPOINTS = [
+  'https://aiduxcare-gbxte11qp-mauricio-sobarzos-projects.vercel.app/api/health',
+  'https://aiduxcare-gbxte11qp-mauricio-sobarzos-projects.vercel.app/api/auth/session',
+  'https://aiduxcare-gbxte11qp-mauricio-sobarzos-projects.vercel.app/api/emr/stats'
+];
 
-const langfuse = new Langfuse({
-  publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
-  secretKey: process.env.VITE_LANGFUSE_SECRET_KEY || '',
-  baseUrl: LANGFUSE_BASE_URL,
-});
+const TEST_CREDENTIALS = {
+  email: 'laura@clinicatest.com',
+  password: 'Test1234!'
+};
 
-async function checkUserLogin(email: string, password: string): Promise<boolean> {
+async function checkEndpoint(url: string) {
   try {
-    const response = await axios.post(`${BASE_URL}/api/auth/signin`, {
-      email,
-      password,
-      callbackUrl: `${BASE_URL}/dashboard`,
-    });
-
-    if (response.status === 200) {
-      console.log(`✅ ${email}`);
-      return true;
-    } else {
-      console.log(`❌ ${email}`);
-      return false;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  } catch (error) {
-    console.log(`❌ ${email}`);
-    console.error('Error logging in', email + ':', error);
-    return false;
-  }
-}
-
-async function checkLangfuseEvents(): Promise<boolean> {
-  try {
-    const endTime = new Date().toISOString();
-    const startTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-    const trace = langfuse.trace({
-      name: 'health-check',
-      metadata: {
-        timestamp: new Date().toISOString(),
-        type: 'diagnostic'
-      }
-    });
-
-    await trace.span({
-      name: 'check',
-      input: { startTime, endTime }
-    }).end();
-
-    console.log('✅ Eventos de Langfuse verificados correctamente');
+    console.log(`✅ ${url} - OK (${response.status})`);
     return true;
   } catch (error) {
-    console.error('Error checking Langfuse events:', error);
+    console.error(`❌ ${url} - Failed: ${(error as Error).message}`);
     return false;
   }
 }
@@ -63,22 +30,34 @@ async function runHealthCheck() {
 
   let allPassed = true;
 
-  // Verificar login de usuarios
-  console.log('👤 Verificando acceso de usuarios...');
-  const users = [
-    { email: 'jose@valenciamed.com', password: 'Test1234!' },
-    { email: 'ines@movsalud.es', password: 'Test1234!' }
-  ];
-
-  for (const user of users) {
-    const passed = await checkUserLogin(user.email, user.password);
+  // Verificar endpoints
+  console.log('🌐 Verificando endpoints...');
+  for (const endpoint of ENDPOINTS) {
+    const passed = await checkEndpoint(endpoint);
     if (!passed) allPassed = false;
   }
 
-  // Verificar eventos de tracking
-  console.log('\n📊 Verificando eventos de tracking...');
-  const eventsOk = await checkLangfuseEvents();
-  if (!eventsOk) allPassed = false;
+  // Verificar login
+  console.log('\n👤 Verificando login...');
+  try {
+    const loginResponse = await fetch('https://aiduxcare-gbxte11qp-mauricio-sobarzos-projects.vercel.app/api/auth/signin', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(TEST_CREDENTIALS),
+    });
+
+    if (loginResponse.ok) {
+      console.log('✅ Login exitoso');
+    } else {
+      console.log('❌ Error en login:', loginResponse.status);
+      allPassed = false;
+    }
+  } catch (error) {
+    console.error('❌ Error en login:', (error as Error).message);
+    allPassed = false;
+  }
 
   // Resumen final
   console.log('\n📋 Resumen de la revisión:');

@@ -79,8 +79,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             totalEvents++;
             
             // Contar campos modificados
-            const inputField = obs.input?.field;
-            if (inputField) {
+            const inputField = obs.input?.field as string;
+            if (typeof inputField === 'string') {
               fieldCounts.set(inputField, (fieldCounts.get(inputField) || 0) + 1);
             }
           } else if (obs.name === 'copilot.feedback') {

@@ -32,6 +32,13 @@ const users: User[] = [
   },
   {
     id: '3',
+    email: 'mauricio@axonvalencia.es',
+    password: '$2a$10$YourHashedPasswordHere',
+    name: 'Mauricio Sobarzo',
+    role: UserRole.ADMIN,
+  },
+  {
+    id: '4',
     email: 'patient@aiduxcare.com',
     password: '$2a$10$GQJ.q9rz6YJH3YuI3J3Z2OZwww/uQJ.q9rz6YJH3YuI3J3Z2O',
     name: 'Patient',

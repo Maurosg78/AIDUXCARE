@@ -53,7 +53,7 @@
     "@types/axios": "^0.9.36",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.9",
-    "@types/node": "^20.11.19",
+    "@types/node": "^20.17.32",
     "@types/papaparse": "^5.3.15",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
@@ -75,7 +75,8 @@
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "terser": "^5.39.0",
-    "typescript": "^5.2.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
     "vite": "^5.4.19"
   }
 }
