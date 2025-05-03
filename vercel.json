@@ -69,14 +69,8 @@
       "main": false
     }
   },
-  "env": {
-    "VITE_LANGFUSE_PUBLIC_KEY": "@vite_langfuse_public_key",
-    "VITE_LANGFUSE_SECRET_KEY": "@vite_langfuse_secret_key",
-    "VITE_LANGFUSE_BASE_URL": "https://cloud.langfuse.com",
-    "NEXTAUTH_SECRET": "@nextauth_secret"
-  },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/" }
   ],
   "headers": [
     {
@@ -96,24 +90,32 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://cloud.langfuse.com"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://cloud.langfuse.com https://api.vercel.com;"
         },
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
         }
       ]
+    },
+    {
+      "source": "/(.*).js",
+      "headers": [{ "key": "Content-Type", "value": "application/javascript" }]
     }
   ],
+  "env": {
+    "VITE_LANGFUSE_PUBLIC_KEY": "pk-lf-57c6e2ec-8603-44cf-b030-cddcef1f1f3d",
+    "VITE_LANGFUSE_SECRET_KEY": "sk-lf-c1872960-86af-4899-b275-b7de8d536794",
+    "VITE_LANGFUSE_BASE_URL": "https://cloud.langfuse.com",
+    "NEXTAUTH_SECRET": "@nextauth_secret",
+    "NEXTAUTH_URL": "https://aiduxcare-test.vercel.app"
+  },
   "build": {
     "env": {
       "VITE_LANGFUSE_PUBLIC_KEY": "@vite_langfuse_public_key",
       "VITE_LANGFUSE_SECRET_KEY": "@vite_langfuse_secret_key",
-      "NEXTAUTH_SECRET": "@nextauth_secret"
+      "NEXTAUTH_SECRET": "@nextauth_secret",
+      "NEXTAUTH_URL": "https://aiduxcare-test.vercel.app"
     }
   }
 } 

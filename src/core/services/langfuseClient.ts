@@ -5,28 +5,28 @@ interface LangfuseResponse<T> {
   data: T[];
 }
 
-const REQUIRED_ENV_VARS = [
-  'VITE_LANGFUSE_PUBLIC_KEY',
-  'VITE_LANGFUSE_SECRET_KEY',
-  'VITE_LANGFUSE_HOST'
-];
+const checkEnvVars = () => {
+  const requiredVars = [
+    'VITE_LANGFUSE_PUBLIC_KEY',
+    'VITE_LANGFUSE_SECRET_KEY',
+    'VITE_LANGFUSE_BASE_URL'
+  ];
 
-function checkEnvVars(): boolean {
-  const missingVars = REQUIRED_ENV_VARS.filter(varName => !import.meta.env[varName]);
+  const missingVars = requiredVars.filter(
+    (varName) => !import.meta.env[varName]
+  );
+
   if (missingVars.length > 0) {
-    console.warn(
-      `⚠️ Langfuse: Variables de entorno faltantes: ${missingVars.join(', ')}\n` +
-      'La trazabilidad estará deshabilitada. Consulta .env.example para más información.'
-    );
+    console.error('Missing required Langfuse environment variables:', missingVars);
     return false;
   }
   return true;
-}
+};
 
 const langfuse = new Langfuse({
   publicKey: import.meta.env.VITE_LANGFUSE_PUBLIC_KEY,
   secretKey: import.meta.env.VITE_LANGFUSE_SECRET_KEY,
-  baseUrl: import.meta.env.VITE_LANGFUSE_HOST,
+  baseUrl: import.meta.env.VITE_LANGFUSE_BASE_URL,
 });
 
 export const trackEvent = async ({ name, payload, traceId }: TrackEventOptions) => {
@@ -37,6 +37,7 @@ export const trackEvent = async ({ name, payload, traceId }: TrackEventOptions) 
       name: traceId || 'default',
       metadata: payload,
     });
+
     await trace.createObservation({
       name,
       input: payload,
@@ -51,14 +52,29 @@ export const trackEvent = async ({ name, payload, traceId }: TrackEventOptions) 
 };
 
 export const getTraces = async (startTime: string, name?: string): Promise<LangfuseResponse<LangfuseTrace>> => {
-  return langfuse.getTraces({
-    startTime,
-    name,
-  });
+  if (!checkEnvVars()) return { data: [] };
+
+  try {
+    const response = await langfuse.getTraces({
+      startTime,
+      name,
+    });
+    return response;
+  } catch (error) {
+    console.error('Error getting traces:', error);
+    return { data: [] };
+  }
 };
 
-export const getTrace = async (traceId: string): Promise<LangfuseTrace> => {
-  return langfuse.getTrace(traceId);
+export const getTrace = async (traceId: string): Promise<LangfuseTrace | null> => {
+  if (!checkEnvVars()) return null;
+
+  try {
+    return await langfuse.getTrace(traceId);
+  } catch (error) {
+    console.error('Error getting trace:', error);
+    return null;
+  }
 };
 
 export const getObservations = async (startTime: string, name?: string): Promise<LangfuseResponse<LangfuseObservation>> => {
@@ -73,14 +89,19 @@ export async function verifyLangfuseConnection(): Promise<boolean> {
   if (!checkEnvVars()) return false;
 
   try {
-    await trackEvent({
+    const trace = langfuse.trace({
       name: 'diagnostic.ping',
-      payload: {
+      metadata: {
         timestamp: new Date().toISOString(),
         environment: import.meta.env.MODE || 'development'
-      },
-      traceId: 'default'
+      }
     });
+
+    await trace.createObservation({
+      name: 'ping',
+      input: { timestamp: new Date().toISOString() }
+    });
+
     console.log('✅ Langfuse: Conexión verificada correctamente');
     return true;
   } catch (error) {

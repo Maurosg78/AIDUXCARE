@@ -6,15 +6,22 @@ interface LangfuseTrace {
   startTime: string;
   metadata?: {
     patientId?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   observations?: Array<{
     id: string;
     name: string;
     startTime: string;
-    input?: any;
-    metadata?: any;
+    input?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
   }>;
+}
+
+interface LangfuseSpan {
+  name: string;
+  input?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  end(): Promise<void>;
 }
 
 interface LangfuseObservation {
@@ -26,17 +33,18 @@ interface LangfuseObservation {
 }
 
 interface LangfuseTraceClient {
-  createObservation(params: {
+  id: string;
+  span(params: {
     name: string;
-    input?: any;
-    metadata?: any;
-  }): Promise<void>;
+    input?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+  }): LangfuseSpan;
 }
 
 interface CreateLangfuseTraceBody {
   name: string;
-  input?: any;
-  metadata?: any;
+  input?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 interface LangfuseResponse<T> {
