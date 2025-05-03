@@ -13,33 +13,25 @@ if (!LANGFUSE_PUBLIC_KEY || !LANGFUSE_SECRET_KEY) {
   console.warn('Langfuse keys no encontradas. El tracking estará deshabilitado.');
 }
 
-export const langfuseClient = new Langfuse({
+export const langfuse = new Langfuse({
   publicKey: LANGFUSE_PUBLIC_KEY || '',
   secretKey: LANGFUSE_SECRET_KEY || '',
   baseUrl: process.env.VITE_LANGFUSE_BASE_URL || 'https://cloud.langfuse.com',
 });
 
-export const trackEvent = async (
-  name: string,
-  data: Record<string, any>,
-  traceId?: string
-) => {
-  try {
-    if (!LANGFUSE_PUBLIC_KEY || !LANGFUSE_SECRET_KEY) return;
+export function trackEvent(field: string, value: string, traceId: string) {
+  console.log("[Langfuse] Ejecutando trackEvent con:", { field, value, traceId });
 
-    const trace = await langfuseClient.trace({
-      id: traceId,
-      name,
-      metadata: {
-        patientId: data.patientId
-      }
-    });
+  // Crea explícitamente el trace si no existe
+  const trace = langfuse.trace({ id: traceId });
 
-    await trace.span({
-      name,
-      metadata: data
-    });
-  } catch (error) {
-    console.error('Error tracking event:', error);
-  }
-}; 
+  // Luego registra un span o evento dentro del trace
+  trace.span({
+    name: "form.update",
+    input: { field, value },
+    startTime: new Date(),
+  });
+
+  // Alternativamente, puedes usar trace.event si lo prefieres
+  // trace.event({ name: "form.update", input: { field, value } });
+} 
