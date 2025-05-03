@@ -3,11 +3,12 @@ export interface PatientEval {
   patientId: string;
   visitDate: string;
   chiefComplaint?: string;
-  symptoms?: string;
+  symptoms?: string[];
   diagnosis?: string;
   treatmentPlan?: string;
   prognosis?: string;
   followUp?: string;
+  voiceApprovedNotes?: string[];
   metadata?: {
     traceId?: string;
     lastUpdated?: string;
