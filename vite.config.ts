@@ -6,12 +6,12 @@ export default defineConfig({
   plugins: [react()],
   base: "/",
   resolve: {
-    alias: [
-      {
-        find: /^@\/(.*)$/,
-        replacement: path.resolve(__dirname, "src") + "/$1"
-      }
-    ]
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  define: {
+    'process.env': process.env,
   },
   build: {
     outDir: "dist",
@@ -19,9 +19,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          mui: ['@mui/material', '@mui/x-date-pickers'],
-          charts: ['recharts']
+          vendor: ['react', 'react-dom', 'next-auth'],
+          ui: ['@mui/material', '@mui/icons-material'],
         }
       }
     }

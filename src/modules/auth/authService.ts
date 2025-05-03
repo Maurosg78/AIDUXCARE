@@ -1,27 +1,37 @@
+import bcrypt from 'bcryptjs';
+import { seedUsers, SeedUser } from './seedUsers';
+
 export type UserRole = 'fisioterapeuta' | 'auditor' | 'admin';
 
 export interface User {
   id: string;
-  username: string;
-  role: UserRole;
+  email: string;
   name: string;
+  role: UserRole;
+  clinic: string;
 }
 
 class AuthService {
   private static SESSION_KEY = 'aiduxcare_user';
+  private static users: SeedUser[] = seedUsers;
 
-  static login(username: string, role: UserRole): User {
-    // Simular un usuario con datos básicos
-    const user: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      username,
-      role,
-      name: `${username} (${role})`
+  static async login(email: string, password: string): Promise<User | null> {
+    const user = this.users.find(u => u.email === email);
+    if (!user) return null;
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) return null;
+
+    const sessionUser: User = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      clinic: user.clinic
     };
 
-    // Guardar en sessionStorage
-    sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(user));
-    return user;
+    sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(sessionUser));
+    return sessionUser;
   }
 
   static logout(): void {
@@ -43,6 +53,15 @@ class AuthService {
     const user = this.getCurrentUser();
     if (!user) return false;
     return requiredRoles.includes(user.role);
+  }
+
+  static async initializeUsers(): Promise<void> {
+    this.users = await Promise.all(
+      this.users.map(async (user) => ({
+        ...user,
+        password: await bcrypt.hash(user.password, 10)
+      }))
+    );
   }
 }
 

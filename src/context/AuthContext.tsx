@@ -23,8 +23,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = (username: string, role: UserRole) => {
-    const loggedUser = AuthService.login(username, role);
+  const login = async (username: string, role: UserRole) => {
+    const loggedUser = await AuthService.login(username, role);
     setUser(loggedUser);
     navigate('/');
   };

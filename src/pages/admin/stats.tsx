@@ -21,7 +21,6 @@ import {
   Download,
   AlertCircle,
   TrendingUp,
-  FileText,
   CheckCircle,
   XCircle,
 } from 'lucide-react';
@@ -104,11 +103,15 @@ export default function StatsPage() {
     link.download = `stats-metrics-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
 
-    trackEvent('admin.export.stats', {
-      format: 'csv',
-      dataSize: csvContent.length,
-      timestamp: new Date().toISOString(),
-    }, 'admin');
+    trackEvent({
+      name: 'admin.export.stats',
+      payload: {
+        format: 'csv',
+        dataSize: csvContent.length,
+        timestamp: new Date().toISOString()
+      },
+      traceId: 'admin'
+    });
   };
 
   if (status === 'loading' || loading) {
@@ -187,8 +190,10 @@ export default function StatsPage() {
                 fill="#8884d8"
                 dataKey="count"
               >
-                {metrics.genderDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                {metrics.genderDistribution.map((_, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  </div>
                 ))}
               </Pie>
               <Tooltip />

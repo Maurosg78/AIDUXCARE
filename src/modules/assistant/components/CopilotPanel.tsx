@@ -22,15 +22,19 @@ const CopilotPanel: React.FC<CopilotPanelProps> = ({ formData, onApplySuggestion
       console.log('[Langfuse] Enviando copilot.feedback...');
       const payload = {
         patientId: formData.patientId,
-        feedback: result,
-        formData: {
+        feedback: JSON.stringify(result),
+        formData: JSON.stringify({
           motivo: formData.motivo,
           observaciones: formData.observaciones,
           diagnostico: formData.diagnostico
-        }
+        })
       };
       if (formData.traceId) {
-        await trackEvent('copilot.feedback', payload, formData.traceId);
+        await trackEvent({
+          name: 'copilot.feedback',
+          payload,
+          traceId: formData.traceId
+        });
       }
     };
     analyzeFeedback();

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useLangfuse } from '@/core/hooks/useLangfuse';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Alert } from '@/components/ui/Alert';
 
@@ -27,7 +27,7 @@ export const ActiveListeningPanel: React.FC<ActiveListeningPanelProps> = ({
   const [hasConsent, setHasConsent] = useState(false);
   const [detectedPhrases, setDetectedPhrases] = useState<DetectedPhrase[]>([]);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  const { trace } = useLangfuse();
+  const { } = useLangfuse();
 
   // Simulación de detección de frases clínicas
   const mockPhrases = [
@@ -100,7 +100,7 @@ export const ActiveListeningPanel: React.FC<ActiveListeningPanelProps> = ({
     onPhrasesValidated({
       approvedPhrases,
       rejectedPhrases,
-      traceId: trace?.id || '',
+      traceId: 'active-listening',
     });
 
     stopListening();

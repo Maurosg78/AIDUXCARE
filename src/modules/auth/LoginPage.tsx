@@ -1,120 +1,115 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Container
-} from '@mui/material';
-import { useAuth } from '../../context/AuthContext';
-import { UserRole } from './authService';
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Alert } from '@/components/ui/Alert';
+import { AlertCircle } from 'lucide-react';
+import AuthService from './authService';
 
-const LoginPage: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [role, setRole] = useState<UserRole>('fisioterapeuta');
-  const { login } = useAuth();
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim()) {
-      login(username, role);
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const user = await AuthService.login(email, password);
+      if (!user) {
+        setError('Credenciales inválidas');
+        return;
+      }
+
+      // Redirigir según el rol
+      switch (user.role) {
+        case 'fisioterapeuta':
+          router.push('/emr');
+          break;
+        case 'admin':
+          router.push('/admin');
+          break;
+        case 'auditor':
+          router.push('/audit');
+          break;
+        default:
+          router.push('/');
+      }
+    } catch (err) {
+      setError('Error al iniciar sesión');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box 
-        component="main"
-        sx={{ 
-          minHeight: '100vh', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center' 
-        }}
-      >
-        <Card 
-          component="section"
-          sx={{ width: '100%' }}
-          aria-labelledby="login-title"
-        >
-          <CardContent>
-            <Typography 
-              id="login-title"
-              variant="h5" 
-              component="h1" 
-              gutterBottom 
-              align="center"
-            >
-              AiDuxCare
-            </Typography>
-            <Typography 
-              variant="subtitle1" 
-              gutterBottom 
-              align="center" 
-              color="text.secondary"
-              id="login-description"
-            >
-              Iniciar Sesión
-            </Typography>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Iniciar Sesión
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Accede a tu cuenta de AiDuxCare
+          </p>
+        </div>
 
-            <Box 
-              component="form" 
-              onSubmit={handleSubmit} 
-              sx={{ mt: 3 }}
-              aria-describedby="login-description"
-            >
-              <TextField
-                fullWidth
-                label="Nombre de usuario"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                margin="normal"
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {error && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <span className="ml-2">{error}</span>
+            </Alert>
+          )}
+
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Email
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
                 required
-                id="username-input"
-                aria-required="true"
-                inputProps={{
-                  'aria-label': 'Nombre de usuario'
-                }}
+                value={email}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                placeholder="Email"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
               />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                Contraseña
+              </label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                placeholder="Contraseña"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              />
+            </div>
+          </div>
 
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="role-select-label">Rol</InputLabel>
-                <Select
-                  labelId="role-select-label"
-                  value={role}
-                  label="Rol"
-                  onChange={(e) => setRole(e.target.value as UserRole)}
-                  id="role-select"
-                  aria-label="Seleccionar rol"
-                >
-                  <MenuItem value="fisioterapeuta">Fisioterapeuta</MenuItem>
-                  <MenuItem value="auditor">Auditor</MenuItem>
-                  <MenuItem value="admin">Administrador</MenuItem>
-                </Select>
-              </FormControl>
-
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ mt: 3, mb: 2 }}
-                disabled={!username.trim()}
-                aria-label="Iniciar sesión"
-              >
-                Iniciar Sesión
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
-    </Container>
+          <div>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
-};
-
-export default LoginPage; 
+} 

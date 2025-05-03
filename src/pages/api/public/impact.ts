@@ -2,6 +2,18 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Langfuse } from 'langfuse-node';
 import { evaluatePatientVisit } from '@/utils/evals/structuredVisit';
 
+interface LangfuseTrace {
+  id: string;
+  startTime: string;
+  metadata?: {
+    patientId?: string;
+  };
+}
+
+interface LangfuseResponse {
+  data: LangfuseTrace[];
+}
+
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
   secretKey: process.env.VITE_LANGFUSE_SECRET_KEY || '',
@@ -28,15 +40,16 @@ export default async function handler(
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const traces = await langfuse.getTraces({
+    const response = await langfuse.getTraces({
       startTime: thirtyDaysAgo.toISOString(),
-      limit: 1000, // Aumentamos el límite para mejor cobertura
       name: 'form.update'
-    });
+    }) as LangfuseResponse;
+
+    const traces = response.data;
 
     // Agrupar por paciente (último trace por paciente)
-    const patientTraces = new Map<string, any>();
-    for (const trace of traces.data) {
+    const patientTraces = new Map<string, LangfuseTrace>();
+    for (const trace of traces) {
       const patientId = trace.metadata?.patientId;
       if (patientId) {
         const existingTrace = patientTraces.get(patientId);
@@ -66,17 +79,17 @@ export default async function handler(
 
     // Promedio de scores
     const avgScore = Math.round(
-      evaluations.reduce((sum, eval) => sum + eval.completenessScore, 0) / totalEvals
+      evaluations.reduce((sum, evaluation) => sum + evaluation.completenessScore, 0) / totalEvals
     );
 
     // Porcentaje de alta calidad (>80)
-    const highQualityCount = evaluations.filter(eval => eval.completenessScore > 80).length;
+    const highQualityCount = evaluations.filter(evaluation => evaluation.completenessScore > 80).length;
     const percentHighQuality = Math.round((highQualityCount / totalEvals) * 100);
 
     // Campos faltantes más comunes
     const missingFieldsCount = new Map<string, number>();
-    evaluations.forEach(eval => {
-      eval.missingFields.forEach(field => {
+    evaluations.forEach(evaluation => {
+      evaluation.missingFields.forEach(field => {
         missingFieldsCount.set(field, (missingFieldsCount.get(field) || 0) + 1);
       });
     });
@@ -88,8 +101,8 @@ export default async function handler(
 
     // Advertencias más comunes
     const warningsCount = new Map<string, number>();
-    evaluations.forEach(eval => {
-      eval.warnings.forEach(warning => {
+    evaluations.forEach(evaluation => {
+      evaluation.warnings.forEach(warning => {
         warningsCount.set(warning, (warningsCount.get(warning) || 0) + 1);
       });
     });

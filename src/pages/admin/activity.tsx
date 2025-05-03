@@ -19,7 +19,6 @@ import {
   Clock,
   Download,
   AlertCircle,
-  TrendingUp,
   FileText,
 } from 'lucide-react';
 import { StatCard, StatCardSkeleton } from '@/components/ui/StatCard';
@@ -99,11 +98,15 @@ export default function ActivityPage() {
     link.download = `activity-metrics-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
 
-    trackEvent('admin.export.activity', {
-      format: 'csv',
-      dataSize: csvContent.length,
-      timestamp: new Date().toISOString(),
-    }, 'admin');
+    trackEvent({
+      name: 'admin.export.activity',
+      payload: {
+        format: 'csv',
+        dataSize: csvContent.length,
+        timestamp: new Date().toISOString()
+      },
+      traceId: 'admin'
+    });
   };
 
   if (status === 'loading' || loading) {

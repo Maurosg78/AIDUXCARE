@@ -21,12 +21,12 @@ interface WeeklyStats {
 }
 
 export default function ReportsPage() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Verificar autenticación y rol de administrador
-  if (!authLoading && (!isAuthenticated || user?.role !== 'admin')) {
+  if (!user || user?.role !== 'admin') {
     router.push('/login');
     return null;
   }
@@ -44,7 +44,7 @@ export default function ReportsPage() {
 
   const handleDownload = async (format: 'json' | 'csv') => {
     try {
-      setIsDownloading(true);
+      setLoading(true);
       const response = await fetch(`/api/admin/weekly-report?format=${format}`);
       if (!response.ok) throw new Error('Error al descargar el reporte');
 
@@ -61,11 +61,11 @@ export default function ReportsPage() {
       console.error('Error al descargar el reporte:', error);
       alert('Error al descargar el reporte');
     } finally {
-      setIsDownloading(false);
+      setLoading(false);
     }
   };
 
-  if (authLoading || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -88,18 +88,18 @@ export default function ReportsPage() {
         <div className="space-x-4">
           <Button
             onClick={() => handleDownload('json')}
-            disabled={isDownloading}
-            variant="outline"
+            disabled={loading}
+            className="flex items-center gap-2 border border-gray-300"
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="w-4 h-4" />
             Descargar JSON
           </Button>
           <Button
             onClick={() => handleDownload('csv')}
-            disabled={isDownloading}
-            variant="outline"
+            disabled={loading}
+            className="flex items-center gap-2 border border-gray-300"
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="w-4 h-4" />
             Descargar CSV
           </Button>
         </div>

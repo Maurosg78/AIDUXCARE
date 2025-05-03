@@ -3,11 +3,10 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "node",
-    "esModuleInterop": true,
-    "allowJs": true,
-    "outDir": "dist/scripts",
+    "target": "ES2020",
+    "outDir": "dist",
     "noEmit": false
   },
-  "include": ["scripts/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["scripts/**/*"],
+  "exclude": ["src"]
 } 

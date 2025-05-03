@@ -110,11 +110,15 @@ export default function CopilotImpactPage() {
     link.download = `copilot-impact-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
 
-    trackEvent('admin.export.copilot-impact', {
-      format: 'csv',
-      dataSize: csvContent.length,
-      timestamp: new Date().toISOString(),
-    }, 'admin');
+    trackEvent({
+      name: 'admin.export.copilot-impact',
+      payload: {
+        format: 'csv',
+        dataSize: csvContent.length,
+        timestamp: new Date().toISOString()
+      },
+      traceId: 'admin'
+    });
   };
 
   if (status === 'loading' || loading) {
@@ -208,8 +212,10 @@ export default function CopilotImpactPage() {
                 fill="#8884d8"
                 dataKey="value"
               >
-                {feedbackData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                {feedbackData.map((_, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  </div>
                 ))}
               </Pie>
               <Tooltip />

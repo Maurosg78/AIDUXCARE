@@ -1,29 +1,19 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { TextField, Button, Stack, Typography, Drawer, Box, useTheme, useMediaQuery, IconButton } from "@mui/material";
-import { useParams } from "react-router-dom";
-import VisitAlert from "../alerts/VisitAlert";
-import VisitService from "../../services/VisitService";
-import CopilotPanel from "../../../assistant/components/CopilotPanel";
-import { CopilotFeedback } from "../../../ai/CopilotService";
-import { trackEvent } from '@/core/services/langfuseClient';
+import React, { useState, useEffect } from "react";
+import { TextField, Button, Stack, Typography, Drawer, Box, TextareaAutosize } from "@mui/material";
+import { trackEvent } from "@/core/services/langfuseClient";
 import { PatientEval } from '@/modules/emr/types/Evaluation';
-import debounce from 'lodash/debounce';
-import TextareaAutosize from '@mui/material/TextareaAutosize';
-
-console.log("[Langfuse] trackEvent está importado correctamente:", typeof trackEvent);
+import { CopilotFeedback } from '@/modules/ai/CopilotService';
+import VisitAlert from '@/modules/emr/components/alerts/VisitAlert';
+import CopilotPanel from '@/modules/assistant/components/CopilotPanel';
 
 const drawerWidth = 340;
 
 const StructuredVisitForm = () => {
   console.log("✅ RENDER STRUCTURED VISIT FORM");
   
-  const { patientId } = useParams();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
   const [formData, setFormData] = useState({
     id: crypto.randomUUID(),
-    patientId: patientId || "unknown",
+    patientId: "unknown",
     visitDate: "",
     motivo: "",
     observaciones: "",
@@ -54,7 +44,15 @@ const StructuredVisitForm = () => {
       });
     }
     
-    trackEvent("form.update", { field, value, patientId: formData.patientId }, formData.traceId);
+    trackEvent({
+      name: "form.update",
+      payload: { 
+        field, 
+        value, 
+        patientId: formData.patientId 
+      },
+      traceId: formData.traceId
+    });
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

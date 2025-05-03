@@ -4,6 +4,23 @@ import { authOptions } from '../../../core/config/auth';
 import { Langfuse } from 'langfuse-node';
 import { UserRole } from '../../../modules/auth/authService';
 
+interface LangfuseObservation {
+  id: string;
+  name: string;
+  startTime: string;
+  input?: {
+    field?: string;
+    feedback?: FeedbackType;
+  };
+  metadata?: {
+    patientId?: string;
+  };
+}
+
+interface LangfuseResponse {
+  data: LangfuseObservation[];
+}
+
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY ?? '',
   secretKey: process.env.VITE_LANGFUSE_SECRET_KEY ?? '',
@@ -40,77 +57,97 @@ interface CopilotImpactMetrics {
 
 type FeedbackType = 'positive' | 'negative' | 'ignored';
 
-// Función auxiliar para procesar eventos de sugerencias
-const processSuggestionEvents = (events: any[]) => {
-  const metrics: CopilotImpactMetrics = {
-    totalSuggestions: 0,
-    acceptedSuggestions: 0,
-    feedbackByType: {
-      positive: 0,
-      negative: 0,
-      ignored: 0,
-    },
-    suggestionsByField: {},
-    topPatients: [],
-    lastUpdated: new Date().toISOString(),
+interface PatientStats {
+  suggestions: number;
+  accepted: number;
+  lastInteraction: string;
+}
+
+// Función auxiliar para inicializar métricas
+const initializeMetrics = (): CopilotImpactMetrics => ({
+  totalSuggestions: 0,
+  acceptedSuggestions: 0,
+  feedbackByType: {
+    positive: 0,
+    negative: 0,
+    ignored: 0,
+  },
+  suggestionsByField: {},
+  topPatients: [],
+  lastUpdated: new Date().toISOString(),
+});
+
+// Función auxiliar para procesar sugerencias
+const processSuggestion = (metrics: CopilotImpactMetrics, event: LangfuseObservation) => {
+  metrics.totalSuggestions++;
+  const field = event.input?.field;
+  if (field) {
+    if (!metrics.suggestionsByField[field]) {
+      metrics.suggestionsByField[field] = {
+        total: 0,
+        accepted: 0,
+        feedback: { positive: 0, negative: 0, ignored: 0 },
+      };
+    }
+    metrics.suggestionsByField[field].total++;
+  }
+};
+
+// Función auxiliar para procesar feedback
+const processFeedback = (metrics: CopilotImpactMetrics, event: LangfuseObservation) => {
+  const feedbackType = event.input?.feedback;
+  if (feedbackType && feedbackType in metrics.feedbackByType) {
+    metrics.feedbackByType[feedbackType]++;
+    if (feedbackType === 'positive') {
+      metrics.acceptedSuggestions++;
+      const field = event.input?.field;
+      if (field && metrics.suggestionsByField[field]) {
+        metrics.suggestionsByField[field].accepted++;
+        metrics.suggestionsByField[field].feedback.positive++;
+      }
+    }
+  }
+};
+
+// Función auxiliar para actualizar estadísticas de pacientes
+const updatePatientStats = (
+  patientStats: Map<string, PatientStats>,
+  event: LangfuseObservation
+) => {
+  const patientId = event.metadata?.patientId;
+  if (!patientId) return;
+
+  const stats = patientStats.get(patientId) || {
+    suggestions: 0,
+    accepted: 0,
+    lastInteraction: event.startTime,
   };
 
-  const patientStats = new Map<string, {
-    suggestions: number;
-    accepted: number;
-    lastInteraction: string;
-  }>();
+  if (event.name === 'copilot.suggestion') {
+    stats.suggestions++;
+  } else if (event.name === 'copilot.feedback' && event.input?.feedback === 'positive') {
+    stats.accepted++;
+  }
+
+  if (new Date(event.startTime) > new Date(stats.lastInteraction)) {
+    stats.lastInteraction = event.startTime;
+  }
+
+  patientStats.set(patientId, stats);
+};
+
+// Función auxiliar para procesar eventos de sugerencias
+const processSuggestionEvents = (events: LangfuseObservation[]) => {
+  const metrics = initializeMetrics();
+  const patientStats = new Map<string, PatientStats>();
 
   events.forEach(event => {
     if (event.name === 'copilot.suggestion') {
-      metrics.totalSuggestions++;
-      const field = event.input?.field;
-      if (field) {
-        if (!metrics.suggestionsByField[field]) {
-          metrics.suggestionsByField[field] = {
-            total: 0,
-            accepted: 0,
-            feedback: { positive: 0, negative: 0, ignored: 0 },
-          };
-        }
-        metrics.suggestionsByField[field].total++;
-      }
+      processSuggestion(metrics, event);
     } else if (event.name === 'copilot.feedback') {
-      const feedbackType = event.input?.feedback as FeedbackType;
-      if (feedbackType && feedbackType in metrics.feedbackByType) {
-        metrics.feedbackByType[feedbackType]++;
-        if (feedbackType === 'positive') {
-          metrics.acceptedSuggestions++;
-          const field = event.input?.field;
-          if (field && metrics.suggestionsByField[field]) {
-            metrics.suggestionsByField[field].accepted++;
-            metrics.suggestionsByField[field].feedback.positive++;
-          }
-        }
-      }
+      processFeedback(metrics, event);
     }
-
-    // Actualizar estadísticas por paciente
-    const patientId = event.metadata?.patientId;
-    if (patientId) {
-      const stats = patientStats.get(patientId) || {
-        suggestions: 0,
-        accepted: 0,
-        lastInteraction: event.startTime,
-      };
-
-      if (event.name === 'copilot.suggestion') {
-        stats.suggestions++;
-      } else if (event.name === 'copilot.feedback' && event.input?.feedback === 'positive') {
-        stats.accepted++;
-      }
-
-      if (new Date(event.startTime) > new Date(stats.lastInteraction)) {
-        stats.lastInteraction = event.startTime;
-      }
-
-      patientStats.set(patientId, stats);
-    }
+    updatePatientStats(patientStats, event);
   });
 
   // Convertir estadísticas de pacientes a array y ordenar
@@ -143,15 +180,16 @@ export default async function handler(
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const response = await langfuse.fetchObservations({
-      toStartTime: thirtyDaysAgo,
+    // Usar el método correcto de la API de Langfuse
+    const response = await langfuse.getObservations({
+      startTime: thirtyDaysAgo.toISOString(),
       name: 'copilot.suggestion',
-    });
+    }) as LangfuseResponse;
 
-    const feedbackResponse = await langfuse.fetchObservations({
-      toStartTime: thirtyDaysAgo,
+    const feedbackResponse = await langfuse.getObservations({
+      startTime: thirtyDaysAgo.toISOString(),
       name: 'copilot.feedback',
-    });
+    }) as LangfuseResponse;
 
     const allEvents = [...(response.data || []), ...(feedbackResponse.data || [])];
     const metrics = processSuggestionEvents(allEvents);

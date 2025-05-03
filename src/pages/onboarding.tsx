@@ -10,6 +10,14 @@ export default function OnboardingPage() {
     router.push('/patients/demo-onboarding/visits/new');
   };
 
+  const handleNext = () => {
+    // Implementation of handleNext function
+  };
+
+  const handleSkip = () => {
+    // Implementation of handleSkip function
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -99,17 +107,16 @@ export default function OnboardingPage() {
 
         <div className="text-center">
           <Button
-            onClick={() => router.push('/docs/ONBOARDING_CLINICO.md')}
-            variant="outline"
+            onClick={handleNext}
             className="mr-4"
           >
-            Ver Documentación Completa
+            Siguiente
           </Button>
           <Button
-            onClick={() => router.push('/impact')}
-            variant="outline"
+            onClick={handleSkip}
+            className="w-full md:w-auto"
           >
-            Ver Dashboard de Impacto
+            Omitir
           </Button>
         </div>
       </div>

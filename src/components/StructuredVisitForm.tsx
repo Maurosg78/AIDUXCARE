@@ -17,7 +17,11 @@ const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({ formData, set
 
     const payload = { patientId: updated.patientId, [field]: value };
     console.log('[Langfuse] Enviando form.update, payload:', payload, 'traceId:', updated.traceId);
-    trackEvent('form.update', payload, updated.traceId!);
+    trackEvent({
+      name: 'form.update',
+      payload,
+      traceId: updated.traceId!
+    });
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {

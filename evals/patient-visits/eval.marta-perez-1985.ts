@@ -1,4 +1,4 @@
-import VisitService from "../../dist/modules/emr/services/VisitService.js";
+import VisitService from "../../src/modules/emr/services/VisitService";
 
 export async function runMartaPerez1985Eval() {
   console.log("\n🧪 Ejecutando prueba Marta Pérez");

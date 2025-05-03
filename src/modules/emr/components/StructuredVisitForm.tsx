@@ -50,11 +50,15 @@ export const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({
       },
     }));
 
-    trackEvent('emr.field.update', {
-      field,
-      value: newValue,
-      patientId,
-    }, formData.metadata?.traceId || '');
+    trackEvent({
+      name: 'emr.field.update',
+      payload: {
+        field,
+        value: newValue,
+        patientId
+      },
+      traceId: formData.metadata?.traceId || ''
+    });
   };
 
   const handlePhrasesValidated = (result: {
@@ -72,11 +76,15 @@ export const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({
       },
     }));
 
-    trackEvent('emr.voice.notes.validated', {
-      approvedCount: result.approvedPhrases.length,
-      rejectedCount: result.rejectedPhrases.length,
-      patientId,
-    }, result.traceId);
+    trackEvent({
+      name: 'emr.voice.notes.validated',
+      payload: {
+        approvedCount: result.approvedPhrases.length,
+        rejectedCount: result.rejectedPhrases.length,
+        patientId
+      },
+      traceId: result.traceId
+    });
   };
 
   const handleSuggestionFeedback = (

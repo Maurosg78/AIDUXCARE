@@ -1,5 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Langfuse } from 'langfuse-node';
+import { Langfuse, LangfuseTrace } from 'langfuse-node';
+
+interface LangfuseResponse {
+  data: LangfuseTrace[];
+}
 
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
@@ -31,14 +35,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Obtener todos los traces de los últimos 7 días
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const traces = await langfuse.getTraces({
-      limit: 1000,
+    const response = await langfuse.getTraces({
       startTime: sevenDaysAgo.toISOString()
-    });
+    }) as LangfuseResponse;
+
+    const traces = response.data;
 
     // Inicializar estadísticas diarias
     const dailyStatsMap = new Map<string, DailyStats>();
@@ -59,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let totalEvents = 0;
 
     // Procesar cada trace
-    traces.data.forEach(trace => {
+    traces.forEach(trace => {
       const patientId = trace.metadata?.patientId;
       if (patientId) {
         uniquePatients.add(patientId);

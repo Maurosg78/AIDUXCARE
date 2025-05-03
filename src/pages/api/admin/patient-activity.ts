@@ -1,6 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Langfuse } from 'langfuse-node';
+import { Langfuse, LangfuseTrace } from 'langfuse-node';
 import { evaluatePatientVisit } from '@/utils/evals/structuredVisit';
+
+interface LangfuseResponse {
+  data: LangfuseTrace[];
+}
 
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
@@ -21,15 +25,16 @@ export default async function handler(
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const traces = await langfuse.getTraces({
+    const response = await langfuse.getTraces({
       startTime: sevenDaysAgo.toISOString(),
-      limit: 100,
       name: 'form.update'
-    });
+    }) as LangfuseResponse;
+
+    const traces = response.data;
 
     // Agrupar por paciente y obtener evaluaciones
-    const patientTraces = new Map<string, any>();
-    for (const trace of traces.data) {
+    const patientTraces = new Map<string, LangfuseTrace>();
+    for (const trace of traces) {
       const patientId = trace.metadata?.patientId;
       if (patientId && !patientTraces.has(patientId)) {
         patientTraces.set(patientId, trace);

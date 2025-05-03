@@ -1,7 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Langfuse } from 'langfuse-node';
+import { Langfuse, LangfuseTrace } from 'langfuse-node';
 import { evaluatePatientVisit } from '@/utils/evals/structuredVisit';
 import Papa from 'papaparse';
+
+interface LangfuseResponse {
+  data: LangfuseTrace[];
+}
 
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
@@ -28,15 +32,16 @@ async function generateWeeklyReport(): Promise<WeeklyStats> {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const traces = await langfuse.getTraces({
+  const response = await langfuse.getTraces({
     startTime: sevenDaysAgo.toISOString(),
-    limit: 1000,
     name: 'form.update'
-  });
+  }) as LangfuseResponse;
+
+  const traces = response.data;
 
   // Agrupar por paciente (último trace por paciente)
-  const patientTraces = new Map<string, any>();
-  for (const trace of traces.data) {
+  const patientTraces = new Map<string, LangfuseTrace>();
+  for (const trace of traces) {
     const patientId = trace.metadata?.patientId;
     if (patientId) {
       const existingTrace = patientTraces.get(patientId);
@@ -56,13 +61,13 @@ async function generateWeeklyReport(): Promise<WeeklyStats> {
   // Calcular estadísticas
   const totalEvals = evaluations.length;
   const avgScore = totalEvals > 0
-    ? Math.round(evaluations.reduce((sum, eval) => sum + eval.completenessScore, 0) / totalEvals)
+    ? Math.round(evaluations.reduce((sum, evaluation) => sum + evaluation.completenessScore, 0) / totalEvals)
     : 0;
 
   // Contar campos faltantes
   const missingFieldsCount = new Map<string, number>();
-  evaluations.forEach(eval => {
-    eval.missingFields.forEach(field => {
+  evaluations.forEach(evaluation => {
+    evaluation.missingFields.forEach(field => {
       missingFieldsCount.set(field, (missingFieldsCount.get(field) || 0) + 1);
     });
   });
@@ -74,8 +79,8 @@ async function generateWeeklyReport(): Promise<WeeklyStats> {
 
   // Contar advertencias
   const warningsCount = new Map<string, number>();
-  evaluations.forEach(eval => {
-    eval.warnings.forEach(warning => {
+  evaluations.forEach(evaluation => {
+    evaluation.warnings.forEach(warning => {
       warningsCount.set(warning, (warningsCount.get(warning) || 0) + 1);
     });
   });
@@ -86,8 +91,8 @@ async function generateWeeklyReport(): Promise<WeeklyStats> {
     .slice(0, 5);
 
   // Contar eventos por tipo
-  const totalFormUpdates = traces.data.filter(t => t.name === 'form.update').length;
-  const totalFeedback = traces.data.filter(t => t.name === 'copilot.feedback').length;
+  const totalFormUpdates = traces.filter(t => t.name === 'form.update').length;
+  const totalFeedback = traces.filter(t => t.name === 'copilot.feedback').length;
 
   return {
     period: {

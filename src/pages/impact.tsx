@@ -2,9 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   ChartBarIcon,
   CheckCircleIcon,
-  ExclamationIcon,
-  ExclamationCircleIcon
-} from '@heroicons/react/solid';
+} from '@heroicons/react/24/outline';
 
 interface ImpactStats {
   avgScore: number;

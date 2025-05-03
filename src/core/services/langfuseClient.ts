@@ -1,4 +1,9 @@
-import { Langfuse } from 'langfuse-node';
+import { Langfuse, LangfuseTrace, LangfuseObservation } from 'langfuse-node';
+import { TrackEventOptions } from '@/types/events';
+
+interface LangfuseResponse<T> {
+  data: T[];
+}
 
 const REQUIRED_ENV_VARS = [
   'VITE_LANGFUSE_PUBLIC_KEY',
@@ -7,7 +12,7 @@ const REQUIRED_ENV_VARS = [
 ];
 
 function checkEnvVars(): boolean {
-  const missingVars = REQUIRED_ENV_VARS.filter(varName => !process.env[varName]);
+  const missingVars = REQUIRED_ENV_VARS.filter(varName => !import.meta.env[varName]);
   if (missingVars.length > 0) {
     console.warn(
       `⚠️ Langfuse: Variables de entorno faltantes: ${missingVars.join(', ')}\n` +
@@ -19,37 +24,62 @@ function checkEnvVars(): boolean {
 }
 
 const langfuse = new Langfuse({
-  publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
-  secretKey: process.env.VITE_LANGFUSE_SECRET_KEY || '',
-  baseUrl: process.env.VITE_LANGFUSE_HOST || 'https://cloud.langfuse.com'
+  publicKey: import.meta.env.VITE_LANGFUSE_PUBLIC_KEY,
+  secretKey: import.meta.env.VITE_LANGFUSE_SECRET_KEY,
+  baseUrl: import.meta.env.VITE_LANGFUSE_HOST,
 });
 
-export async function trackEvent(
-  name: string,
-  metadata: Record<string, string | number | boolean>,
-  traceId?: string
-): Promise<void> {
+export const trackEvent = async ({ name, payload, traceId }: TrackEventOptions) => {
   if (!checkEnvVars()) return;
 
   try {
-    await langfuse.trace(traceId || 'default').observation({
+    const trace = langfuse.trace({
+      name: traceId || 'default',
+      metadata: payload,
+    });
+    await trace.createObservation({
       name,
-      metadata,
-      startTime: new Date().toISOString()
+      input: payload,
+      metadata: {
+        ...payload,
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
-    console.error('Error al registrar evento en Langfuse:', error);
+    console.error('Error tracking event:', error);
   }
-}
+};
+
+export const getTraces = async (startTime: string, name?: string): Promise<LangfuseResponse<LangfuseTrace>> => {
+  return langfuse.getTraces({
+    startTime,
+    name,
+  });
+};
+
+export const getTrace = async (traceId: string): Promise<LangfuseTrace> => {
+  return langfuse.getTrace(traceId);
+};
+
+export const getObservations = async (startTime: string, name?: string): Promise<LangfuseResponse<LangfuseObservation>> => {
+  return langfuse.getObservations({
+    startTime,
+    name,
+  });
+};
 
 // Función de diagnóstico para verificar conectividad
 export async function verifyLangfuseConnection(): Promise<boolean> {
   if (!checkEnvVars()) return false;
 
   try {
-    await trackEvent('diagnostic.ping', {
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development'
+    await trackEvent({
+      name: 'diagnostic.ping',
+      payload: {
+        timestamp: new Date().toISOString(),
+        environment: import.meta.env.MODE || 'development'
+      },
+      traceId: 'default'
     });
     console.log('✅ Langfuse: Conexión verificada correctamente');
     return true;
