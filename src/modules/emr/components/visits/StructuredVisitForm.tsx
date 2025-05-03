@@ -10,6 +10,8 @@ import { PatientEval } from '@/modules/emr/types/Evaluation';
 import debounce from 'lodash/debounce';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 
+console.log("[Langfuse] trackEvent está importado correctamente:", typeof trackEvent);
+
 const drawerWidth = 340;
 
 const StructuredVisitForm = () => {
@@ -41,6 +43,17 @@ const StructuredVisitForm = () => {
   const handleChange = (field: keyof PatientEval) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     console.log(`[Langfuse] Cambio en campo '${field}' →`, value);
+    
+    if (typeof trackEvent !== "function") {
+      console.error("[Langfuse] ERROR: trackEvent no es una función");
+    } else {
+      console.log("[Langfuse] Ejecutando trackEvent con:", {
+        field: field,
+        value: value,
+        traceId: formData?.traceId
+      });
+    }
+    
     trackEvent("form.update", { field, value, patientId: formData.patientId }, formData.traceId);
     setFormData(prev => ({ ...prev, [field]: value }));
   };
