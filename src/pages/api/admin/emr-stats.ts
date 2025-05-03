@@ -1,0 +1,117 @@
+import { NextApiRequest, NextApiResponse } from 'next';
+import { Langfuse } from 'langfuse-node';
+
+const langfuse = new Langfuse({
+  publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
+  secretKey: process.env.VITE_LANGFUSE_SECRET_KEY || '',
+  baseUrl: process.env.VITE_LANGFUSE_HOST || 'https://cloud.langfuse.com'
+});
+
+interface DailyStats {
+  date: string;
+  formUpdates: number;
+  feedbacks: number;
+}
+
+interface FieldStats {
+  field: string;
+  count: number;
+}
+
+interface EMRStats {
+  dailyStats: DailyStats[];
+  topFields: FieldStats[];
+  averageEventsPerVisit: number;
+  lastUpdated: string;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Método no permitido' });
+  }
+
+  try {
+    // Obtener todos los traces de los últimos 7 días
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const traces = await langfuse.getTraces({
+      limit: 1000,
+      startTime: sevenDaysAgo.toISOString()
+    });
+
+    // Inicializar estadísticas diarias
+    const dailyStatsMap = new Map<string, DailyStats>();
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      dailyStatsMap.set(dateStr, {
+        date: dateStr,
+        formUpdates: 0,
+        feedbacks: 0
+      });
+    }
+
+    // Contador de campos modificados
+    const fieldCounts = new Map<string, number>();
+    const uniquePatients = new Set<string>();
+    let totalEvents = 0;
+
+    // Procesar cada trace
+    traces.data.forEach(trace => {
+      const patientId = trace.metadata?.patientId;
+      if (patientId) {
+        uniquePatients.add(patientId);
+      }
+
+      trace.observations?.forEach(obs => {
+        const date = new Date(obs.startTime).toISOString().split('T')[0];
+        const dailyStats = dailyStatsMap.get(date);
+        
+        if (dailyStats) {
+          if (obs.name === 'form.update') {
+            dailyStats.formUpdates++;
+            totalEvents++;
+            
+            // Contar campos modificados
+            const inputField = obs.input?.field;
+            if (inputField) {
+              fieldCounts.set(inputField, (fieldCounts.get(inputField) || 0) + 1);
+            }
+          } else if (obs.name === 'copilot.feedback') {
+            dailyStats.feedbacks++;
+            totalEvents++;
+          }
+        }
+      });
+    });
+
+    // Convertir estadísticas diarias a array y ordenar por fecha
+    const dailyStats = Array.from(dailyStatsMap.values())
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Obtener top 5 campos más modificados
+    const topFields = Array.from(fieldCounts.entries())
+      .map(([field, count]) => ({ field, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    // Calcular promedio de eventos por visita
+    const averageEventsPerVisit = uniquePatients.size > 0 
+      ? totalEvents / uniquePatients.size 
+      : 0;
+
+    const stats: EMRStats = {
+      dailyStats,
+      topFields,
+      averageEventsPerVisit,
+      lastUpdated: new Date().toISOString()
+    };
+
+    res.status(200).json(stats);
+  } catch (error) {
+    console.error('Error al obtener estadísticas:', error);
+    res.status(500).json({ error: 'Error al obtener estadísticas' });
+  }
+} 
