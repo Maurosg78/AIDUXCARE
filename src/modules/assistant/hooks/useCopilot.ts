@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useLangfuse } from '@/core/hooks/useLangfuse';
 import { PatientEval } from '@/types/Evaluation';
+import { trackEvent } from '@/core/services/langfuseClient';
 
 interface UseCopilotProps {
   patientEval: PatientEval;
@@ -16,9 +17,16 @@ interface StructuredSuggestion {
   treatmentPlan?: string;
 }
 
+type SuggestionFeedback = 'positive' | 'negative' | 'ignored';
+
+interface SuggestionFeedbackState {
+  [key: string]: SuggestionFeedback;
+}
+
 export const useCopilot = ({ patientEval }: UseCopilotProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<StructuredSuggestion | null>(null);
+  const [feedbackState, setFeedbackState] = useState<SuggestionFeedbackState>({});
   const { trace } = useLangfuse();
 
   const getContext = useCallback(() => {
@@ -31,7 +39,7 @@ export const useCopilot = ({ patientEval }: UseCopilotProps) => {
       `Seguimiento: ${patientEval.followUp || ''}`,
     ];
 
-    if (patientEval.voiceApprovedNotes?.length > 0) {
+    if (patientEval.voiceApprovedNotes && patientEval.voiceApprovedNotes.length > 0) {
       context.push(
         '// source: audioValidated',
         'Contexto clínico hablado (aprobado por el profesional):',
@@ -44,7 +52,7 @@ export const useCopilot = ({ patientEval }: UseCopilotProps) => {
           metadata: {
             source: 'voice',
             notes: patientEval.voiceApprovedNotes,
-            traceId: patientEval.metadata?.traceId,
+            traceId: patientEval.metadata?.traceId || '',
           },
         });
       }
@@ -53,8 +61,41 @@ export const useCopilot = ({ patientEval }: UseCopilotProps) => {
     return context.join('\n');
   }, [patientEval, trace]);
 
+  const submitSuggestionFeedback = useCallback((
+    field: keyof StructuredSuggestion,
+    feedback: SuggestionFeedback,
+    value: string | string[]
+  ) => {
+    setFeedbackState(prev => ({
+      ...prev,
+      [field]: feedback,
+    }));
+
+    trackEvent('copilot.suggestion.feedback', {
+      field,
+      feedback,
+      valueSuggested: value,
+      patientId: patientEval.patientId,
+      traceId: patientEval.metadata?.traceId || '',
+      source: 'voice',
+    }, patientEval.metadata?.traceId || '');
+
+    if (trace) {
+      trace.event({
+        name: 'copilot.suggestion.feedback',
+        metadata: {
+          field,
+          feedback,
+          valueSuggested: value,
+          traceId: patientEval.metadata?.traceId || '',
+          source: 'voice',
+        },
+      });
+    }
+  }, [patientEval, trace]);
+
   const analyzeVoiceNotes = useCallback(async () => {
-    if (!patientEval.voiceApprovedNotes?.length) return null;
+    if (!patientEval.voiceApprovedNotes || patientEval.voiceApprovedNotes.length === 0) return null;
 
     setIsLoading(true);
     try {
@@ -89,13 +130,14 @@ ${patientEval.voiceApprovedNotes.join('\n')}
       };
 
       setSuggestions(mockResponse);
+      setFeedbackState({});
 
       if (trace) {
         trace.event({
           name: 'copilot.suggestion.generated',
           metadata: {
             source: 'voice',
-            traceId: patientEval.metadata?.traceId,
+            traceId: patientEval.metadata?.traceId || '',
             suggestedFields: Object.keys(mockResponse),
             llmResponse: mockResponse,
           },
@@ -122,7 +164,7 @@ ${patientEval.voiceApprovedNotes.join('\n')}
           metadata: {
             question,
             hasVoiceNotes: patientEval.voiceApprovedNotes?.length > 0,
-            traceId: patientEval.metadata?.traceId,
+            traceId: patientEval.metadata?.traceId || '',
           },
         });
       }
@@ -145,5 +187,7 @@ ${patientEval.voiceApprovedNotes.join('\n')}
     askQuestion,
     analyzeVoiceNotes,
     suggestions,
+    feedbackState,
+    submitSuggestionFeedback,
   };
 }; 
