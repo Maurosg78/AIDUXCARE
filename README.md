@@ -25,6 +25,12 @@ npm run dev
 npm run build
 ```
 
+## Documentación
+
+La documentación completa del proyecto se encuentra en la carpeta `/docs`:
+
+- [Índice de Documentación](./docs/README_DOCS.md) - Acceso a toda la documentación técnica y operativa
+
 ## Despliegue en Vercel
 
 1. Preparación local:
