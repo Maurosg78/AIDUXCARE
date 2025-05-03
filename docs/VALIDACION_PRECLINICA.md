@@ -1,14 +1,16 @@
 # Validación Pre-Clínica AiDuxCare
 
 ## Estado de Configuración (Actualizado: 2024-03-19)
-- **Rama**: pre-clinical-test
+- **Rama**: pre-clinical-test ✅
 - **URL**: https://aiduxcare-test.vercel.app
-- **Estado**: ⚠️ En proceso de despliegue
+- **Estado**: ✅ Build exitoso - Listo para deploy
 
 ## Correcciones Técnicas Realizadas
-- ✅ Configuración de PostCSS actualizada
-- ✅ Dependencias de Tailwind actualizadas
-- ✅ Formato de archivos de configuración corregido
+- ✅ Configuración de PostCSS actualizada (v8.4.31)
+- ✅ Dependencias de Tailwind actualizadas (v3.3.0)
+- ✅ Build local verificado y exitoso
+- ✅ Errores de CSS corregidos
+- ✅ Configuración de Vite optimizada
 
 ## Variables de Entorno para Vercel
 ```env
@@ -26,19 +28,20 @@ VERCEL_ORG_ID=[Opcional]
 VERCEL_PROJECT_ID=[Opcional]
 ```
 
-## Plan de Validación
+## Plan de Deploy y Validación
 
 ### 1. 🚀 Deploy en Vercel
-- [ ] Confirmar rama pre-clinical-test
-- [ ] Configurar variables de entorno en Vercel
-- [ ] Realizar deploy inicial
+- [ ] Acceder al dashboard de Vercel
+- [ ] Importar proyecto desde GitHub (rama: pre-clinical-test)
+- [ ] Configurar variables de entorno listadas arriba
+- [ ] Ejecutar deploy inicial
 - [ ] Verificar build exitoso
 
 ### 2. 🔍 Validación de Usuarios
-- [ ] Probar acceso con laura@clinicatest.com
-- [ ] Probar acceso con jose@valenciamed.com
-- [ ] Probar acceso con ines@movsalud.es
-- [ ] Verificar permisos de EMR
+- [ ] Probar acceso con laura@clinicatest.com / Test1234!
+- [ ] Probar acceso con jose@valenciamed.com / Test1234!
+- [ ] Probar acceso con ines@movsalud.es / Test1234!
+- [ ] Verificar acceso a /dashboard/emr
 - [ ] Validar formulario de feedback
 
 ### 3. 📊 Validación de Eventos Langfuse
@@ -54,24 +57,24 @@ VERCEL_PROJECT_ID=[Opcional]
 - [ ] Validar sugerencias del copiloto
 
 ### 5. 🔧 Health Check
-- [ ] Ejecutar script de validación
+- [ ] Ejecutar `npx tsx scripts/health-check.ts`
 - [ ] Verificar endpoints activos
 - [ ] Confirmar conexiones de API
 - [ ] Validar respuestas de servicios
 
-## Estado de Validación
-⚠️ **En Progreso**
-- Build local corregido
-- Pendiente deploy en Vercel
-- Pendiente validación de usuarios
-- Pendiente verificación de eventos
+## Estado Actual
+✅ **Listo para Deploy**
+- Build local verificado y exitoso
+- Configuración técnica completada
+- Dependencias actualizadas y estables
+- Listo para deploy en Vercel
 
 ## Próximos Pasos
-1. Completar deploy en Vercel
+1. Realizar deploy en Vercel
 2. Ejecutar validaciones automáticas
 3. Realizar pruebas manuales
 4. Documentar resultados
-5. Aprobar para uso clínico
+5. Notificar a Mauricio Sobarzo para pruebas oficiales
 
 ## Contacto Soporte
 - **Email**: soporte@aiduxcare.com

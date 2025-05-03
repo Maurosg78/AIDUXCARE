@@ -1,8 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import tailwindcss from 'tailwindcss'
-import autoprefixer from 'autoprefixer'
 
 export default defineConfig({
   plugins: [react()],
@@ -14,7 +12,6 @@ export default defineConfig({
     },
   },
   define: {
-    'process.env': process.env,
     'process.env.VITE_LANGFUSE_PUBLIC_KEY': JSON.stringify(process.env.VITE_LANGFUSE_PUBLIC_KEY),
     'process.env.VITE_LANGFUSE_SECRET_KEY': JSON.stringify(process.env.VITE_LANGFUSE_SECRET_KEY),
     'process.env.VITE_LANGFUSE_BASE_URL': JSON.stringify(process.env.VITE_LANGFUSE_BASE_URL),
@@ -49,11 +46,6 @@ export default defineConfig({
     include: ['react', 'react-dom', 'next-auth']
   },
   css: {
-    postcss: {
-      plugins: [
-        tailwindcss,
-        autoprefixer,
-      ],
-    },
+    postcss: './postcss.config.mjs'
   }
 });
