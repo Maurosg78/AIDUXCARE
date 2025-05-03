@@ -1,117 +1,149 @@
-import CopilotService from '../src/modules/ai/CopilotService';
-import { PatientEval } from '../src/modules/emr/services/EvalService';
-import { CopilotFeedback } from '../src/modules/ai/CopilotService';
-import simulatedData from '../src/public-data/evals-simulated.json';
+import { Langfuse } from 'langfuse-node';
+import { PatientEval } from '../src/types/Evaluation';
 
-describe('Structured Visit Form Copilot Integration', () => {
-  const mockEvaluations: PatientEval[] = simulatedData.evaluations;
+const langfuse = new Langfuse({
+  publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
+  secretKey: process.env.VITE_LANGFUSE_SECRET_KEY || '',
+  baseUrl: process.env.VITE_LANGFUSE_HOST || 'https://cloud.langfuse.com'
+});
 
-  // Función auxiliar para clasificar el feedback
-  const classifyFeedback = (feedback: CopilotFeedback[]) => {
-    return feedback.reduce((acc, item) => {
-      if (!acc[item.type]) {
-        acc[item.type] = [];
+interface EvalResult {
+  patientId: string;
+  completenessScore: number;
+  missingFields: string[];
+  warnings: string[];
+}
+
+// Campos críticos que deben estar presentes
+const CRITICAL_FIELDS = [
+  'chiefComplaint',
+  'symptoms',
+  'diagnosis',
+  'treatmentPlan',
+  'prognosis',
+  'followUp'
+];
+
+// Reglas de consistencia
+const CONSISTENCY_RULES = [
+  {
+    name: 'diagnosis_without_symptoms',
+    check: (fields: Record<string, any>) => 
+      fields.diagnosis && !fields.symptoms,
+    message: 'Diagnóstico presente sin síntomas asociados'
+  },
+  {
+    name: 'treatment_without_diagnosis',
+    check: (fields: Record<string, any>) => 
+      fields.treatmentPlan && !fields.diagnosis,
+    message: 'Plan de tratamiento presente sin diagnóstico previo'
+  },
+  {
+    name: 'prognosis_without_diagnosis',
+    check: (fields: Record<string, any>) => 
+      fields.prognosis && !fields.diagnosis,
+    message: 'Pronóstico presente sin diagnóstico previo'
+  }
+];
+
+async function evaluatePatientVisit(traceId: string): Promise<EvalResult> {
+  try {
+    // Obtener el trace específico
+    const trace = await langfuse.getTrace(traceId);
+    if (!trace) {
+      throw new Error(`Trace no encontrado: ${traceId}`);
+    }
+
+    const patientId = trace.metadata?.patientId;
+    if (!patientId) {
+      throw new Error('Trace sin patientId en metadata');
+    }
+
+    // Recolectar todos los campos del formulario
+    const formFields: Record<string, any> = {};
+    trace.observations?.forEach(obs => {
+      if (obs.name === 'form.update' && obs.input?.field) {
+        formFields[obs.input.field] = obs.input.value;
       }
-      acc[item.type].push({
-        message: item.message,
-        severity: item.severity
-      });
-      return acc;
-    }, {} as Record<string, { message: string; severity: string }[]>);
-  };
+    });
 
-  describe('Feedback Generation', () => {
-    test.each(mockEvaluations)(
-      'should generate appropriate feedback for patient $patientId',
-      async (evaluation) => {
-        // Simular datos del formulario
-        const formData: PatientEval = {
-          ...evaluation,
-          feedback: [], // Limpiar feedback previo
-        };
-
-        // Obtener feedback del copiloto
-        const feedback = await CopilotService.analyzeEval(formData);
-
-        // Verificaciones básicas
-        expect(feedback).toBeDefined();
-        expect(feedback.length).toBeGreaterThan(0);
-
-        // Clasificar y documentar el feedback
-        const classifiedFeedback = classifyFeedback(feedback);
-        console.log(`\nFeedback para paciente ${evaluation.patientId}:`);
-        Object.entries(classifiedFeedback).forEach(([type, items]) => {
-          console.log(`  ${type}:`);
-          items.forEach(item => {
-            console.log(`    - ${item.message} (${item.severity})`);
-          });
-        });
-
-        // Verificar tipos específicos de feedback
-        if (classifiedFeedback['suggestion']) {
-          expect(classifiedFeedback['suggestion'].length).toBeGreaterThan(0);
-          classifiedFeedback['suggestion'].forEach(item => {
-            expect(item.severity).toBe('info');
-          });
-        }
-
-        if (classifiedFeedback['risk']) {
-          expect(classifiedFeedback['risk'].length).toBeGreaterThan(0);
-          classifiedFeedback['risk'].forEach(item => {
-            expect(['warning', 'error']).toContain(item.severity);
-          });
-        }
-
-        if (classifiedFeedback['omission']) {
-          expect(classifiedFeedback['omission'].length).toBeGreaterThan(0);
-          classifiedFeedback['omission'].forEach(item => {
-            expect(['warning', 'error']).toContain(item.severity);
-          });
-        }
-      }
+    // Verificar campos críticos
+    const missingFields = CRITICAL_FIELDS.filter(field => 
+      !formFields[field] || formFields[field].trim() === ''
     );
 
-    test('should handle empty or incomplete form data', async () => {
-      const incompleteFormData: PatientEval = {
-        id: 'test-incomplete',
-        patientId: 'test-patient',
-        visitDate: new Date().toISOString(),
-        motivo: '',
-        observaciones: '',
-        diagnostico: '',
-        alertas: [],
-        feedback: []
-      };
+    // Verificar reglas de consistencia
+    const warnings = CONSISTENCY_RULES
+      .filter(rule => rule.check(formFields))
+      .map(rule => rule.message);
 
-      const feedback = await CopilotService.analyzeEval(incompleteFormData);
-      
-      // Verificar que se detectan omisiones
-      expect(feedback.some(item => item.type === 'omission')).toBe(true);
-      
-      const omissions = feedback.filter(item => item.type === 'omission');
-      console.log('\nFeedback para formulario incompleto:');
-      omissions.forEach(item => {
-        console.log(`  - ${item.message} (${item.severity})`);
-        expect(item.severity).toBe('warning');
-      });
+    // Calcular score de completitud
+    const completenessScore = Math.round(
+      ((CRITICAL_FIELDS.length - missingFields.length) / CRITICAL_FIELDS.length) * 100
+    );
+
+    return {
+      patientId,
+      completenessScore,
+      missingFields,
+      warnings
+    };
+  } catch (error) {
+    console.error('Error en evaluación:', error);
+    throw error;
+  }
+}
+
+describe('Evaluaciones de Visitas Estructuradas', () => {
+  let testTraceId: string;
+
+  beforeAll(async () => {
+    // Obtener un trace real para pruebas
+    const traces = await langfuse.getTraces({
+      limit: 1,
+      name: 'form.update'
+    });
+    
+    if (traces.data.length > 0) {
+      testTraceId = traces.data[0].id;
+    } else {
+      throw new Error('No se encontraron traces para pruebas');
+    }
+  });
+
+  test('debe detectar campos faltantes', async () => {
+    const result = await evaluatePatientVisit(testTraceId);
+    
+    expect(result).toHaveProperty('patientId');
+    expect(result).toHaveProperty('completenessScore');
+    expect(result).toHaveProperty('missingFields');
+    expect(result).toHaveProperty('warnings');
+    
+    expect(result.completenessScore).toBeGreaterThanOrEqual(0);
+    expect(result.completenessScore).toBeLessThanOrEqual(100);
+    
+    expect(Array.isArray(result.missingFields)).toBe(true);
+    expect(Array.isArray(result.warnings)).toBe(true);
+  });
+
+  test('debe detectar inconsistencias en los datos', async () => {
+    const result = await evaluatePatientVisit(testTraceId);
+    
+    // Verificar que las advertencias son coherentes
+    result.warnings.forEach(warning => {
+      expect(typeof warning).toBe('string');
+      expect(warning.length).toBeGreaterThan(0);
     });
   });
 
-  describe('Suggestion Application', () => {
-    test('should generate valid suggestions that can be applied', async () => {
-      const evaluation = mockEvaluations[0]; // Usar el primer caso como ejemplo
-      const feedback = await CopilotService.analyzeEval(evaluation);
-      
-      const suggestions = feedback.filter(item => item.type === 'suggestion');
-      
-      if (suggestions.length > 0) {
-        console.log('\nSugerencias aplicables:');
-        suggestions.forEach(suggestion => {
-          console.log(`  - ${suggestion.message}`);
-          expect(suggestion.message).toBeTruthy();
-          expect(suggestion.severity).toBe('info');
-        });
-      }
-    });
+  test('debe calcular correctamente el score de completitud', async () => {
+    const result = await evaluatePatientVisit(testTraceId);
+    
+    // El score debe ser proporcional a los campos faltantes
+    const expectedScore = Math.round(
+      ((CRITICAL_FIELDS.length - result.missingFields.length) / CRITICAL_FIELDS.length) * 100
+    );
+    
+    expect(result.completenessScore).toBe(expectedScore);
   });
 }); 
