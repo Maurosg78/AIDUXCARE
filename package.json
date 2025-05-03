@@ -4,12 +4,13 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
-    "@mui/x-date-pickers": "^6.19.4",
+    "@mui/x-date-pickers": "^6.20.2",
     "@tanstack/react-query": "^5.20.5",
     "@types/papaparse": "^5.3.15",
     "@types/recharts": "^1.8.29",
     "axios": "^1.6.7",
-    "date-fns": "^3.3.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^3.6.0",
     "dotenv": "^16.4.4",
     "langfuse": "^2.7.0",
     "langfuse-node": "^2.7.0",
@@ -21,6 +22,7 @@
     "react-dom": "18.2.0",
     "react-router-dom": "^6.22.1",
     "recharts": "^2.12.0",
+    "tailwind-merge": "^3.2.0",
     "uuid": "^9.0.1"
   },
   "scripts": {
