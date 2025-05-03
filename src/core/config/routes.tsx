@@ -20,6 +20,7 @@ import StructuredVisitForm from "@/modules/emr/components/visits/StructuredVisit
 import PatientActivityDashboard from "@/pages/admin/activity";
 import EMRStatsDashboard from "@/pages/admin/stats";
 import ReportsPage from "@/pages/admin/reports";
+import OnboardingPage from "@/modules/auth/OnboardingPage";
 
 const routes: RouteObject[] = [
   {
@@ -99,6 +100,10 @@ const routes: RouteObject[] = [
         <HomePage />
       </ProtectedRoute>
     )
+  },
+  {
+    path: '/onboarding',
+    element: <OnboardingPage />
   },
   {
     path: '*',
