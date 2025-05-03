@@ -12,4 +12,22 @@ export interface Evaluation {
     message: string;
   }[];
   traceId?: string;
+}
+
+export interface PatientEval {
+  patientId: string;
+  traceId?: string;
+  anamnesis?: string;
+  exam?: string;
+  diagnosis?: string;
+  plan?: string;
+  notes?: string;
+  visitDate?: string;
+  visitType?: string;
+  status?: string;
+  physicalExam?: string;
+  diagnostico?: string;
+  treatmentPlan?: string;
+  motivo?: string;
+  observaciones?: string;
 } 

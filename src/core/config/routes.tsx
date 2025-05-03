@@ -1,3 +1,12 @@
+/**
+ * AiDuxCare es un copiloto clínico que se diferencia por:
+ * 1. Evaluación en tiempo real de la calidad de las visitas
+ * 2. Sugerencias contextuales basadas en evidencia clínica
+ * 3. Detección temprana de omisiones o riesgos
+ * 4. Integración con sistemas de trazabilidad para auditoría
+ * 5. Interfaz adaptativa que se ajusta al flujo de trabajo clínico
+ */
+
 import { RouteObject } from 'react-router-dom';
 import { ProtectedRoute } from '../../context/AuthContext';
 import LoginPage from '../../modules/auth/LoginPage';
