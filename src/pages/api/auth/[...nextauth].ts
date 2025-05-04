@@ -1,58 +1,68 @@
 import NextAuth, { NextAuthOptions, DefaultSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { validateCredentials } from '@/modules/auth/authService';
-import { UserRole } from '@/modules/auth/authService';
-import { NextApiRequest, NextApiResponse } from 'next';
 
+// Extender los tipos de NextAuth
 declare module 'next-auth' {
-  interface User {
-    role?: UserRole;
-  }
-  
   interface Session {
     user: {
-      role?: UserRole;
+      role?: string;
     } & DefaultSession['user'];
+  }
+  interface User {
+    role?: string;
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
-    role?: UserRole;
+    role?: string;
   }
 }
 
+// Configuración de autenticación
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
-        password: { label: 'Contraseña', type: 'password' },
+        password: { label: 'Contraseña', type: 'password' }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Se requieren credenciales');
+        const validEmail = 'mauro@clinicaaxonvalencia.com';
+        const validPassword = 'Tester1234!';
+
+        if (
+          credentials?.email === validEmail &&
+          credentials?.password === validPassword
+        ) {
+          return {
+            id: '1',
+            name: 'Mauricio',
+            email: validEmail,
+            role: 'fisioterapeuta'
+          };
         }
-
-        const user = await validateCredentials(
-          credentials.email,
-          credentials.password
-        );
-
-        if (!user) {
-          throw new Error('Credenciales inválidas');
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
-      },
+        
+        console.error('Intento de login fallido:', {
+          providedEmail: credentials?.email,
+          timestamp: new Date().toISOString()
+        });
+        
+        return null;
+      }
     }),
   ],
+  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 24 horas
+  },
+  pages: {
+    signIn: '/login',
+    error: '/login',
+    signOut: '/'
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -65,51 +75,34 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role;
       }
       return session;
-    },
+    }
   },
-  pages: {
-    signIn: '/login',
-    error: '/login',
-    signOut: '/',
-  },
-  session: {
-    strategy: 'jwt',
-    maxAge: 24 * 60 * 60, // 24 horas
-  },
-  secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',
 };
 
-// Crear instancia del handler
+// Handler de NextAuth
 const handler = NextAuth(authOptions);
 
-// Middleware simplificado
-export default async function wrappedHandler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+// Middleware para manejar las respuestas
+export default async function wrappedHandler(req: any, res: any) {
   // Asegurar headers de respuesta JSON
-  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
 
-  // Verificar variables de entorno críticas
-  if (!process.env.NEXTAUTH_URL || !process.env.NEXTAUTH_SECRET) {
-    return res.status(500).json({
-      error: true,
-      message: 'Configuración incompleta del servidor'
-    });
-  }
-
-  // Para endpoints de sesión
+  // Para endpoints de sesión sin token
   if (req.url?.includes('/session')) {
-    const hasSessionToken = req.headers.cookie?.includes('next-auth.session-token') ||
-                          req.headers.cookie?.includes('__Secure-next-auth.session-token');
+    const hasSessionToken = 
+      req.headers.cookie?.includes('next-auth.session-token') ||
+      req.headers.cookie?.includes('__Secure-next-auth.session-token');
     
     if (!hasSessionToken) {
-      return res.status(200).json({ user: null });
+      return res.status(200).json({
+        user: null,
+        expires: null
+      });
     }
   }
 
-  // Manejar la solicitud con NextAuth
   try {
     await handler(req, res);
   } catch (error) {

@@ -5,12 +5,12 @@
       "src": "/api/auth/(.*)",
       "dest": "/api/auth/$1",
       "headers": {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store, max-age=0",
         "Access-Control-Allow-Credentials": "true",
         "Access-Control-Allow-Origin": "https://aiduxcare-muhku3co6-mauricio-sobarzos-projects.vercel.app",
         "Access-Control-Allow-Methods": "GET,OPTIONS,PATCH,DELETE,POST,PUT",
-        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization",
+        "Cache-Control": "no-store, max-age=0",
+        "Content-Type": "application/json; charset=utf-8"
       }
     },
     {
@@ -19,6 +19,18 @@
       "headers": {
         "Cache-Control": "no-store, max-age=0"
       }
+    },
+    {
+      "src": "/login",
+      "dest": "/login"
+    },
+    {
+      "src": "/dashboard",
+      "dest": "/dashboard"
+    },
+    {
+      "src": "/admin",
+      "dest": "/admin"
     },
     {
       "src": "/(.*)",
@@ -30,8 +42,6 @@
   ],
   "env": {
     "NEXTAUTH_URL": "https://aiduxcare-muhku3co6-mauricio-sobarzos-projects.vercel.app",
-    "VITE_LANGFUSE_PUBLIC_KEY": "pk-lf-57c6e2ec-8603-44cf-b030-cddcef1f1f3d",
-    "VITE_LANGFUSE_SECRET_KEY": "sk-lf-c1872960-86af-4899-b275-b7de8d536794",
-    "VITE_LANGFUSE_BASE_URL": "https://cloud.langfuse.com"
+    "NEXTAUTH_SECRET": "R9YcT2Jm8A4qGz5Xt7pDq2LgHbK6n9Ey+zF1iQsOAdU="
   }
 } 

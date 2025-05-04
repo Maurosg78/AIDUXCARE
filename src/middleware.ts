@@ -1,19 +1,63 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { publicRoutes } from '@/core/config/routes';
+import { getToken } from 'next-auth/jwt';
+
+// Rutas que requieren autenticación
+const protectedRoutes = ['/dashboard', '/admin'];
+// Rutas que requieren roles específicos
+const roleRoutes = {
+  '/admin': ['admin'],
+  '/dashboard': ['fisioterapeuta', 'admin']
+};
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
+  const { pathname } = request.nextUrl;
 
-  // Permitir acceso a rutas públicas
-  if (publicRoutes.some(route => route.path === pathname)) {
+  // Bypass para archivos estáticos y API routes que no son de auth
+  if (
+    pathname.includes('_next') || 
+    pathname.includes('static') ||
+    pathname.includes('favicon') ||
+    (pathname.includes('/api') && !pathname.includes('/api/auth'))
+  ) {
     return NextResponse.next();
   }
 
-  // Verificar sesión
-  const session = request.cookies.get('next-auth.session-token');
-  if (!session) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // Manejo especial para /api/auth/session
+  if (pathname === '/api/auth/session') {
+    const response = NextResponse.next();
+    response.headers.set('Content-Type', 'application/json; charset=utf-8');
+    response.headers.set('Cache-Control', 'no-store, max-age=0');
+    return response;
+  }
+
+  // Obtener token y verificar autenticación
+  const token = await getToken({ 
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET 
+  });
+
+  // Verificar si la ruta requiere autenticación
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  
+  if (isProtectedRoute && !token) {
+    const url = new URL('/login', request.url);
+    url.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Verificar roles para rutas específicas
+  if (token?.role) {
+    for (const [route, roles] of Object.entries(roleRoutes)) {
+      if (pathname.startsWith(route) && !roles.includes(token.role as string)) {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+    }
+  }
+
+  // Redirigir /login si ya está autenticado
+  if (pathname === '/login' && token) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();
@@ -22,13 +66,12 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
+     * Match all paths except:
+     * 1. /api routes that are not auth related
+     * 2. /_next (Next.js internals)
+     * 3. /static (static files)
+     * 4. /favicon.ico, /robots.txt (static files)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!api/(?!auth)|_next/|static/|favicon|robots).*)',
   ],
 }; 
