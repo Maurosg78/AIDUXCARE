@@ -6,17 +6,17 @@ import { PaymentTracker } from '../PaymentTracker';
 describe('Flujo de Visita - Caso Andreina Saade', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn();
+    vi.resetModules();
+    localStorage.clear();
   });
 
   it('debería manejar el flujo completo de registro y agendamiento', async () => {
     // 1. Datos de la paciente
     const pacienteData = {
-      id: '123e4567-e89b-12d3-a456-426614174000',
       nombre: 'Andreina Saade',
       edad: 42,
       fechaNacimiento: '1982-03-20',
-      genero: 'femenino',
+      genero: 'femenino' as const,
       telefono: '+34600000000',
       email: 'andreina.saade@email.com',
       seguroMedico: false,
@@ -24,111 +24,93 @@ describe('Flujo de Visita - Caso Andreina Saade', () => {
 
     // 2. Datos de la visita
     const visitaData = {
-      patientId: pacienteData.id,
-      professionalId: '123e4567-e89b-12d3-a456-426614174001', // ID del profesional asignado
-      scheduledDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Mañana
+      patientId: '123e4567-e89b-12d3-a456-426614174000',
+      professionalId: '123e4567-e89b-12d3-a456-426614174001',
+      professionalEmail: 'dra.garcia@axonvalencia.es',
+      scheduledDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       duration: 45,
       motivo: 'Dolor lumbar persistente',
-      modalidad: 'presencial',
+      modalidad: 'presencial' as const,
       precio: 35,
-      paymentStatus: 'paid',
+      paymentStatus: 'paid' as const,
       previousHistory: false,
+      metadata: {
+        visit_type: 'primera_visita',
+        duration_minutes: 45,
+        location: 'Consulta 1',
+        follow_up_required: true
+      }
     };
-
-    // Mock de respuestas
-    const createdPatient = { ...pacienteData };
-    const createdVisit = {
-      id: '123e4567-e89b-12d3-a456-426614174002',
-      ...visitaData,
-      status: 'scheduled',
-    };
-
-    const paymentRecord = {
-      id: '123e4567-e89b-12d3-a456-426614174003',
-      visitId: createdVisit.id,
-      patientId: pacienteData.id,
-      amount: 35,
-      status: 'paid',
-      createdAt: new Date().toISOString(),
-    };
-
-    // Configurar mocks
-    (global.fetch as jest.Mock)
-      // Crear paciente
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(createdPatient),
-      })
-      // Crear visita
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(createdVisit),
-      })
-      // Registrar pago
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(paymentRecord),
-      })
-      // Obtener visitas del profesional
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([createdVisit]),
-      });
 
     // 1. Registrar paciente
     const patient = await PatientService.createPatient(pacienteData);
-    expect(patient).toEqual(createdPatient);
+    expect(patient).toHaveProperty('id');
+    expect(patient.nombre).toBe(pacienteData.nombre);
 
     // 2. Agendar visita
-    const visit = await VisitService.scheduleVisit(visitaData);
-    expect(visit).toEqual(createdVisit);
-    expect(visit.paymentStatus).toBe('paid');
+    const visit = await VisitService.scheduleVisit({
+      ...visitaData,
+      patientId: patient.id
+    });
+
+    expect(visit).toMatchObject({
+      patientId: patient.id,
+      professionalEmail: visitaData.professionalEmail,
+      status: 'scheduled',
+      paymentStatus: 'paid',
+      motivo: visitaData.motivo
+    });
 
     // 3. Verificar que aparece en las visitas del profesional
-    const professionalVisits = await VisitService.getProfessionalPendingVisits(visitaData.professionalId);
-    expect(professionalVisits).toContainEqual(createdVisit);
+    const professionalVisits = await VisitService.getProfessionalPendingVisits(visitaData.professionalEmail);
+    expect(professionalVisits).toContainEqual(expect.objectContaining({
+      id: visit.id,
+      patientId: patient.id,
+      status: 'scheduled'
+    }));
 
     // 4. Verificar registro de pago
     const paymentTracker = new PaymentTracker();
-    const paymentStatus = await paymentTracker.getPaymentStatus(createdVisit.id);
-    expect(paymentStatus).toEqual(paymentRecord);
-
-    // Verificar llamadas a la API
-    expect(global.fetch).toHaveBeenCalledTimes(4);
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/patients'),
-      expect.any(Object)
-    );
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/visits'),
-      expect.any(Object)
-    );
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/payments'),
-      expect.any(Object)
-    );
+    const paymentStatus = await paymentTracker.getPaymentStatus(visit.id);
+    expect(paymentStatus).toMatchObject({
+      visitId: visit.id,
+      patientId: patient.id,
+      amount: visitaData.precio,
+      status: 'paid'
+    });
   });
 
   it('debería permitir acceder a la ficha clínica independientemente del estado de pago', async () => {
-    const visitId = '123e4567-e89b-12d3-a456-426614174002';
     const visitData = {
-      id: visitId,
       patientId: '123e4567-e89b-12d3-a456-426614174000',
       professionalId: '123e4567-e89b-12d3-a456-426614174001',
+      professionalEmail: 'dra.garcia@axonvalencia.es',
       scheduledDate: new Date().toISOString(),
-      status: 'scheduled',
-      paymentStatus: 'paid',
+      duration: 45,
       motivo: 'Dolor lumbar persistente',
+      modalidad: 'presencial' as const,
+      precio: 35,
+      paymentStatus: 'pending' as const,
       previousHistory: false,
+      metadata: {
+        visit_type: 'primera_visita',
+        duration_minutes: 45,
+        location: 'Consulta 1',
+        follow_up_required: true
+      }
     };
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(visitData),
-    });
+    // Crear visita
+    const createdVisit = await VisitService.scheduleVisit(visitData);
+    expect(createdVisit).toHaveProperty('id');
 
-    const visit = await VisitService.getVisitById(visitId);
-    expect(visit).toEqual(visitData);
-    expect(visit?.status).toBe('scheduled');
+    // Obtener visita
+    const visit = await VisitService.getVisitById(createdVisit.id);
+    expect(visit).toBeDefined();
+    expect(visit).toMatchObject({
+      id: createdVisit.id,
+      status: 'scheduled',
+      paymentStatus: 'pending'
+    });
   });
 }); 

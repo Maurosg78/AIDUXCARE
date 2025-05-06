@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { Patient, PatientCreate } from '../models/Patient';
 import { StorageService } from './StorageService';
 import { v4 as uuidv4 } from 'uuid';
 import VisitService from './VisitService';
@@ -18,6 +17,7 @@ const PatientSchema = z.object({
 });
 
 export type Patient = z.infer<typeof PatientSchema>;
+export type PatientCreate = Omit<Patient, 'id' | 'createdAt' | 'updatedAt'>;
 
 export class PatientService {
   private static STORAGE_KEY = 'patients';
@@ -79,7 +79,7 @@ export class PatientService {
     StorageService.remove(this.STORAGE_KEY);
   }
 
-  static async createPatient(patientData: Omit<Patient, 'id' | 'createdAt'>): Promise<Patient> {
+  static async createPatient(patientData: PatientCreate): Promise<Patient> {
     try {
       const newPatient: Patient = {
         id: crypto.randomUUID(),

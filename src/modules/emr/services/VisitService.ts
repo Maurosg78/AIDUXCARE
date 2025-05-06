@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { PaymentTracker } from './PaymentTracker.js';
-import { PatientService } from './PatientService.js';
 import { StorageService } from './StorageService.js';
 
 const VisitStatusSchema = z.enum(['scheduled', 'in_progress', 'completed', 'cancelled']);
@@ -22,6 +21,13 @@ const VisitSchema = z.object({
   previousHistory: z.boolean().optional(),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
+  notes: z.string().optional(),
+  metadata: z.object({
+    visit_type: z.string(),
+    duration_minutes: z.number(),
+    location: z.string().optional(),
+    follow_up_required: z.boolean()
+  }).optional()
 });
 
 // Esquema para crear una nueva visita
@@ -108,7 +114,13 @@ export class VisitService {
   private static STORAGE_KEY = 'visits';
 
   static async getAll(): Promise<Visit[]> {
-    return StorageService.load<Visit[]>(this.STORAGE_KEY) || [];
+    try {
+      const visits = await StorageService.load<Visit[]>(this.STORAGE_KEY) || [];
+      return visits.map(visit => VisitSchema.parse(visit));
+    } catch (error) {
+      console.error('Error al obtener visitas:', error);
+      throw error;
+    }
   }
 
   static async scheduleVisit(visitData: CreateVisit): Promise<Visit> {
@@ -118,6 +130,7 @@ export class VisitService {
         ...visitData,
         status: visitData.status || 'scheduled',
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       const validatedVisit = VisitSchema.parse(newVisit);
@@ -126,7 +139,6 @@ export class VisitService {
       visits.push(validatedVisit);
       await StorageService.save(this.STORAGE_KEY, visits);
 
-      // Si la visita está pagada, crear registro de pago
       if (validatedVisit.paymentStatus === 'paid' && validatedVisit.precio) {
         await this.paymentTracker.createPaymentRecord({
           visitId: validatedVisit.id,
@@ -138,52 +150,77 @@ export class VisitService {
 
       return validatedVisit;
     } catch (error) {
-      throw new Error(`Error al agendar visita: ${error}`);
+      console.error('Error al agendar visita:', error);
+      throw error;
     }
-  }
-
-  static async getVisits(): Promise<Visit[]> {
-    return StorageService.load<Visit[]>(this.STORAGE_KEY) || [];
   }
 
   static async getVisitById(id: string): Promise<Visit | undefined> {
-    const visits = await this.getVisits();
-    return visits.find(v => v.id === id);
-  }
-
-  static async getProfessionalVisits(professionalEmail: string): Promise<Visit[]> {
-    const visits = await this.getVisits();
-    return visits.filter(v => v.professionalEmail === professionalEmail);
-  }
-
-  static async updateVisit(visitId: string, updateData: Partial<Omit<Visit, 'id'>>): Promise<Visit> {
-    const visits = await this.getVisits();
-    const index = visits.findIndex(v => v.id === visitId);
-    
-    if (index === -1) {
-      throw new Error(`Visita no encontrada: ${visitId}`);
+    try {
+      const visits = await this.getAll();
+      const visit = visits.find(v => v.id === id);
+      return visit ? VisitSchema.parse(visit) : undefined;
+    } catch (error) {
+      console.error('Error al obtener visita por ID:', error);
+      throw error;
     }
+  }
 
-    const updatedVisit = {
-      ...visits[index],
-      ...updateData,
-      updatedAt: new Date().toISOString(),
-    };
+  static async updateVisit(visitId: string, updateData: UpdateVisit): Promise<Visit> {
+    try {
+      const visits = await this.getAll();
+      const index = visits.findIndex(v => v.id === visitId);
+      
+      if (index === -1) {
+        throw new Error(`Visita no encontrada: ${visitId}`);
+      }
 
-    const validatedVisit = VisitSchema.parse(updatedVisit);
-    visits[index] = validatedVisit;
-    await StorageService.save(this.STORAGE_KEY, visits);
+      const updatedVisit = {
+        ...visits[index],
+        ...updateData,
+        updatedAt: new Date().toISOString(),
+      };
 
-    return validatedVisit;
+      const validatedVisit = VisitSchema.parse(updatedVisit);
+      visits[index] = validatedVisit;
+      await StorageService.save(this.STORAGE_KEY, visits);
+
+      return validatedVisit;
+    } catch (error) {
+      console.error('Error al actualizar visita:', error);
+      throw error;
+    }
   }
 
   static async getProfessionalPendingVisits(professionalEmail: string): Promise<Visit[]> {
-    const visits = await this.getVisits();
-    return visits.filter(v => 
-      v.professionalEmail === professionalEmail && 
-      v.status === 'scheduled' &&
-      new Date(v.scheduledDate) > new Date()
-    );
+    try {
+      const visits = await this.getAll();
+      return visits.filter(v => 
+        v.professionalEmail === professionalEmail && 
+        v.status === 'scheduled' &&
+        new Date(v.scheduledDate) > new Date()
+      );
+    } catch (error) {
+      console.error('Error al obtener visitas pendientes del profesional:', error);
+      throw error;
+    }
+  }
+
+  static async deleteVisit(id: string): Promise<boolean> {
+    try {
+      const visits = await this.getAll();
+      const filteredVisits = visits.filter(v => v.id !== id);
+      
+      if (filteredVisits.length === visits.length) {
+        return false;
+      }
+
+      await StorageService.save(this.STORAGE_KEY, filteredVisits);
+      return true;
+    } catch (error) {
+      console.error('Error al eliminar visita:', error);
+      throw error;
+    }
   }
 }
 

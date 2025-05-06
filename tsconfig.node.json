@@ -17,6 +17,7 @@
     "vite.config.ts",
     "scripts",
     "src/core/data/seed/**/*",
-    "src/core/lib/**/*"
+    "src/core/lib/**/*",
+    "src/core/schemas/**/*"
   ]
 } 

@@ -1,27 +1,36 @@
 import { z } from 'zod';
+import { ProfessionalSchema } from './ProfessionalSchema';
 
 /**
  * Schema para validar visitas clínicas
  * Define la estructura y restricciones de los datos de una visita
  */
+const VisitStatusSchema = z.enum(['scheduled', 'in_progress', 'completed', 'cancelled']);
+const PaymentStatusSchema = z.enum(['pending', 'paid', 'cancelled', 'refunded']);
+const ModalidadSchema = z.enum(['presencial', 'telematica']);
+
 export const VisitSchema = z.object({
   id: z.string().uuid(),
-  patient_id: z.string().uuid(),
-  date: z.string().datetime(),
-  professional: z.object({
-    id: z.string().uuid(),
-    email: z.string().email(),
-    name: z.string().min(1)
-  }),
-  reason: z.string().min(1).max(500),
-  notes: z.string().min(1).max(2000),
-  status: z.enum(['completed', 'pending', 'cancelled']),
+  patientId: z.string(),
+  professionalId: z.string(),
+  professionalEmail: z.string().email(),
+  scheduledDate: z.string().datetime(),
+  duration: z.number().min(15).max(120).optional(),
+  status: VisitStatusSchema,
+  paymentStatus: PaymentStatusSchema,
+  motivo: z.string(),
+  modalidad: ModalidadSchema.optional(),
+  precio: z.number().optional(),
+  previousHistory: z.boolean().optional(),
+  createdAt: z.string().datetime().optional(),
+  updatedAt: z.string().datetime().optional(),
+  notes: z.string().optional(),
   metadata: z.object({
-    location: z.string().optional(),
     visit_type: z.string(),
-    duration_minutes: z.number().int().positive(),
+    duration_minutes: z.number(),
+    location: z.string().optional(),
     follow_up_required: z.boolean()
-  })
+  }).optional()
 });
 
 export type Visit = z.infer<typeof VisitSchema>;
