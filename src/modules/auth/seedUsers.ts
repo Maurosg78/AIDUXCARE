@@ -23,7 +23,7 @@ export const seedUsers: SeedUser[] = [
   {
     id: '1',
     email: 'mauricio@axonvalencia.es',
-    password: 'Test1234!', // Se hasheará al inicializar
+    password: 'Test1234!',
     name: 'Mauricio Sobarzo',
     role: 'fisioterapeuta',
     clinic: 'Clínica AXON - Valencia',

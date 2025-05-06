@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import { useAuth } from '@/core/context/AuthContext';
 import {
   BarChart,
   Bar,
@@ -21,11 +20,11 @@ import {
   AlertCircle,
   FileText,
 } from 'lucide-react';
-import { StatCard, StatCardSkeleton } from '@/components/ui/StatCard';
-import { ChartCard } from '@/components/ui/ChartCard';
+import { StatCard, StatCardSkeleton } from '@/components/ui/stat-card';
+import { ChartCard } from '@/components/ui/chart-card';
 import { Button } from '@/components/ui/button';
-import { Alert } from '@/components/ui/Alert';
-import { trackEvent } from '@/core/services/langfuseClient';
+import { Alert } from '@/components/ui/alert';
+import { trackEvent } from '@/core/lib/langfuse.client';
 
 interface ActivityMetrics {
   totalVisits: number;
@@ -49,17 +48,10 @@ interface ActivityMetrics {
 }
 
 export default function ActivityPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const [metrics, setMetrics] = useState<ActivityMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-  }, [status, router]);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -77,10 +69,10 @@ export default function ActivityPage() {
       }
     };
 
-    if (session?.user) {
+    if (isAuthenticated) {
       fetchMetrics();
     }
-  }, [session]);
+  }, [isAuthenticated]);
 
   const handleExport = async () => {
     if (!metrics) return;
@@ -99,17 +91,22 @@ export default function ActivityPage() {
     link.click();
 
     trackEvent({
-      name: 'admin.export.activity',
+      name: 'form.submit',
       payload: {
-        format: 'csv',
-        dataSize: csvContent.length,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        patientId: 'admin',
+        value: 'activity_export',
+        field: 'csv',
+        fields: [
+          { name: 'format', value: 'csv' },
+          { name: 'dataSize', value: csvContent.length.toString() }
+        ]
       },
       traceId: 'admin'
     });
   };
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
         {[...Array(4)].map((_, i) => (

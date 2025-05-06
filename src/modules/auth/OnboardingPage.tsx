@@ -1,12 +1,12 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/core/context/AuthContext';
 import { UserRole } from './authService';
 
 const OnboardingPage: React.FC = () => {
-  const { data: session } = useSession();
-  const userRole = (session?.user as { role?: UserRole })?.role;
+  const { user } = useAuth();
+  const userRole = (user as { role?: UserRole })?.role;
   const showFeedback = userRole === 'fisioterapeuta' || userRole === 'admin';
 
   return (
@@ -46,7 +46,7 @@ const OnboardingPage: React.FC = () => {
             Tu experiencia es clave para que AiDuxCare sea realmente útil para ti.
           </p>
           <Link
-            href="/feedback"
+            to="/feedback"
             className="inline-block px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md text-sm font-medium"
           >
             Rellenar formulario de feedback

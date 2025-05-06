@@ -1,0 +1,56 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "actions": "Acciones",
+    "user": "Usuario"
+  },
+  "roles": {
+    "professional": "Profesional de la Salud",
+    "secretary": "Secretario/a",
+    "admin": "Administrador/a",
+    "developer": "Desarrollador/a"
+  },
+  "dashboard": {
+    "title": "Bienvenido/a, {{role}}",
+    "professional": "Esta es tu área de trabajo clínico.",
+    "secretary": "Aquí puedes gestionar pacientes y pagos.",
+    "admin": "Panel de control administrativo.",
+    "dev": "Herramientas de desarrollo disponibles.",
+    "error": {
+      "role_not_found": "Rol no reconocido",
+      "contact_admin": "Por favor, contacta con el administrador del sistema."
+    }
+  },
+  "sidebar": {
+    "my_visits": "Mis Visitas",
+    "mcp": "MCP",
+    "schedule": "Agenda",
+    "payments": "Pagos",
+    "users": "Usuarios",
+    "metrics": "Métricas",
+    "logs": "Registros",
+    "tests": "Pruebas",
+    "settings": "Configuración"
+  },
+  "auth": {
+    "mock_login_title": "Iniciar Sesión (Desarrollo)",
+    "mock_login_description": "Selecciona un rol para simular el inicio de sesión",
+    "mock_login_dev_note": "Esta es una vista de desarrollo para pruebas",
+    "select_role": "Seleccionar Rol",
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión",
+    "profile": "Perfil",
+    "email": "Correo electrónico",
+    "session_closed": "Sesión cerrada correctamente"
+  }
+} 

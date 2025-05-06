@@ -1,23 +1,38 @@
-import React from 'react';
-import { Link } from "react-router-dom";
+import { useEffect } from 'react';
+import { useAuth } from '@/core/context/AuthContext';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Box, CircularProgress } from '@mui/material';
 
-const HomePage: React.FC = () => {
-  return (
-    <div>
-      <h1>Inicio de AiDuxCare</h1>
-      <ul>
-        <li>
-          <Link to="/patients/eva-martinez-1988/visits">Visitas de Eva Martínez</Link>
-        </li>
-        <li>
-          <Link to="/patients/marta-perez-1985/visits">Visitas de Marta Pérez</Link>
-        </li>
-        <li>
-          <Link to="/patients/nuria-arnedo-1990/visits">Visitas de Nuria Arnedo</Link>
-        </li>
-      </ul>
-    </div>
-  );
-};
+export default function HomePage() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
 
-export default HomePage;
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else if (!isLoading) {
+      navigate('/auth/login');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // Mientras se verifica la autenticación, mostrar loading
+  if (isLoading) {
+    return (
+      <Box sx={{ 
+        height: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+      }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Redirección inmediata si ya conocemos el estado
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Navigate to="/auth/login" replace />;
+}

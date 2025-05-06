@@ -2,8 +2,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useLangfuse } from '@/core/hooks/useLangfuse';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/Checkbox';
-import { Alert } from '@/components/ui/Alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert } from '@/components/ui/alert';
 
 interface DetectedPhrase {
   id: string;

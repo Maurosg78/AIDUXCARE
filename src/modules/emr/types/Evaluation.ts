@@ -30,4 +30,6 @@ export interface PatientEval {
   treatmentPlan?: string;
   motivo?: string;
   observaciones?: string;
+  diagnosticoFisioterapeutico?: string;
+  tratamientoPropuesto?: string;
 } 

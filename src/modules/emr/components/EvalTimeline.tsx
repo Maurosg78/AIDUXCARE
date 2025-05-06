@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Card, CardContent, Stack, Alert, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { Box, Typography, Card, CardContent, Stack, Alert, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import type { DatePickerProps } from '@mui/x-date-pickers/DatePicker';
 import EvalService, { PatientEval, EvalFilter } from '../services/EvalService';
 import CopilotService, { CopilotFeedback } from '@/modules/ai/CopilotService';
 import LangfuseLink from '@/modules/ai/components/LangfuseLink';
@@ -83,11 +84,23 @@ const EvalTimeline: React.FC<EvalTimelineProps> = ({ patientId }) => {
             label="Fecha inicio"
             value={startDate}
             onChange={(date) => setStartDate(date)}
+            slotProps={{
+              textField: {
+                variant: "outlined",
+                fullWidth: true
+              }
+            }}
           />
           <DatePicker
             label="Fecha fin"
             value={endDate}
             onChange={(date) => setEndDate(date)}
+            slotProps={{
+              textField: {
+                variant: "outlined",
+                fullWidth: true
+              }
+            }}
           />
           <FormControl>
             <InputLabel id="feedback-type-label">Tipo de feedback</InputLabel>

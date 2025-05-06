@@ -1,12 +1,18 @@
 export interface Patient {
   id: string;
-  firstName: string;
+  name: string;
   lastName: string;
-  dateOfBirth: string;
-  gender: 'male' | 'female' | 'other' | 'prefer-not-to-say';
   email?: string;
   phone?: string;
+  dateOfBirth?: string;
   createdAt: string;
   updatedAt: string;
-  medicalRecordNumber?: string;
+}
+
+export interface PatientCreate {
+  name: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  dateOfBirth?: string;
 }

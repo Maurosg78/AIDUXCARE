@@ -1,26 +1,33 @@
-import { NextAuthOptions } from 'next-auth';
-import { UserRole } from '@/modules/auth/authService';
-import { DefaultUser, Session } from 'next-auth';
+import type { Session } from '@auth/core/types';
+import type { AuthOptions } from '@auth/core';
 
-interface ExtendedUser extends DefaultUser {
-  role?: UserRole;
+export interface CustomUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
 }
 
-interface ExtendedSession extends Session {
-  user: ExtendedUser;
+export interface CustomSession extends Session {
+  user: CustomUser;
 }
 
-export const authOptions: NextAuthOptions = {
+export const authConfig: AuthOptions = {
   providers: [],
   callbacks: {
-    async session({ session, token }) {
-      const extendedSession = session as ExtendedSession;
-      extendedSession.user.role = token.role as UserRole;
-      return extendedSession;
+    async session({ session, token }): Promise<CustomSession> {
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.sub as string,
+          role: token.role as string
+        }
+      } as CustomSession;
     },
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as ExtendedUser).role;
+        token.role = (user as CustomUser).role;
       }
       return token;
     }

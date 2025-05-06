@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import { useAuth } from '@/core/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart,
   Bar,
@@ -24,11 +24,11 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import { StatCard, StatCardSkeleton } from '@/components/ui/StatCard';
-import { ChartCard } from '@/components/ui/ChartCard';
+import { StatCard, StatCardSkeleton } from '@/components/ui/stat-card';
+import { ChartCard } from '@/components/ui/chart-card';
 import { Button } from '@/components/ui/button';
-import { Alert } from '@/components/ui/Alert';
-import { trackEvent } from '@/core/services/langfuseClient';
+import { Alert } from '@/components/ui/alert';
+import { trackEvent } from '@/core/lib/langfuse.client';
 
 interface StatsMetrics {
   totalPatients: number;
@@ -54,17 +54,17 @@ interface StatsMetrics {
 const COLORS = ['#3b82f6', '#ef4444', '#94a3b8'];
 
 export default function StatsPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [metrics, setMetrics] = useState<StatsMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
+    if (isAuthenticated === false) {
+      navigate('/login');
     }
-  }, [status, router]);
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -82,10 +82,10 @@ export default function StatsPage() {
       }
     };
 
-    if (session?.user) {
+    if (user) {
       fetchMetrics();
     }
-  }, [session]);
+  }, [user]);
 
   const handleExport = async () => {
     if (!metrics) return;
@@ -104,17 +104,21 @@ export default function StatsPage() {
     link.click();
 
     trackEvent({
-      name: 'admin.export.stats',
+      name: 'form.submit',
       payload: {
-        format: 'csv',
-        dataSize: csvContent.length,
-        timestamp: new Date().toISOString()
-      },
-      traceId: 'admin'
+        timestamp: new Date().toISOString(),
+        patientId: 'admin',
+        value: 'stats_export',
+        field: 'csv',
+        fields: [
+          { name: 'format', value: 'csv' },
+          { name: 'dataSize', value: csvContent.length.toString() }
+        ]
+      }
     });
   };
 
-  if (status === 'loading' || loading) {
+  if (isAuthenticated === false || loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
         {[...Array(4)].map((_, i) => (

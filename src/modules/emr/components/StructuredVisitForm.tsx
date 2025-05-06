@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TextField, Button, IconButton, Collapse } from '@mui/material';
-import { trackEvent } from '@/core/services/langfuseClient';
+import { trackEvent } from '@/core/lib/langfuse.client';
 import { PatientEval } from '@/types/Evaluation';
 import { useCopilot } from '@/modules/assistant/hooks/useCopilot';
 import { ActiveListeningPanel } from '@/modules/assistant/components/ActiveListeningPanel';

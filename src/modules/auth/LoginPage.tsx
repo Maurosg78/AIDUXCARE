@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Alert } from '@/components/ui/Alert';
+import { Alert } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import AuthService from './authService';
 
 export default function LoginPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -28,16 +28,16 @@ export default function LoginPage() {
       // Redirigir según el rol
       switch (user.role) {
         case 'fisioterapeuta':
-          router.push('/emr');
+          navigate('/emr');
           break;
         case 'admin':
-          router.push('/admin');
+          navigate('/admin');
           break;
         case 'auditor':
-          router.push('/audit');
+          navigate('/audit');
           break;
         default:
-          router.push('/');
+          navigate('/');
       }
     } catch (err) {
       setError('Error al iniciar sesión');

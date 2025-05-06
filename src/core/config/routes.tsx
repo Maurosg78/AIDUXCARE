@@ -7,11 +7,16 @@
  * 5. Interfaz adaptativa que se ajusta al flujo de trabajo clínico
  */
 
-import { RouteObject } from "react-router-dom";
-import HomePage from "@/modules/core/pages/HomePage";
-import LoginPage from "@/modules/auth/LoginPage";
-import OnboardingPage from "@/modules/auth/OnboardingPage";
-import FeedbackForm from "@/modules/feedback/components/FeedbackForm";
+import { RouteObject } from 'react-router-dom';
+import { ProtectedRoute } from '@/core/context/AuthContext';
+import HomePage from '@/modules/core/pages/HomePage';
+import LoginPage from '@/pages/auth/login';
+import DashboardPage from '@/pages/dashboard';
+import VisitDetailPage from '@/modules/emr/pages/VisitDetailPage';
+import PatientVisitListPage from '@/modules/emr/pages/PatientVisitListPage';
+import PatientVisitCreatePage from '@/modules/emr/pages/PatientVisitCreatePage';
+import NotFoundPage from '@/pages/404';
+import MCPPage from '@/pages/mcp/[visitId]';
 
 const routes: RouteObject[] = [
   {
@@ -19,21 +24,61 @@ const routes: RouteObject[] = [
     element: <HomePage />,
   },
   {
-    path: '/login',
+    path: '/auth/login',
     element: <LoginPage />,
   },
   {
-    path: '/onboarding',
-    element: <OnboardingPage />,
+    path: '/dashboard',
+    element: (
+      <ProtectedRoute>
+        <DashboardPage />
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/feedback',
-    element: <FeedbackForm />,
+    path: '/visits',
+    element: (
+      <ProtectedRoute>
+        <PatientVisitListPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/visits/:visitId',
+    element: (
+      <ProtectedRoute>
+        <VisitDetailPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/mcp/:visitId',
+    element: (
+      <ProtectedRoute>
+        <MCPPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/patients/:patientId/visits',
+    element: (
+      <ProtectedRoute>
+        <PatientVisitListPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/patients/:patientId/visits/new',
+    element: (
+      <ProtectedRoute>
+        <PatientVisitCreatePage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '*',
-    element: <div>404 - Página no encontrada</div>,
-  },
+    element: <NotFoundPage />,
+  }
 ];
 
 export default routes;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Download } from 'lucide-react';
@@ -22,12 +22,12 @@ interface WeeklyStats {
 
 export default function ReportsPage() {
   const { user } = useAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   // Verificar autenticación y rol de administrador
   if (!user || user?.role !== 'admin') {
-    router.push('/login');
+    navigate('/login');
     return null;
   }
 

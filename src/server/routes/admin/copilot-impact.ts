@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../core/config/auth';
+import { authOptions } from '@/core/config/auth';
 import { Langfuse } from 'langfuse-node';
-import { UserRole } from '../../../modules/auth/authService';
+import { UserRole } from '@/modules/auth/authService';
 
 interface LangfuseObservation {
   id: string;
@@ -23,8 +23,8 @@ interface LangfuseResponse {
 
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY ?? '',
-  secretKey: process.env.VITE_LANGFUSE_SECRET_KEY ?? '',
-  baseUrl: process.env.VITE_LANGFUSE_HOST ?? 'https://cloud.langfuse.com',
+  secretKey: process.env.LANGFUSE_SECRET_KEY ?? '',
+  baseUrl: process.env.VITE_LANGFUSE_BASE_URL ?? ''
 });
 
 interface CopilotImpactMetrics {

@@ -1,15 +1,13 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist-eval",
-    "rootDir": ".",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "target": "ES2020",
-    "allowJs": true,
-    "checkJs": false,
-    "noImplicitAny": false
+    "noEmit": false,
+    "outDir": "./dist",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "allowImportingTsExtensions": false
   },
-  "include": ["scripts/**/*", "evals/**/*"]
+  "include": ["src", "scripts", "evals"],
+  "exclude": ["node_modules"]
 }
 

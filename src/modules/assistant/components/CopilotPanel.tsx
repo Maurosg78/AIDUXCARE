@@ -3,7 +3,7 @@ import CopilotService from '../../ai/CopilotService';
 import { PatientEval } from '../../emr/services/EvalService';
 import { CopilotFeedback } from '../../ai/CopilotService';
 import { Button } from '@mui/material';
-import { trackEvent } from '@/core/services/langfuseClient';
+import { trackEvent } from '@/core/lib/langfuse.client';
 
 interface CopilotPanelProps {
   formData: PatientEval;

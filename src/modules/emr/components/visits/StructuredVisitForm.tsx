@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { TextField, Button, Stack, Typography, Drawer, Box, TextareaAutosize } from "@mui/material";
-import { trackEvent } from "@/core/services/langfuseClient";
+import { trackEvent } from '@/core/lib/langfuse.client';
 import { PatientEval } from '@/modules/emr/types/Evaluation';
 import { CopilotFeedback } from '@/modules/ai/CopilotService';
 import VisitAlert from '@/modules/emr/components/alerts/VisitAlert';

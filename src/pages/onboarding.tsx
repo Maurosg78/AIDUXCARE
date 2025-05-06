@@ -1,13 +1,13 @@
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Laptop, User, AlertCircle } from 'lucide-react';
 
 export default function OnboardingPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const handleDemoClick = () => {
-    router.push('/patients/demo-onboarding/visits/new');
+    navigate('/patients/demo-onboarding/visits/new');
   };
 
   const handleNext = () => {

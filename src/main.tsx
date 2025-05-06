@@ -1,17 +1,20 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, useRoutes } from "react-router-dom";
-import { AuthProvider } from './context/AuthContext';
-import routes from "./core/config/routes";
+import { AuthProvider } from '@/core/context/AuthContext';
+import routes from "@/core/config/routes";
+import { verifyLangfuseConfig } from "@/core/lib/langfuse.client";
 
 function AppRouter() {
   const element = useRoutes(routes);
   return element;
 }
 
-console.log('🔥 VITE_LANGFUSE_PUBLIC_KEY →', import.meta.env.VITE_LANGFUSE_PUBLIC_KEY);
-console.log('🔥 VITE_LANGFUSE_SECRET_KEY →', import.meta.env.VITE_LANGFUSE_SECRET_KEY);
-console.log('🔥 VITE_LANGFUSE_BASE_URL →', import.meta.env.VITE_LANGFUSE_BASE_URL);
+// Verificación del entorno en desarrollo
+if (import.meta.env.DEV) {
+  // Verificar configuración de Langfuse
+  verifyLangfuseConfig();
+}
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 root.render(
