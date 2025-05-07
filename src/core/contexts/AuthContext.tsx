@@ -113,6 +113,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Redirección automática post-login según el rol
+  useEffect(() => {
+    if (loading) return; // Esperar a que termine la carga inicial
+    if (!user || !userRole) return;
+
+    const pathByRole: Record<string, string> = {
+      patient: '/dashboard/patient',
+      professional: '/dashboard/professional',
+      admin: '/dashboard/admin',
+    };
+    const target = pathByRole[userRole] || '/dashboard';
+
+    if (window.location.pathname !== target) {
+      router.push(target);
+    }
+  }, [user, userRole, loading, router]);
+
   const value = {
     session,
     user,
