@@ -1,5 +1,7 @@
 import React from 'react';
 import type { StructuredSuggestion } from '@/hooks/useCopilot';
+import { AuditLogService } from '@/core/services/AuditLogService';
+import { useAuth } from '@/core/contexts/AuthContext';
 
 interface FieldWithSuggestionProps {
   field: string;
@@ -7,6 +9,7 @@ interface FieldWithSuggestionProps {
   suggestion?: StructuredSuggestion;
   onAcceptSuggestion: (suggestion: StructuredSuggestion) => void;
   onRejectSuggestion: (suggestion: StructuredSuggestion) => void;
+  visitId: string;
 }
 
 export const FieldWithSuggestion: React.FC<FieldWithSuggestionProps> = ({
@@ -15,7 +18,49 @@ export const FieldWithSuggestion: React.FC<FieldWithSuggestionProps> = ({
   suggestion,
   onAcceptSuggestion,
   onRejectSuggestion,
+  visitId,
 }) => {
+  const { user } = useAuth();
+
+  const handleAccept = () => {
+    if (!suggestion) return;
+    // Detectar si el usuario editó la sugerencia antes de aceptar
+    if (suggestion.value !== value) {
+      AuditLogService.logEvent({
+        visitId,
+        field,
+        oldValue: String(suggestion.value),
+        newValue: value,
+        modifiedBy: user?.email || 'desconocido',
+        action: 'ai_suggestion_modified',
+        source: 'copilot',
+      });
+    } else {
+      AuditLogService.logEvent({
+        visitId,
+        field,
+        newValue: String(suggestion.value),
+        modifiedBy: user?.email || 'desconocido',
+        action: 'ai_suggestion_accepted',
+        source: 'copilot',
+      });
+    }
+    onAcceptSuggestion(suggestion);
+  };
+
+  const handleReject = () => {
+    if (!suggestion) return;
+    AuditLogService.logEvent({
+      visitId,
+      field,
+      oldValue: String(suggestion.value),
+      modifiedBy: user?.email || 'desconocido',
+      action: 'ai_suggestion_rejected',
+      source: 'copilot',
+    });
+    onRejectSuggestion(suggestion);
+  };
+
   const fieldId = `field-${field.toLowerCase().replace(/\s+/g, '-')}`;
 
   return (
@@ -63,13 +108,13 @@ export const FieldWithSuggestion: React.FC<FieldWithSuggestionProps> = ({
             </div>
             <div className="flex gap-2 ml-4">
               <button
-                onClick={() => onAcceptSuggestion(suggestion)}
+                onClick={handleAccept}
                 className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Aceptar
               </button>
               <button
-                onClick={() => onRejectSuggestion(suggestion)}
+                onClick={handleReject}
                 className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Rechazar

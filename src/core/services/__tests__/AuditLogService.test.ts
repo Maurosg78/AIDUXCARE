@@ -32,4 +32,38 @@ describe('AuditLogService', () => {
     expect(Array.isArray(logs)).toBe(true);
     expect(logs.length).toBe(0);
   });
+
+  it('logEvent IA accepted', async () => {
+    await expect(AuditLogService.logEvent({
+      visitId: '00000000-0000-0000-0000-000000000002',
+      action: 'ai_suggestion_accepted',
+      field: 'diagnostico',
+      newValue: 'Lumbalgia',
+      modifiedBy: 'doctor@aiduxcare.com',
+      source: 'copilot',
+    })).resolves.toBeUndefined();
+  });
+
+  it('logEvent IA modified', async () => {
+    await expect(AuditLogService.logEvent({
+      visitId: '00000000-0000-0000-0000-000000000002',
+      action: 'ai_suggestion_modified',
+      field: 'diagnostico',
+      oldValue: 'Lumbalgia',
+      newValue: 'Lumbalgia aguda',
+      modifiedBy: 'doctor@aiduxcare.com',
+      source: 'copilot',
+    })).resolves.toBeUndefined();
+  });
+
+  it('logEvent IA rejected', async () => {
+    await expect(AuditLogService.logEvent({
+      visitId: '00000000-0000-0000-0000-000000000002',
+      action: 'ai_suggestion_rejected',
+      field: 'diagnostico',
+      oldValue: 'Lumbalgia',
+      modifiedBy: 'doctor@aiduxcare.com',
+      source: 'copilot',
+    })).resolves.toBeUndefined();
+  });
 }); 
