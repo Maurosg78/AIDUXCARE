@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Box, Button, TextField, Typography } from '@mui/material';
-import { AuditLogService } from '@/core/services/AuditLogService';
+import { AuditLogClient } from '@/core/clients/AuditLogClient';
 import { useAuth } from '@/core/contexts/AuthContext';
 import { PatientEval } from '@/modules/emr/types/Evaluation';
 
@@ -28,7 +28,7 @@ const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({ formData, set
 
   const logFieldChange = (field: keyof PatientEval, oldValue: string, newValue: string) => {
     if (!formData.patientId || !user?.email) return;
-    AuditLogService.logEvent({
+    AuditLogClient.logEvent({
       visitId: formData.patientId, // Asumimos que patientId es el visitId, ajustar si es necesario
       field,
       oldValue,
@@ -36,6 +36,7 @@ const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({ formData, set
       modifiedBy: user.email,
       action: 'field_updated',
       source: 'user',
+      timestamp: new Date().toISOString(),
     }).catch(console.error);
   };
 

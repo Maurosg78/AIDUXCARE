@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuditLogService } from '../AuditLogService';
 
-vi.mock('../../lib/supabaseClient', () => ({
+vi.mock('@/core/lib/supabaseClient', () => ({
   supabase: {
     from: vi.fn(() => ({
       insert: vi.fn().mockReturnValue({ error: null }),
@@ -24,6 +24,7 @@ describe('AuditLogService', () => {
       newValue: 'Dolor lumbar',
       modifiedBy: 'doctor@aiduxcare.com',
       source: 'user',
+      timestamp: new Date().toISOString(),
     })).resolves.toBeUndefined();
   });
 
@@ -41,6 +42,7 @@ describe('AuditLogService', () => {
       newValue: 'Lumbalgia',
       modifiedBy: 'doctor@aiduxcare.com',
       source: 'copilot',
+      timestamp: new Date().toISOString(),
     })).resolves.toBeUndefined();
   });
 
@@ -53,6 +55,7 @@ describe('AuditLogService', () => {
       newValue: 'Lumbalgia aguda',
       modifiedBy: 'doctor@aiduxcare.com',
       source: 'copilot',
+      timestamp: new Date().toISOString(),
     })).resolves.toBeUndefined();
   });
 
@@ -64,6 +67,7 @@ describe('AuditLogService', () => {
       oldValue: 'Lumbalgia',
       modifiedBy: 'doctor@aiduxcare.com',
       source: 'copilot',
+      timestamp: new Date().toISOString(),
     })).resolves.toBeUndefined();
   });
 }); 
