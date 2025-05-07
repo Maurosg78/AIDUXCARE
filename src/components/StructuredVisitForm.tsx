@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Box, Button, TextField, Typography } from '@mui/material';
-import { trackEvent } from '@/core/lib/langfuse.client';
+import { AuditLogService } from '@/core/services/AuditLogService';
+import { useAuth } from '@/core/contexts/AuthContext';
 import { PatientEval } from '@/modules/emr/types/Evaluation';
 
 interface StructuredVisitFormProps {
@@ -9,21 +10,48 @@ interface StructuredVisitFormProps {
   onSubmit: (data: PatientEval) => void;
 }
 
+function debounceFieldChange(
+  fn: (field: keyof PatientEval, oldValue: string, newValue: string) => void,
+  delay: number
+) {
+  let timer: NodeJS.Timeout;
+  return (field: keyof PatientEval, oldValue: string, newValue: string) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(field, oldValue, newValue), delay);
+  };
+}
+
 const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({ formData, setFormData, onSubmit }) => {
+  const { user } = useAuth();
+  const lastValues = useRef<Partial<PatientEval>>({ ...formData });
+  const debounceRefs = useRef<Record<string, (field: keyof PatientEval, oldValue: string, newValue: string) => void>>({});
+
+  const logFieldChange = (field: keyof PatientEval, oldValue: string, newValue: string) => {
+    if (!formData.patientId || !user?.email) return;
+    AuditLogService.logEvent({
+      visitId: formData.patientId, // Asumimos que patientId es el visitId, ajustar si es necesario
+      field,
+      oldValue,
+      newValue,
+      modifiedBy: user.email,
+      action: 'field_updated',
+      source: 'user',
+    }).catch(console.error);
+  };
+
   const handleFieldChange = (field: keyof PatientEval) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const updated = { ...formData, [field]: value };
-    setFormData(updated);
-
-    trackEvent({
-      name: "form.update",
-      payload: { 
-        patientId: updated.patientId,
-        field,
-        value,
-        timestamp: new Date().toISOString()
-      },
-      traceId: updated.traceId
+    setFormData(prev => {
+      const oldValue = prev[field] || '';
+      // Solo loguear si el valor realmente cambió
+      if (oldValue !== value) {
+        if (!debounceRefs.current[field]) {
+          debounceRefs.current[field] = debounceFieldChange(logFieldChange, 1000);
+        }
+        debounceRefs.current[field](field, oldValue, value);
+      }
+      lastValues.current[field] = value;
+      return { ...prev, [field]: value };
     });
   };
 
@@ -43,63 +71,21 @@ const StructuredVisitForm: React.FC<StructuredVisitFormProps> = ({ formData, set
       <TextField
         label="Motivo de Consulta"
         value={formData.motivo || ''}
-        onChange={(e) => {
-          const value = e.target.value;
-          setFormData(prev => ({ ...prev, motivo: value }));
-          
-          trackEvent({
-            name: "form.update",
-            payload: { 
-              patientId: "nuria-arnedo",
-              field: "motivoConsulta",
-              value: value,
-              timestamp: new Date().toISOString()
-            },
-            traceId: "nuria-arnedo"
-          });
-        }}
+        onChange={handleFieldChange('motivo')}
         required
       />
 
       <TextField
         label="Diagnóstico Fisioterapéutico"
         value={formData.diagnosticoFisioterapeutico || ''}
-        onChange={(e) => {
-          const value = e.target.value;
-          setFormData(prev => ({ ...prev, diagnosticoFisioterapeutico: value }));
-          
-          trackEvent({
-            name: "form.update",
-            payload: { 
-              patientId: "nuria-arnedo",
-              field: "diagnosticoFisioterapeutico",
-              value: value,
-              timestamp: new Date().toISOString()
-            },
-            traceId: "nuria-arnedo"
-          });
-        }}
+        onChange={handleFieldChange('diagnosticoFisioterapeutico')}
         required
       />
 
       <TextField
         label="Tratamiento Propuesto"
         value={formData.tratamientoPropuesto || ''}
-        onChange={(e) => {
-          const value = e.target.value;
-          setFormData(prev => ({ ...prev, tratamientoPropuesto: value }));
-          
-          trackEvent({
-            name: "form.update",
-            payload: { 
-              patientId: "nuria-arnedo",
-              field: "tratamientoPropuesto",
-              value: value,
-              timestamp: new Date().toISOString()
-            },
-            traceId: "nuria-arnedo"
-          });
-        }}
+        onChange={handleFieldChange('tratamientoPropuesto')}
         required
       />
 
