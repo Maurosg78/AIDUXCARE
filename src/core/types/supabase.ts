@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'professional' | 'patient';
+export type UserRole = 'admin' | 'professional' | 'patient' | 'secretary' | 'developer';
 
 export interface Database {
   public: {

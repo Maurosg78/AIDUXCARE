@@ -24,37 +24,47 @@ import {
   Box
 } from "@mui/material";
 import { ArrowBack as ArrowBackIcon, Visibility as VisibilityIcon, Add as AddIcon } from '@mui/icons-material';
-import VisitService from "../services/VisitService";
-import PatientService from "../services/PatientService";
-import { PatientVisit } from "../models/PatientVisit";
-import { Patient, PatientCreate } from "../models/Patient";
+import VisitService from '@/modules/emr/services/VisitService';
+import { PatientService } from "@/core/services/patient/PatientService";
+import { Visit } from "@/modules/emr/services/VisitService";
+import { Patient } from "@/core/schemas/PatientSchema";
 
 const PatientVisitListPage: React.FC = () => {
   const { patientId } = useParams<{ patientId?: string }>();
   const navigate = useNavigate();
-  const [visits, setVisits] = useState<PatientVisit[]>([]);
+  const [visits, setVisits] = useState<Visit[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isNewVisitDialogOpen, setIsNewVisitDialogOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [isNewPatientDialogOpen, setIsNewPatientDialogOpen] = useState(false);
-  const [newPatient, setNewPatient] = useState<PatientCreate>({
-    name: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    dateOfBirth: ""
+  const [newPatient, setNewPatient] = useState<Partial<Patient>>({
+    full_name: "",
+    birth_date: "",
+    sex: "other",
+    contact_info: {
+      email: "",
+      phone: ""
+    }
   });
+
+  const patientService = new PatientService();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [visitsResult, patientsResult] = await Promise.all([
-          patientId ? VisitService.getByPatientId(patientId) : VisitService.getAll(),
-          PatientService.getAll()
+          VisitService.getAll(),
+          patientService.getAllPatients()
         ]);
-        setVisits(visitsResult);
+        
+        // Filtrar visitas por patientId si está presente
+        const filteredVisits = patientId 
+          ? visitsResult.filter(visit => visit.patientId === patientId)
+          : visitsResult;
+          
+        setVisits(filteredVisits);
         setPatients(patientsResult);
       } catch (error) {
         console.error('Error al cargar datos:', error);
@@ -88,7 +98,11 @@ const PatientVisitListPage: React.FC = () => {
 
   const handleNewPatientSubmit = async () => {
     try {
-      const createdPatient = await PatientService.create(newPatient);
+      const createdPatient = await patientService.createPatient({
+        ...newPatient,
+        id: crypto.randomUUID()
+      } as Patient);
+      
       setPatients([...patients, createdPatient]);
       setSelectedPatientId(createdPatient.id);
       setIsNewPatientDialogOpen(false);
@@ -167,11 +181,11 @@ const PatientVisitListPage: React.FC = () => {
               <React.Fragment key={visit.id}>
                 <ListItem>
                   <ListItemText
-                    primary={visit.visitType}
+                    primary={visit.metadata?.visit_type || 'Visita sin tipo'}
                     secondary={
                       <>
                         <Typography component="span" variant="body2" color="text.primary">
-                          {formatDate(visit.visitDate)}
+                          {formatDate(visit.scheduledDate)}
                         </Typography>
                         {visit.notes && (
                           <Typography component="p" variant="body2">
@@ -214,7 +228,7 @@ const PatientVisitListPage: React.FC = () => {
                 >
                   {patients.map((patient) => (
                     <MenuItem key={patient.id} value={patient.id}>
-                      {`${patient.name} ${patient.lastName}`}
+                      {patient.full_name}
                     </MenuItem>
                   ))}
                 </Select>
@@ -248,37 +262,43 @@ const PatientVisitListPage: React.FC = () => {
             <Box sx={{ minWidth: 300, mt: 2 }}>
               <Stack spacing={2}>
                 <TextField
-                  label="Nombre"
+                  label="Nombre completo"
                   fullWidth
-                  value={newPatient.name}
-                  onChange={(e) => setNewPatient({...newPatient, name: e.target.value})}
+                  value={newPatient.full_name}
+                  onChange={(e) => setNewPatient({...newPatient, full_name: e.target.value})}
                 />
                 <TextField
-                  label="Apellidos"
+                  label="Fecha de nacimiento"
+                  type="date"
                   fullWidth
-                  value={newPatient.lastName}
-                  onChange={(e) => setNewPatient({...newPatient, lastName: e.target.value})}
+                  InputLabelProps={{ shrink: true }}
+                  value={newPatient.birth_date}
+                  onChange={(e) => setNewPatient({...newPatient, birth_date: e.target.value})}
                 />
                 <TextField
                   label="Email"
                   type="email"
                   fullWidth
-                  value={newPatient.email}
-                  onChange={(e) => setNewPatient({...newPatient, email: e.target.value})}
+                  value={newPatient.contact_info?.email}
+                  onChange={(e) => setNewPatient({
+                    ...newPatient, 
+                    contact_info: { 
+                      ...newPatient.contact_info,
+                      email: e.target.value 
+                    }
+                  })}
                 />
                 <TextField
                   label="Teléfono"
                   fullWidth
-                  value={newPatient.phone}
-                  onChange={(e) => setNewPatient({...newPatient, phone: e.target.value})}
-                />
-                <TextField
-                  label="Fecha de Nacimiento"
-                  type="date"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  value={newPatient.dateOfBirth}
-                  onChange={(e) => setNewPatient({...newPatient, dateOfBirth: e.target.value})}
+                  value={newPatient.contact_info?.phone}
+                  onChange={(e) => setNewPatient({
+                    ...newPatient,
+                    contact_info: {
+                      ...newPatient.contact_info,
+                      phone: e.target.value
+                    }
+                  })}
                 />
               </Stack>
             </Box>
@@ -288,7 +308,7 @@ const PatientVisitListPage: React.FC = () => {
             <Button 
               onClick={handleNewPatientSubmit} 
               variant="contained"
-              disabled={!newPatient.name || !newPatient.lastName}
+              disabled={!newPatient.full_name}
             >
               Crear Paciente
             </Button>

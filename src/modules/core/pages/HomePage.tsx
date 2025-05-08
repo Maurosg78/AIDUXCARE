@@ -31,7 +31,7 @@ export default function HomePage() {
 
   // Redirección inmediata si ya conocemos el estado
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/professional/dashboard" replace />;
   }
 
   return <Navigate to="/auth/login" replace />;

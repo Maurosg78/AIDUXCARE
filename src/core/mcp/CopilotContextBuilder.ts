@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { trackEvent } from '../lib/langfuse.client';
-import { VisitService } from '../services/VisitService';
+import { trackEvent } from '@/core/lib/langfuse.client';
+import { VisitService } from '@/core/services/visit/VisitService';
 import { ContextEnricher } from './ContextEnricher';
-import { PatientService } from '../services/PatientService';
-import { MCPContext, MCPContextSchema } from './schemas';
+import { PatientService } from '@/core/services/patient/PatientService';
 
 /**
  * Schema para validar el estado del paciente
@@ -99,6 +98,18 @@ export class CopilotContextBuilder {
     this.patientService = patientService;
   }
 
+  // Función auxiliar para calcular edad a partir de fecha de nacimiento
+  private calculateAge(birthDate: string): number {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
   async build(input: BuilderInput): Promise<MCPContext> {
     try {
       // Validar que la visita existe
@@ -112,15 +123,17 @@ export class CopilotContextBuilder {
         throw new Error('Visita no encontrada');
       }
 
-      // Obtener datos del paciente
-      const patientData = await this.patientService.getPatientData(input.visit.id);
+      // Usar input directamente ya que contiene los datos básicos del paciente
+      const patientAge = input.patientData.age;
+      const patientSex = input.patientData.sex;
+      const patientHistory = input.patientData.clinicalHistory;
 
       // Construir el contexto
       const context: MCPContext = {
         patient_state: {
-          age: patientData.age,
-          sex: patientData.sex,
-          history: patientData.clinical_history
+          age: patientAge,
+          sex: patientSex,
+          history: patientHistory
         },
         visit_metadata: {
           visit_id: input.visit.id,
@@ -132,12 +145,12 @@ export class CopilotContextBuilder {
         enrichment: {
           emr: {
             patient_data: {
-              name: patientData.full_name,
-              allergies: patientData.allergies || [],
-              chronicConditions: patientData.chronic_conditions || [],
-              medications: patientData.medications || []
+              name: `Paciente ${input.visit.id.substring(0, 6)}`,
+              allergies: [],
+              chronicConditions: [],
+              medications: []
             },
-            visit_history: patientData.visit_history || []
+            visit_history: []
           }
         }
       };

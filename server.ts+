@@ -1,0 +1,61 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { resolve } from 'path';
+import { langfuseServer, mockLangfuseEvent, isServerEnvValid } from './src/core/lib/langfuse.config';
+
+// Cargar variables de entorno desde .env.local
+dotenv.config({ path: resolve(process.cwd(), '.env.local') });
+
+// Validar configuración del servidor
+const { isValid, errors } = isServerEnvValid();
+if (!isValid && process.env.NODE_ENV !== 'development') {
+  console.error('\n❌ Error en la configuración del servidor:');
+  errors.forEach(error => console.error(`  ${error}`));
+  process.exit(1);
+}
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+
+// 🔁 Carga dinámica de la ruta de pacientes
+await import('./routes/patients.cjs').then(({ default: jsPatientsRouter }) => {
+  console.log('🧩 Ruta dinámica JS /api/patients cargada');
+  app.use('/api/patients', jsPatientsRouter);
+});
+
+// Endpoint de prueba de Langfuse
+app.post('/api/log-event', async (req, res) => {
+  try {
+    const { name, ...metadata } = req.body as { name: string; [key: string]: unknown };
+    if (langfuseServer) {
+      await langfuseServer.track({ name, metadata });
+    } else {
+      mockLangfuseEvent(name, metadata);
+    }
+    res.status(200).json({ message: 'Evento registrado' });
+  } catch (error: any) {
+    console.error('❌ Error al registrar evento:', error);
+    res.status(500).json({ message: 'Error al registrar evento', error: error.message });
+  }
+});
+
+// Log de estado del entorno
+if (process.env.NODE_ENV === 'development') {
+  console.log('\n📝 Estado del entorno:');
+  console.log('  - NODE_ENV:', process.env.NODE_ENV);
+  console.log('  - Langfuse:', langfuseServer ? '✅ Configurado' : '⚠️  Modo Mock');
+  if (!isValid) {
+    console.warn('\n⚠️  Advertencias de configuración:');
+    errors.forEach(error => console.warn(`  ${error}`));
+  }
+}
+
+// 🚀 Inicio del servidor
+app.listen(port, () => {
+  console.log(`🚀 API server corriendo en http://localhost:${port}`);
+});
+

@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
     hasPublicKey: !!env.VITE_LANGFUSE_PUBLIC_KEY,
     hasSecretKey: !!env.VITE_LANGFUSE_SECRET_KEY,
     hasBaseUrl: !!env.VITE_LANGFUSE_BASE_URL,
+    apiBaseUrl: env.VITE_API_BASE_URL
   });
 
   return {
@@ -21,42 +22,14 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
+    server: {
+      port: 5176,
+      strictPort: true
+    },
     define: {
       'import.meta.env.VITE_LANGFUSE_PUBLIC_KEY': JSON.stringify(env.VITE_LANGFUSE_PUBLIC_KEY),
+      'import.meta.env.VITE_LANGFUSE_SECRET_KEY': JSON.stringify(env.VITE_LANGFUSE_SECRET_KEY),
       'import.meta.env.VITE_LANGFUSE_BASE_URL': JSON.stringify(env.VITE_LANGFUSE_BASE_URL),
     },
-    build: {
-      outDir: "dist",
-      sourcemap: !isProd,
-      minify: isProd,
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom'],
-            ui: ['@mui/material', '@mui/icons-material'],
-            dateFns: ['date-fns'],
-            langfuse: ['langfuse']
-          }
-        }
-      }
-    },
-    optimizeDeps: {
-      include: ['date-fns', '@mui/x-date-pickers', 'langfuse'],
-    },
-    server: isProd ? undefined : {
-      port: 5175,
-      strictPort: true,
-      open: true,
-      watch: {
-        usePolling: true
-      },
-      proxy: {
-        '/api': {
-          target: 'http://localhost:3000',
-          changeOrigin: true,
-          secure: false,
-        },
-      }
-    }
   };
 });

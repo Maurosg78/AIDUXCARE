@@ -15,8 +15,24 @@ export interface PatientEval {
 export interface Patient {
   id: string;
   name: string;
+  age: number;
+  gender: 'M' | 'F' | 'O';
+  medicalHistory?: {
+    conditions: string[];
+    medications: string[];
+    allergies: string[];
+    lastVisit?: string;
+  };
+  currentSymptoms?: {
+    chiefComplaint: string;
+    symptoms: string[];
+    onset: string;
+    severity: 'Leve' | 'Moderado' | 'Severo';
+    aggravatingFactors: string[];
+    relievingFactors: string[];
+  };
+  created_at?: string;
   birthDate: string;
-  gender: string;
   email?: string;
   phone?: string;
   address?: string;

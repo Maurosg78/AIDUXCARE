@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ContextEnricher, EnrichedMCPContextSchema } from '../ContextEnricher';
-import { PatientService } from '../../services/PatientService';
+import { PatientService } from '@/core/services/patient/PatientService';
 import { MCPContext } from '../CopilotContextBuilder';
 
 describe('ContextEnricher', () => {

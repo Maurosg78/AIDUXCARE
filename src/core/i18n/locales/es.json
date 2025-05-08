@@ -40,7 +40,8 @@
     "metrics": "Métricas",
     "logs": "Registros",
     "tests": "Pruebas",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "patients": "Pacientes"
   },
   "auth": {
     "mock_login_title": "Iniciar Sesión (Desarrollo)",

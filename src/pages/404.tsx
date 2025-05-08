@@ -32,7 +32,7 @@ export default function NotFoundPage() {
       <Button
         variant="contained"
         startIcon={<Home />}
-        onClick={() => navigate('/dashboard')}
+        onClick={() => navigate('/professional/dashboard')}
         size="large"
       >
         Volver al Dashboard

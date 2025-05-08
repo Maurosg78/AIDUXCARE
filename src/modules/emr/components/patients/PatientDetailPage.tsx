@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Container, Typography, CircularProgress, Alert } from "@mui/material";
-import PatientService from "../../services/PatientService";
+import PatientService from "@/core/services/patient/PatientService";
 import { Patient } from "../../models";
 
 const PatientDetailPage: React.FC = () => {

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Container, CircularProgress, Alert } from "@mui/material";
 import PatientForm from "../components/patients/PatientForm";
-import PatientService from "../services/PatientService";
+import PatientService from "@/core/services/patient/PatientService";
 import { Patient } from "../models";
 
 const PatientEditPage: React.FC = () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { AccessControl } from '@/core/components/AccessControl';
+import AccessControl from '@/components/auth/AccessControl';
 
 const DashboardAdmin: React.FC = () => {
   const { t } = useTranslation();

@@ -1,59 +1,42 @@
-import { v4 as uuidv4 } from 'uuid';
-import type { Patient } from '../../schemas/PatientSchema';
-
-/**
- * Datos de seed para pacientes
- * Contiene información realista para pruebas y desarrollo
- */
-export const patientsSeed: Patient[] = [
+export const patientsSeed = [
   {
-    id: uuidv4(),
-    full_name: "Andreina Martínez López",
-    birth_date: "1988-05-15T00:00:00Z",
-    sex: "F",
-    email: "andreina.martinez@gmail.com",
-    clinical_history: [
-      "Migraña crónica desde 2023",
-      "Respuesta parcial a topiramato",
-      "Sin alergias conocidas",
-      "Antecedentes familiares de migraña"
-    ],
-    tags: ["migraña", "cefalea", "neurología"],
-    status: "active",
-    created_at: "2023-12-01T10:00:00Z",
-    updated_at: "2024-03-15T15:30:00Z"
+    id: 'b1a7e8c2-1a2b-4c3d-9e4f-1a2b3c4d5e6f',
+    full_name: 'Andreina Torres',
+    birth_date: '1990-01-01',
+    gender: 'female',
+    email: 'andreina@example.com',
+    phone: '+56911111111'
   },
   {
-    id: uuidv4(),
-    full_name: "Juan Carlos Pérez Ruiz",
-    birth_date: "1965-08-23T00:00:00Z",
-    sex: "M",
-    email: "jcperez@outlook.com",
-    clinical_history: [
-      "Temblor esencial diagnosticado en 2022",
-      "Buena respuesta a propranolol",
-      "Hipertensión arterial controlada",
-      "Antecedente de colecistectomía en 2018"
-    ],
-    tags: ["temblor esencial", "hipertensión", "neurología"],
-    status: "active",
-    created_at: "2024-01-10T09:15:00Z",
-    updated_at: "2024-03-10T11:20:00Z"
+    id: 'c2b8f9d3-2b3c-4d4e-8f1a-2b3c4d5e6f7a',
+    full_name: 'Pilar González',
+    birth_date: '1985-05-12',
+    gender: 'female',
+    email: 'pilar@example.com',
+    phone: '+56922222222'
   },
   {
-    id: uuidv4(),
-    full_name: "María Isabel Sánchez García",
-    birth_date: "1992-11-30T00:00:00Z",
-    sex: "F",
-    clinical_history: [
-      "Epilepsia focal desde 2015",
-      "Control adecuado con levetiracetam",
-      "Última crisis: agosto 2023",
-      "Resonancia magnética normal (2023)"
-    ],
-    tags: ["epilepsia", "neurología"],
-    status: "active",
-    created_at: "2023-09-20T14:45:00Z",
-    updated_at: "2024-02-28T16:00:00Z"
+    id: 'd3c9f0e4-3c4d-4e5f-9a2b-3c4d5e6f7a8b',
+    full_name: 'Nuria López',
+    birth_date: '1978-09-23',
+    gender: 'female',
+    email: 'nuria@example.com',
+    phone: '+56933333333'
+  },
+  {
+    id: 'e4d0a1f5-4d5e-4f6a-8b3c-4d5e6f7a8b9c',
+    full_name: 'José Martínez',
+    birth_date: '1992-03-15',
+    gender: 'male',
+    email: 'jose@example.com',
+    phone: '+56944444444'
+  },
+  {
+    id: 'f5e1b2c6-5e6f-4b7b-9c4d-5e6f7a8b9c0d',
+    full_name: 'Paula Ramírez',
+    birth_date: '1988-07-30',
+    gender: 'female',
+    email: 'paula@example.com',
+    phone: '+56955555555'
   }
 ]; 

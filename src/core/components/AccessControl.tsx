@@ -15,7 +15,7 @@ export const AccessControl: React.FC<AccessControlProps> = ({ children, allowedR
   }
 
   if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/professional/dashboard" replace />;
   }
 
   return <>{children}</>;

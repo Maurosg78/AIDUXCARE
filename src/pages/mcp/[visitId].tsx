@@ -6,7 +6,7 @@ import { MCPContextView } from '../../components/MCPContextView/MCPContextView';
 import { MCPErrorBoundary } from '../../components/MCPContextView/MCPErrorBoundary';
 import { trackEvent } from '../../core/lib/langfuse.client';
 import { UserRole } from '../../core/types/UserRoles';
-import { AccessControl } from '../../components/AccessControl';
+import AccessControl from '../../components/auth/AccessControl';
 
 /**
  * Página que muestra el contexto MCP para una visita específica

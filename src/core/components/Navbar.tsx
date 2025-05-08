@@ -5,7 +5,7 @@ import { useAuth } from '@/core/context/AuthContext';
 
 const Navbar: React.FC = () => {
   const { user } = useAuth();
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = import.meta.env.MODE === 'development';
 
   return (
     <AppBar position="static">

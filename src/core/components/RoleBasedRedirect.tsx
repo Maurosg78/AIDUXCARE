@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/core/context/AuthContext';
 import { z } from 'zod';
 
 // Esquema de validación para roles
-const RoleSchema = z.enum(['admin', 'healthcare', 'secretary', 'developer', 'fisioterapeuta']);
+const RoleSchema = z.enum(['admin', 'professional', 'secretary', 'developer', 'fisioterapeuta']);
 type Role = z.infer<typeof RoleSchema>;
 
 // Componente de redirección basado en rol
@@ -17,22 +17,25 @@ const RoleBasedRedirect: React.FC = () => {
 
   try {
     const role = RoleSchema.parse(user.role);
+    console.log('Redirigiendo usuario con rol:', role);
+    
     switch (role) {
-      case 'healthcare':
+      case 'professional':
       case 'fisioterapeuta':
-        return <Navigate to="/professional/dashboard" />;
+        return <Navigate to="/professional/dashboard" replace />;
       case 'admin':
-        return <Navigate to="/admin/dashboard" />;
+        return <Navigate to="/admin/dashboard" replace />;
       case 'secretary':
-        return <Navigate to="/secretary/dashboard" />;
+        return <Navigate to="/secretary/dashboard" replace />;
       case 'developer':
-        return <Navigate to="/developer/dashboard" />;
+        return <Navigate to="/developer/dashboard" replace />;
       default:
-        return <Navigate to="/login" />;
+        console.error('Rol no reconocido:', role);
+        return <Navigate to="/login" replace />;
     }
   } catch (error) {
     console.error('Error de validación de rol:', error);
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 };
 

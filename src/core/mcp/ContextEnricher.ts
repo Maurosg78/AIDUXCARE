@@ -1,6 +1,6 @@
 import { MCPContext, EnrichedMCPContextSchema } from './schemas';
-import { trackEvent } from '../lib/langfuse.client';
-import { PatientService } from '../services/PatientService';
+import { trackEvent } from '@/core/lib/langfuse.client';
+import { PatientService } from '@/core/services/patient/PatientService';
 import { EMREnrichmentSource } from './enrichment/EMREnrichmentSource';
 
 export interface EnrichmentSource {

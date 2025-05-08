@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Divider, Paper, Button, Alert, Typography } from "@mui/material";
 import { Refresh } from "@mui/icons-material";
-import VisitService, { Visit } from "../services/VisitService";
-import { PatientService } from "../services/PatientService";
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import VisitService, { Visit } from "@/core/services/visit/VisitService";
+import { PatientService } from "@/core/services/patient/PatientService";
 import EvalTimeline from "@/modules/emr/components/EvalTimeline";
-import StructuredVisitForm from "@/components/StructuredVisitForm";
+import { StructuredVisitForm } from "@/modules/emr/components/StructuredVisitForm";
 import AudioChecklist from "@/components/AudioChecklist";
 import { PatientEval } from "@/modules/emr/types/Evaluation";
 import { trackEvent } from '@/core/lib/langfuse.client';
@@ -177,6 +178,17 @@ const VisitDetailPage: React.FC = () => {
             </p>
           </div>
         )}
+
+        {/* Botón para acceder a los registros de auditoría */}
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={() => navigate(`/visits/${visitId}/audit-log`)}
+            className="flex items-center bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 transition-colors"
+          >
+            <AssessmentIcon className="mr-2" fontSize="small" />
+            Ver Registros de Auditoría
+          </button>
+        </div>
       </div>
 
       <Divider sx={{ my: 3 }} />

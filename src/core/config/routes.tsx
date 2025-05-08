@@ -7,31 +7,34 @@
  * 5. Interfaz adaptativa que se ajusta al flujo de trabajo clínico
  */
 
-import { RouteObject } from 'react-router-dom';
+import { RouteObject, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/core/context/AuthContext';
+import RecordsPage from '@/modules/emr/pages/RecordsPage';
 import HomePage from '@/modules/core/pages/HomePage';
 import LoginPage from '@/pages/auth/login';
-import DashboardPage from '@/pages/dashboard';
+import ProfessionalDashboard from '@/pages/professional/Dashboard';
 import VisitDetailPage from '@/modules/emr/pages/VisitDetailPage';
 import PatientVisitListPage from '@/modules/emr/pages/PatientVisitListPage';
 import PatientVisitCreatePage from '@/modules/emr/pages/PatientVisitCreatePage';
 import NotFoundPage from '@/pages/404';
 import MCPPage from '@/pages/mcp/[visitId]';
+import PatientListPage from '@/modules/emr/pages/PatientListPage';
+import AuditLogViewer from '@/components/audit/AuditLogViewer';
 
 const routes: RouteObject[] = [
   {
     path: '/',
-    element: <HomePage />,
+    element: <Navigate to="/auth/login" replace />,
   },
   {
     path: '/auth/login',
     element: <LoginPage />,
   },
   {
-    path: '/dashboard',
+    path: '/professional/dashboard',
     element: (
-      <ProtectedRoute>
-        <DashboardPage />
+      <ProtectedRoute allowedRoles={['professional', 'fisioterapeuta']}>
+        <ProfessionalDashboard />
       </ProtectedRoute>
     ),
   },
@@ -48,6 +51,14 @@ const routes: RouteObject[] = [
     element: (
       <ProtectedRoute>
         <VisitDetailPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/visits/:visitId/audit-log',
+    element: (
+      <ProtectedRoute>
+        <AuditLogViewer />
       </ProtectedRoute>
     ),
   },
@@ -72,6 +83,22 @@ const routes: RouteObject[] = [
     element: (
       <ProtectedRoute>
         <PatientVisitCreatePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/patients',
+    element: (
+      <ProtectedRoute>
+        <PatientListPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/records',
+    element: (
+      <ProtectedRoute>
+        <RecordsPage />
       </ProtectedRoute>
     ),
   },

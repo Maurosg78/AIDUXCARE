@@ -1,6 +1,6 @@
 import { EnrichmentSource } from '../ContextEnricher';
 import { MCPContext } from '../schemas';
-import { PatientService } from '../../services/PatientService';
+import { PatientService } from '@/core/services/patient/PatientService';
 
 export class EMREnrichmentSource implements EnrichmentSource {
   name = 'emr';

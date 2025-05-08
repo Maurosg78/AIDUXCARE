@@ -1,13 +1,19 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import tsconfigPaths from 'vite-tsconfig-paths';
+import { loadEnv } from 'vite';
+
+const env = loadEnv('', process.cwd(), '');
 
 export default defineConfig({
-  plugins: [react(), tsconfigPaths()],
+  plugins: [react()],
   test: {
     environment: 'jsdom',
-    setupFiles: ['src/modules/emr/services/__tests__/setup.ts'],
     globals: true,
+    setupFiles: ['./jest.setup.cjs'],
+    env: {
+      NEXT_PUBLIC_SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    }
   },
 }); 

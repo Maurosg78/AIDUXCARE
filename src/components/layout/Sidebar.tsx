@@ -25,15 +25,18 @@ interface MenuItem {
 const menuItemsByRole: Record<string, MenuItem[]> = {
   professional: [
     { label: 'sidebar.my_visits', path: '/dashboard/professional', icon: <FileText size={20} /> },
-    { label: 'sidebar.mcp', path: '/mcp', icon: <Brain size={20} /> }
+    { label: 'sidebar.mcp', path: '/mcp', icon: <Brain size={20} /> },
+    { label: 'sidebar.patients', path: '/patients', icon: <Users size={20} /> }
   ],
   secretary: [
     { label: 'sidebar.schedule', path: '/dashboard/secretary', icon: <Calendar size={20} /> },
-    { label: 'sidebar.payments', path: '/pagos', icon: <CreditCard size={20} /> }
+    { label: 'sidebar.payments', path: '/pagos', icon: <CreditCard size={20} /> },
+    { label: 'sidebar.patients', path: '/patients', icon: <Users size={20} /> }
   ],
   admin: [
     { label: 'sidebar.users', path: '/dashboard/admin', icon: <Users size={20} /> },
-    { label: 'sidebar.metrics', path: '/metrics', icon: <Activity size={20} /> }
+    { label: 'sidebar.metrics', path: '/metrics', icon: <Activity size={20} /> },
+    { label: 'sidebar.patients', path: '/patients', icon: <Users size={20} /> }
   ],
   developer: [
     { label: 'sidebar.logs', path: '/langfuse', icon: <Terminal size={20} /> },

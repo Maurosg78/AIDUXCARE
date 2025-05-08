@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { PatientDataSchema, VisitSchema } from '../../../core/services/PatientService';
+import { PatientSchema } from '../../../core/services/patient/PatientService';
 
 // Simulación de base de datos local
 const mockDatabase = {

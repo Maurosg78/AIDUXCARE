@@ -1,38 +1,45 @@
 import fs from "fs";
 import path from "path";
 
-const BASE_DIR: string = './src';
-const TARGET: string = 'Maple';
-const REPLACEMENT: string = 'AiDuxCare';
+const rootDir = path.resolve("src");
+const aliasFixes: Record<string, string> = {
+  '../services/VisitService': '@/core/services/visit/VisitService',
+  '../lib/supabaseClient': '@/core/lib/supabaseClient',
+  '../lib/langfuse.client': '@/core/lib/langfuse.client',
+  '../services/PatientService': '@/core/services/patient/PatientService',
+};
 
-function scanAndFixImports(dir: string): void {
+function walk(dir: string): string[] {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
-
-  for (const entry of entries) {
+  return entries.flatMap(entry => {
     const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) return walk(fullPath);
+    if (entry.isFile() && (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))) return [fullPath];
+    return [];
+  });
+}
 
-    if (entry.isDirectory()) {
-      scanAndFixImports(fullPath);
-    } else if (entry.isFile() && (fullPath.endsWith('.ts') || fullPath.endsWith('.tsx'))) {
-      fixImportsInFile(fullPath);
+function fixImports(filePath: string) {
+  let content = fs.readFileSync(filePath, "utf-8");
+  let modified = false;
+
+  for (const [brokenPath, fixedPath] of Object.entries(aliasFixes)) {
+    if (content.includes(brokenPath)) {
+      content = content.replaceAll(brokenPath, fixedPath);
+      modified = true;
     }
   }
-}
 
-function fixImportsInFile(filePath: string): void {
-  let content: string = fs.readFileSync(filePath, 'utf8');
-  let original: string = content;
-
-  // Busca importaciones o requires con "Maple" en la ruta
-  const regex = /from\s+['"](.*Maple.*)['"]|require\(['"](.*Maple.*)['"]\)/g;
-  content = content.replace(regex, (match) => match.replace(new RegExp(TARGET, 'g'), REPLACEMENT));
-
-  if (content !== original) {
-    fs.writeFileSync(filePath, content, 'utf8');
-    console.log(`🔧 Imports corregidos en: ${filePath}`);
+  if (modified) {
+    fs.writeFileSync(filePath, content, "utf-8");
+    console.log(`✅ Fix applied: ${filePath}`);
   }
 }
 
-console.log('🛠️ Corrigiendo imports rotos con referencias a "Maple"...');
-scanAndFixImports(BASE_DIR);
-console.log('✅ Corrección completada.');
+function main() {
+  const files = walk(rootDir);
+  files.forEach(fixImports);
+  console.log("🧹 Revisión de imports completada.");
+}
+
+main();

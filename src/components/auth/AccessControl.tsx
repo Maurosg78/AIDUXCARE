@@ -1,35 +1,36 @@
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { useAuth } from '@/core/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/core/context/AuthContext';
 import type { UserRole } from '@/core/types/supabase';
 import { CircularProgress, Box } from '@mui/material';
 
 interface AccessControlProps {
   children: React.ReactNode;
   allowedRoles: UserRole[];
+  fallback?: React.ReactNode;
 }
 
-export default function AccessControl({ children, allowedRoles }: AccessControlProps) {
-  const { user, userRole, loading } = useAuth();
-  const router = useRouter();
+export default function AccessControl({ children, allowedRoles, fallback }: AccessControlProps) {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/auth/login');
+      navigate('/auth/login');
       return;
     }
 
-    if (!loading && userRole && !allowedRoles.includes(userRole)) {
+    if (!loading && user && !allowedRoles.includes(user.role as UserRole)) {
       // Redirigir a la página correspondiente según el rol
-      if (userRole === 'admin') {
-        router.push('/admin/dashboard');
-      } else if (userRole === 'professional') {
-        router.push('/professional/dashboard');
-      } else if (userRole === 'patient') {
-        router.push('/patient/dashboard');
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else if (user.role === 'professional') {
+        navigate('/professional/dashboard');
+      } else if (user.role === 'patient') {
+        navigate('/patient/dashboard');
       }
     }
-  }, [loading, user, userRole, allowedRoles, router]);
+  }, [loading, user, allowedRoles, navigate]);
 
   if (loading) {
     return (
@@ -44,8 +45,8 @@ export default function AccessControl({ children, allowedRoles }: AccessControlP
     );
   }
 
-  if (!user || !userRole || !allowedRoles.includes(userRole)) {
-    return null;
+  if (!user || !allowedRoles.includes(user.role as UserRole)) {
+    return fallback ? <>{fallback}</> : null;
   }
 
   return <>{children}</>;

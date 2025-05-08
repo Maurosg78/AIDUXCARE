@@ -137,16 +137,22 @@ export class PatientService {
   if (!existing.find(p => p.id === 'javier-ruiz-1966')) {
     const now = new Date().toISOString();
     const paciente1: PatientCreate = {
-      name: 'Javier',
-      lastName: 'Ruiz',
-      dateOfBirth: new Date(new Date().getFullYear() - 59, 0, 1).toISOString()
+      nombre: 'Javier Ruiz',
+      fechaNacimiento: new Date(new Date().getFullYear() - 59, 0, 1).toISOString(),
+      edad: 59,
+      genero: 'masculino',
+      telefono: '123456789',
+      email: 'javier@example.com',
+      seguroMedico: true
     };
     const createdPaciente1 = await PatientService.create(paciente1);
-    await VisitService.create({
-      id: 'jr-visita-001',
+    await VisitService.scheduleVisit({
       patientId: createdPaciente1.id,
-      visitDate: now,
-      visitType: 'postoperatorio',
+      professionalId: 'prof-001',
+      professionalEmail: 'doctor@example.com',
+      scheduledDate: now,
+      paymentStatus: 'paid',
+      motivo: 'Postoperatorio de prótesis total de cadera',
       status: 'completed',
       notes: 'Postoperatorio de prótesis total de cadera'
     });
@@ -154,16 +160,22 @@ export class PatientService {
   if (!existing.find(p => p.id === 'lucia-gomez-1982')) {
     const now = new Date().toISOString();
     const paciente2: PatientCreate = {
-      name: 'Lucía',
-      lastName: 'Gómez',
-      dateOfBirth: new Date(1982, 0, 1).toISOString()
+      nombre: 'Lucía Gómez',
+      fechaNacimiento: new Date(1982, 0, 1).toISOString(),
+      edad: 41,
+      genero: 'femenino',
+      telefono: '987654321',
+      email: 'lucia@example.com',
+      seguroMedico: true
     };
     const createdPaciente2 = await PatientService.create(paciente2);
-    await VisitService.create({
-      id: 'lg-visita-001',
+    await VisitService.scheduleVisit({
       patientId: createdPaciente2.id,
-      visitDate: now,
-      visitType: 'diagnostico',
+      professionalId: 'prof-001',
+      professionalEmail: 'doctor@example.com',
+      scheduledDate: now,
+      paymentStatus: 'paid',
+      motivo: 'Diagnóstico inicial',
       status: 'completed',
       notes: 'Diagnóstico reciente de ELA'
     });
@@ -171,16 +183,22 @@ export class PatientService {
   if (!existing.find(p => p.id === 'carla-ortega-2018')) {
     const now = new Date().toISOString();
     const paciente3: PatientCreate = {
-      name: 'Carla',
-      lastName: 'Ortega',
-      dateOfBirth: new Date(2018, 0, 1).toISOString()
+      nombre: 'Carla Ortega',
+      fechaNacimiento: new Date(2018, 0, 1).toISOString(),
+      edad: 6,
+      genero: 'femenino',
+      telefono: '456789123',
+      email: 'padres.carla@example.com',
+      seguroMedico: false
     };
     const createdPaciente3 = await PatientService.create(paciente3);
-    await VisitService.create({
-      id: 'co-visita-001',
+    await VisitService.scheduleVisit({
       patientId: createdPaciente3.id,
-      visitDate: now,
-      visitType: 'trauma',
+      professionalId: 'prof-001',
+      professionalEmail: 'doctor@example.com',
+      scheduledDate: now,
+      paymentStatus: 'paid',
+      motivo: 'Trauma lumbar',
       status: 'completed',
       notes: 'Dolor lumbar persistente post caída'
     });

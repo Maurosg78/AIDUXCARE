@@ -2,7 +2,7 @@ import React, { FC, useState } from "react";
 import { TextField, Button, MenuItem, Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { PatientVisit } from "../../models/PatientVisit";
-import VisitService from "../../services/VisitService";
+import VisitService from "@/core/services/visit/VisitService";
 
 const visitTypes = ["Consulta inicial", "Control", "Reevaluación", "Alta"];
 

@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Typography } from "@mui/material";
 import PatientForm from "../components/patients/PatientForm";
-import PatientService from "../services/PatientService";
+import PatientService from "@/core/services/patient/PatientService";
 import { Patient } from "../models";
 
 const PatientCreatePage: React.FC = () => {

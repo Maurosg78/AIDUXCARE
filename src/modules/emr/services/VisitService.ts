@@ -31,7 +31,7 @@ const VisitSchema = z.object({
 });
 
 // Esquema para crear una nueva visita
-const CreateVisitSchema = VisitSchema.omit({
+const _CreateVisitSchema = VisitSchema.omit({
   id: true,
   status: true,
   createdAt: true,
@@ -39,7 +39,7 @@ const CreateVisitSchema = VisitSchema.omit({
 });
 
 // Esquema para actualizar una visita
-const UpdateVisitSchema = VisitSchema.partial().omit({
+const _UpdateVisitSchema = VisitSchema.partial().omit({
   id: true,
   createdAt: true,
 });
@@ -73,7 +73,7 @@ export class VisitServiceError extends Error {
 }
 
 // Funciones auxiliares
-const validateResponse = async <T>(
+const _validateResponse = async <T>(
   response: Response,
   schema: z.ZodType<T>
 ): Promise<T> => {
@@ -219,6 +219,15 @@ export class VisitService {
       return true;
     } catch (error) {
       console.error('Error al eliminar visita:', error);
+      throw error;
+    }
+  }
+
+  static async clearAll(): Promise<void> {
+    try {
+      await StorageService.remove(this.STORAGE_KEY);
+    } catch (error) {
+      console.error('Error al limpiar visitas:', error);
       throw error;
     }
   }

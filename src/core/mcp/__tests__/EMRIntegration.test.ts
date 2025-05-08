@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { CopilotContextBuilder } from '../CopilotContextBuilder';
-import { PatientService, PatientNotFoundError } from '../../services/PatientService';
+import { PatientService, PatientNotFoundError } from '@/core/services/patient/PatientService';
 import axios from 'axios';
 
 describe('EMR Integration Tests', () => {

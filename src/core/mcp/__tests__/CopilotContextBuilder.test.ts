@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CopilotContextBuilder } from '../CopilotContextBuilder';
-import { PatientService } from '../../services/PatientService';
-import { visitExists } from '../../services/VisitService';
-import { trackEvent } from '../../lib/langfuse.client';
+import { PatientService } from '@/core/services/patient/PatientService';
+import { visitExists } from '@/core/services/visit/VisitService';
+import { trackEvent } from '@/core/lib/langfuse.client';
 
 // Mock de visitExists
-jest.mock('../../services/VisitService');
+jest.mock('@/core/services/visit/VisitService');
 const mockVisitExists = visitExists as jest.MockedFunction<typeof visitExists>;
 
 // Mock de trackEvent
-jest.mock('../../lib/langfuse.client');
+jest.mock('@/core/lib/langfuse.client');
 const mockTrackEvent = trackEvent as jest.MockedFunction<typeof trackEvent>;
 
 describe('CopilotContextBuilder', () => {

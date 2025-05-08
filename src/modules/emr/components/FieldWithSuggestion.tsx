@@ -1,7 +1,7 @@
 import React from 'react';
 import type { StructuredSuggestion } from '@/hooks/useCopilot';
 import { AuditLogService } from '@/core/services/AuditLogService';
-import { useAuth } from '@/core/contexts/AuthContext';
+import { useAuth } from '@/core/context/AuthContext';
 
 interface FieldWithSuggestionProps {
   field: string;

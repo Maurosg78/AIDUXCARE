@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { patientsSeed } from '../src/core/data/seed/realPatientsSeed';
 import { visitsSeed } from '../src/core/data/seed/realVisitsSeed';
 import supabase from '../src/core/lib/supabaseClient';

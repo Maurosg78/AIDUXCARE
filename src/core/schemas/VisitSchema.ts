@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { ProfessionalSchema } from './ProfessionalSchema';
 
 /**
  * Schema para validar visitas clínicas
@@ -41,9 +40,9 @@ export type Visit = z.infer<typeof VisitSchema>;
  */
 export const VisitSummarySchema = VisitSchema.pick({
   id: true,
-  date: true,
-  professional: true,
-  reason: true,
+  scheduledDate: true,
+  professionalEmail: true,
+  motivo: true,
   status: true
 });
 
