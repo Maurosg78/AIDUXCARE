@@ -2,11 +2,11 @@
 interface User {
   id: string;
   email: string;
-  role?: string;
+  role?: UserRole;
 }
 
-// Definir las roles de usuario
-type UserRole = 'admin' | 'professional' | 'patient' | 'guest';
+// Definir los roles de usuario
+type UserRole = 'admin' | 'professional' | 'patient' | 'guest' | 'fisioterapeuta' | 'secretary';
 
 // Definir interfaces para servicios
 interface Patient {
@@ -84,7 +84,7 @@ interface CopilotFeedback {
   value?: string;
 }
 
-// Módulos específicos con implementaciones detalladas
+// Declaración de módulos específicos para resolver errores de importación
 declare module '@/core/services/AuditLogService' {
   export interface AuditLogEvent {
     id?: string;
@@ -112,8 +112,36 @@ declare module '@/core/clients/AuditLogClient' {
   import type { AuditLogEvent } from '@/core/services/AuditLogService';
   
   export class AuditLogClient {
-    logEvent(eventData: AuditLogEvent): Promise<void>;
+    logEvent(eventData: Omit<AuditLogEvent, 'id' | 'timestamp'>): Promise<void>;
+    getAuditLogByVisitId(visitId: string): Promise<AuditLogEvent[]>;
   }
+}
+
+declare module '@/core/contexts/AuthContext' {
+  import { ReactNode } from 'react';
+  
+  export interface User {
+    id: string;
+    email: string;
+    role?: UserRole;
+  }
+
+  export interface AuthContextType {
+    user: User | null;
+    loading: boolean;
+    isAuthenticated: boolean;
+    login: (email: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
+  }
+
+  export function useAuth(): AuthContextType;
+  
+  export function AuthProvider({ children }: { children: ReactNode }): JSX.Element;
+
+  export function ProtectedRoute(props: { 
+    children: ReactNode;
+    allowedRoles?: UserRole[];
+  }): JSX.Element;
 }
 
 declare module '@/core/context/AuthContext' {
@@ -122,7 +150,7 @@ declare module '@/core/context/AuthContext' {
   export interface User {
     id: string;
     email: string;
-    role?: string;
+    role?: UserRole;
   }
 
   export interface AuthContextType {
@@ -175,6 +203,12 @@ declare module '@/core/services/patient/PatientService' {
   export type PatientCreate = PatientCreate;
 }
 
+declare module '@/modules/emr/services/PatientService' {
+  export const PatientService: IPatientService;
+  export type Patient = Patient;
+  export type PatientCreate = PatientCreate;
+}
+
 declare module '@/core/services/visit/VisitService' {
   export const VisitService: {
     getAll(): Promise<Visit[]>;
@@ -188,8 +222,22 @@ declare module '@/core/services/visit/VisitService' {
   export type Visit = Visit;
 }
 
+declare module '@/modules/emr/services/VisitService' {
+  export const VisitService: {
+    getAll(): Promise<Visit[]>;
+    getVisitById(id: string): Promise<Visit | undefined>;
+    updateVisit(id: string, updateData: Partial<Visit>): Promise<Visit>;
+    scheduleVisit(visitData: Omit<Visit, 'id' | 'createdAt' | 'updatedAt'>): Promise<Visit>;
+    visitExists(id: string): Promise<boolean>;
+    update(visit: Visit): Promise<void>;
+    create(visit: Visit): Promise<void>;
+  };
+  export type Visit = Visit;
+}
+
 declare module '@/lib/utils' {
-  export function cn(...inputs: (string | boolean | undefined | null | {[key: string]: boolean})[]): string;
+  import { type ClassValue } from 'clsx';
+  export function cn(...inputs: ClassValue[]): string;
 }
 
 declare module '@/types/Evaluation' {
@@ -203,6 +251,15 @@ declare module '@/types/Evaluation' {
     content: string;
     timestamp: string;
     source: string;
+  }
+}
+
+// Declarar módulo para react-router-dom con RouteObject
+declare module 'react-router-dom' {
+  export interface RouteObject {
+    path: string;
+    element: React.ReactNode;
+    children?: RouteObject[];
   }
 }
 

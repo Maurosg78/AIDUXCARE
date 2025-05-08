@@ -19,7 +19,7 @@ import PatientVisitCreatePage from '@/modules/emr/pages/PatientVisitCreatePage';
 import NotFoundPage from '@/pages/404';
 import MCPPage from '@/pages/mcp/[visitId]';
 import PatientListPage from '@/modules/emr/pages/PatientListPage';
-import AuditLogViewer from '@/components/audit/AuditLogViewer';
+import AuditLogViewerWithRouter from '@/components/audit/AuditLogViewer';
 
 const routes: RouteObject[] = [
   {
@@ -58,7 +58,7 @@ const routes: RouteObject[] = [
     path: '/visits/:visitId/audit-log',
     element: (
       <ProtectedRoute>
-        <AuditLogViewer />
+        <AuditLogViewerWithRouter />
       </ProtectedRoute>
     ),
   },

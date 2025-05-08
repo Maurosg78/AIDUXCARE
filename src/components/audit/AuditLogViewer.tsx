@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { AuditLogService, AuditLogEvent } from '@/core/services/audit/AuditLogService';
+import { AuditLogService } from '@/core/services/AuditLogService';
 import {
   Box,
   Card,
@@ -17,6 +16,7 @@ import {
   Alert,
   Grid,
   Divider,
+  SelectChangeEvent
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -34,6 +34,7 @@ const ACTION_LABELS: Record<string, string> = {
   ai_suggestion_accepted: 'Sugerencia IA aceptada',
   ai_suggestion_modified: 'Sugerencia IA modificada',
   ai_suggestion_rejected: 'Sugerencia IA rechazada',
+  test_event: 'Evento de prueba'
 };
 
 // Mapeo de fuentes a etiquetas en español
@@ -48,10 +49,26 @@ const SOURCE_COLORS: Record<string, { bg: string; text: string }> = {
   copilot: { bg: '#fff8e1', text: '#ff6f00' }, // Naranja claro
 };
 
-const AuditLogViewer: React.FC = () => {
-  const { visitId } = useParams<{ visitId: string }>();
-  const navigate = useNavigate();
-  const [logs, setLogs] = useState<AuditLogEvent[]>([]);
+// Definir el tipo localmente para evitar problemas de namespace
+interface AuditLogItem {
+  id?: string;
+  visitId: string;
+  timestamp: string;
+  action: string;
+  field: string;
+  oldValue?: string;
+  newValue?: string;
+  modifiedBy: string;
+  source: 'user' | 'copilot';
+}
+
+interface AuditLogViewerProps {
+  visitId?: string;
+  onBack?: () => void;
+}
+
+const AuditLogViewer: React.FC<AuditLogViewerProps> = ({ visitId, onBack }) => {
+  const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionFilter, setActionFilter] = useState<string>('');
@@ -71,6 +88,7 @@ const AuditLogViewer: React.FC = () => {
         // Ordenar por fecha descendente (más recientes primero)
         setLogs(auditLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
       } catch (err) {
+        console.error('Error al cargar logs de auditoría:', err);
         setError(err instanceof Error ? err.message : 'Error al cargar los registros de auditoría');
       } finally {
         setLoading(false);
@@ -115,7 +133,20 @@ const AuditLogViewer: React.FC = () => {
   }, [logs]);
 
   const handleBackToVisit = () => {
-    navigate(`/visits/${visitId}`);
+    if (onBack) {
+      onBack();
+    } else {
+      // Fallback para navegación si no se proporciona una función onBack
+      window.history.back();
+    }
+  };
+
+  const handleActionFilterChange = (event: SelectChangeEvent<string>) => {
+    setActionFilter(event.target.value);
+  };
+
+  const handleSourceFilterChange = (event: SelectChangeEvent<string>) => {
+    setSourceFilter(event.target.value);
   };
 
   if (loading) {
@@ -173,7 +204,7 @@ const AuditLogViewer: React.FC = () => {
                   labelId="action-filter-label"
                   value={actionFilter}
                   label="Tipo de acción"
-                  onChange={(e) => setActionFilter(e.target.value)}
+                  onChange={handleActionFilterChange}
                 >
                   <MenuItem value="">Todas las acciones</MenuItem>
                   {uniqueActions.map((action) => (
@@ -191,7 +222,7 @@ const AuditLogViewer: React.FC = () => {
                   labelId="source-filter-label"
                   value={sourceFilter}
                   label="Fuente"
-                  onChange={(e) => setSourceFilter(e.target.value)}
+                  onChange={handleSourceFilterChange}
                 >
                   <MenuItem value="">Todas las fuentes</MenuItem>
                   {uniqueSources.map((source) => (
@@ -222,7 +253,7 @@ const AuditLogViewer: React.FC = () => {
       {filteredLogs.length > 0 ? (
         <Box>
           {filteredLogs.map((log) => (
-            <Card key={log.id} sx={{ mb: 2, borderLeft: `4px solid ${SOURCE_COLORS[log.source]?.bg || '#e0e0e0'}` }}>
+            <Card key={log.id || `${log.timestamp}-${log.field}`} sx={{ mb: 2, borderLeft: `4px solid ${SOURCE_COLORS[log.source]?.bg || '#e0e0e0'}` }}>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
                   <Typography variant="subtitle2" color="text.secondary">
@@ -250,9 +281,11 @@ const AuditLogViewer: React.FC = () => {
                       <Typography variant="body2" color="text.secondary">
                         Valor anterior:
                       </Typography>
-                      <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {log.oldValue || '-'}
-                      </Typography>
+                      <Card variant="outlined" sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5' }}>
+                        <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', m: 0 }}>
+                          {log.oldValue}
+                        </Typography>
+                      </Card>
                     </Grid>
                   )}
                   {log.newValue && (
@@ -260,28 +293,38 @@ const AuditLogViewer: React.FC = () => {
                       <Typography variant="body2" color="text.secondary">
                         Valor nuevo:
                       </Typography>
-                      <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {log.newValue || '-'}
-                      </Typography>
+                      <Card variant="outlined" sx={{ mt: 1, p: 1, bgcolor: '#f1f8e9' }}>
+                        <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', m: 0 }}>
+                          {log.newValue}
+                        </Typography>
+                      </Card>
                     </Grid>
                   )}
                 </Grid>
-                <Box mt={1}>
-                  <Typography variant="body2" color="text.secondary">
-                    Modificado por: {log.modifiedBy}
-                  </Typography>
-                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                  Modificado por: <strong>{log.modifiedBy}</strong>
+                </Typography>
               </CardContent>
             </Card>
           ))}
         </Box>
       ) : (
-        <Alert severity="info">
-          No hay registros de auditoría que coincidan con los filtros seleccionados.
-        </Alert>
+        <Card sx={{ p: 5, textAlign: 'center' }}>
+          <Typography variant="body1" color="text.secondary">
+            No se encontraron registros de auditoría con los filtros actuales.
+          </Typography>
+        </Card>
       )}
     </Box>
   );
 };
 
-export default AuditLogViewer; 
+// Wrapper para usar AuditLogViewer con React Router DOM
+const AuditLogViewerWithRouter: React.FC = () => {
+  // Obtener visitId de la URL (puedes adaptar esto según tu router)
+  const visitId = window.location.pathname.split('/').pop();
+  
+  return <AuditLogViewer visitId={visitId} />;
+};
+
+export default AuditLogViewerWithRouter; 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AuditLogService, AuditLogEvent } from '@/core/services/AuditLogService';
+import { AuditLogService } from '@/core/services/AuditLogService';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Box } from '@mui/material';
 
 const ACTION_LABELS: Record<string, string> = {
@@ -11,14 +11,28 @@ const ACTION_LABELS: Record<string, string> = {
   suggestion_accepted: 'Sugerencia aceptada',
   copilot_intervention: 'Intervención Copiloto',
   form_submitted: 'Formulario enviado',
+  test_event: 'Evento de prueba'
 };
 
 interface ClinicalAuditLogProps {
   visitId: string;
 }
 
+// Definir el tipo localmente para evitar problemas de namespace
+interface AuditLogItem {
+  id?: string;
+  visitId: string;
+  timestamp: string;
+  action: string;
+  field: string;
+  oldValue?: string;
+  newValue?: string;
+  modifiedBy: string;
+  source: 'user' | 'copilot';
+}
+
 export const ClinicalAuditLog: React.FC<ClinicalAuditLogProps> = ({ visitId }) => {
-  const [logs, setLogs] = useState<AuditLogEvent[]>([]);
+  const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +44,8 @@ export const ClinicalAuditLog: React.FC<ClinicalAuditLogProps> = ({ visitId }) =
       .then((data) => {
         if (mounted) setLogs(data.sort((a, b) => b.timestamp.localeCompare(a.timestamp)));
       })
-      .catch((_err) => {
+      .catch((err) => {
+        console.error('Error al cargar logs de auditoría:', err);
         if (mounted) setError('Error al cargar los eventos clínicos.');
       })
       .finally(() => {
@@ -64,7 +79,7 @@ export const ClinicalAuditLog: React.FC<ClinicalAuditLogProps> = ({ visitId }) =
         </TableHead>
         <TableBody>
           {logs.map((log) => (
-            <TableRow key={log.id} tabIndex={0}>
+            <TableRow key={log.id || `${log.timestamp}-${log.field}`} tabIndex={0}>
               <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
               <TableCell>{log.field}</TableCell>
               <TableCell>{ACTION_LABELS[log.action] || log.action}</TableCell>
