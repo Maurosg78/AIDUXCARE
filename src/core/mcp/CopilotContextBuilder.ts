@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { trackEvent } from '@/core/lib/langfuse.client';
 import { VisitService } from '@/core/services/visit/VisitService';
 import { ContextEnricher } from './ContextEnricher';
-import { PatientService } from '@/core/services/patient/PatientService';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type * as PatientTypes from '@/core/services/patient/PatientService';
 
 /**
  * Schema para validar el estado del paciente
@@ -91,9 +92,11 @@ export class CopilotContextBuilder {
   `.trim();
 
   private enricher: ContextEnricher;
-  private patientService: PatientService;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private patientService: any;
 
-  constructor(patientService: PatientService) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(patientService: any) {
     this.enricher = new ContextEnricher(patientService);
     this.patientService = patientService;
   }

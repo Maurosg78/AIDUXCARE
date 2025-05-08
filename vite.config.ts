@@ -4,14 +4,17 @@ import path from "path";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  const isProd = mode === 'production';
+  
+  // Forzar uso de puerto 5176 sin importar lo que esté en env
+  const PORT = 5176;
   
   console.log('🔧 Vite Config - Environment Check:', {
     mode,
     hasPublicKey: !!env.VITE_LANGFUSE_PUBLIC_KEY,
     hasSecretKey: !!env.VITE_LANGFUSE_SECRET_KEY,
     hasBaseUrl: !!env.VITE_LANGFUSE_BASE_URL,
-    apiBaseUrl: env.VITE_API_BASE_URL
+    apiBaseUrl: env.VITE_API_BASE_URL,
+    port: PORT
   });
 
   return {
@@ -23,8 +26,9 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 5176,
-      strictPort: true
+      port: PORT,
+      strictPort: true,
+      force: true
     },
     define: {
       'import.meta.env.VITE_LANGFUSE_PUBLIC_KEY': JSON.stringify(env.VITE_LANGFUSE_PUBLIC_KEY),

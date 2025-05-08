@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/core/context/AuthContext';
-import type { UserRole } from '@/core/types/supabase';
 import { CircularProgress, Box } from '@mui/material';
 
 interface AccessControlProps {

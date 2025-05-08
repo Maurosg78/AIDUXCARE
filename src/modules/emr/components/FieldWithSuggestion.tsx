@@ -34,7 +34,6 @@ export const FieldWithSuggestion: React.FC<FieldWithSuggestionProps> = ({
         modifiedBy: user?.email || 'desconocido',
         action: 'ai_suggestion_modified',
         source: 'copilot',
-        timestamp: new Date().toISOString(),
       });
     } else {
       AuditLogService.logEvent({
@@ -44,7 +43,6 @@ export const FieldWithSuggestion: React.FC<FieldWithSuggestionProps> = ({
         modifiedBy: user?.email || 'desconocido',
         action: 'ai_suggestion_accepted',
         source: 'copilot',
-        timestamp: new Date().toISOString(),
       });
     }
     onAcceptSuggestion(suggestion);
@@ -59,7 +57,6 @@ export const FieldWithSuggestion: React.FC<FieldWithSuggestionProps> = ({
       modifiedBy: user?.email || 'desconocido',
       action: 'ai_suggestion_rejected',
       source: 'copilot',
-      timestamp: new Date().toISOString(),
     });
     onRejectSuggestion(suggestion);
   };

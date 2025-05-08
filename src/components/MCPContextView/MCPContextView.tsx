@@ -7,10 +7,10 @@ import { useMCPContext } from './useMCPContext';
 import { MCPErrorBoundary } from './MCPErrorBoundary';
 import { PatientInfoCard } from './PatientInfoCard';
 
-// Lazy loading de componentes secundarios
-const VisitHistoryCard = React.lazy(() => import('./VisitHistoryCard'));
-const CurrentVisitCard = React.lazy(() => import('./CurrentVisitCard'));
-const SystemRulesCard = React.lazy(() => import('./SystemRulesCard'));
+// Lazy loading de componentes secundarios como componentes con default export
+const VisitHistoryCard = React.lazy(() => import('./VisitHistoryCard').then(module => ({ default: module.VisitHistoryCard || module.default || module })));
+const CurrentVisitCard = React.lazy(() => import('./CurrentVisitCard').then(module => ({ default: module.CurrentVisitCard || module.default || module })));
+const SystemRulesCard = React.lazy(() => import('./SystemRulesCard').then(module => ({ default: module.SystemRulesCard || module.default || module })));
 
 export interface MCPContextViewProps {
   visitId?: string;
@@ -81,7 +81,15 @@ export const MCPContextView: React.FC<MCPContextViewProps> = React.memo(({ visit
     );
   }
 
-  const { patient_state, visit_metadata, rules_and_constraints, system_instructions, enrichment } = context;
+  // Asegurarnos de que context tiene la forma correcta (por defecto)
+  const typedContext = context as MCPContext;
+  const { 
+    patient_state = {}, 
+    visit_metadata = {}, 
+    rules_and_constraints = [], 
+    system_instructions = '', 
+    enrichment = { emr: { patient_data: { name: '', allergies: [], chronicConditions: [], medications: [] }, visit_history: [] } } 
+  } = typedContext;
 
   return (
     <MCPErrorBoundary>

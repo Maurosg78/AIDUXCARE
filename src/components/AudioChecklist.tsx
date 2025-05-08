@@ -3,12 +3,12 @@ import { Box, Button, List, ListItem, ListItemIcon, ListItemText, Checkbox, Typo
 import { trackEvent } from '@/core/lib/langfuse.client';
 
 interface AudioChecklistProps {
-  patientId: string;
-  visitId: string;
+  _patientId: string;
+  _visitId: string;
   onDataValidated: (data: { field: string; value: string }[]) => void;
 }
 
-export default function AudioChecklist({ patientId, visitId, onDataValidated }: AudioChecklistProps) {
+export default function AudioChecklist({ _patientId, _visitId, onDataValidated }: AudioChecklistProps) {
   const [isListening, setIsListening] = useState(false);
   const [validatedData, setValidatedData] = useState<Array<{
     field: string;
@@ -18,11 +18,8 @@ export default function AudioChecklist({ patientId, visitId, onDataValidated }: 
 
   const startListening = () => {
     setIsListening(true);
-    trackEvent({
-      name: "audio.start_listening",
-      payload: {
-        timestamp: new Date().toISOString()
-      }
+    trackEvent("audio.start_listening", {
+      timestamp: new Date().toISOString()
     });
 
     // Simular datos capturados por voz
@@ -41,26 +38,24 @@ export default function AudioChecklist({ patientId, visitId, onDataValidated }: 
     const newData = { ...validatedData, [field]: value };
     setValidatedData(newData);
 
-    trackEvent({
-      name: "audio.validate_field",
-      payload: {
-        field,
-        value,
-        timestamp: new Date().toISOString()
-      }
+    trackEvent("audio.validate_field", {
+      field,
+      value,
+      timestamp: new Date().toISOString()
     });
   };
 
   const handleApproveData = () => {
-    const approvedFields = Object.entries(validatedData)
-      .map(([field, value]) => ({ field, value }));
+    const approvedFields = validatedData
+      .filter(item => item.isValid)
+      .map(item => ({ 
+        field: item.field, 
+        value: item.value 
+      }));
 
-    trackEvent({
-      name: "audio.approve_data",
-      payload: {
-        fields: approvedFields,
-        timestamp: new Date().toISOString()
-      }
+    trackEvent("audio.approve_data", {
+      fields: approvedFields,
+      timestamp: new Date().toISOString()
     });
 
     onDataValidated(approvedFields);
@@ -85,7 +80,7 @@ export default function AudioChecklist({ patientId, visitId, onDataValidated }: 
             Validar datos capturados:
           </Typography>
           <List>
-            {validatedData.map((item, index) => (
+            {validatedData.map((item, _index) => (
               <ListItem key={item.field} dense button onClick={() => handleValidateField(item.field, item.value)}>
                 <ListItemIcon>
                   <Checkbox

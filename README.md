@@ -180,4 +180,386 @@ La documentación completa del proyecto se encuentra en la carpeta `/docs`:
 - ✅ El sistema queda técnicamente estable para iniciar pruebas clínicas reales en entorno controlado
 
 ---
-*AiDuxCare - Transformando la Fisioterapia con IA* 
+*AiDuxCare - Transformando la Fisioterapia con IA*
+
+# AiDuxCare v1.15
+
+## Instalación y Ejecución Rápida v1.15
+
+Para ejecutar AiDuxCare v1.15 de forma estable, sigue estos pasos:
+
+### Método 1: Ejecución con un solo comando (Recomendado)
+```bash
+# Iniciar todo el sistema con un solo comando
+npm run quickstart
+```
+
+Este comando realizará automáticamente:
+1. Liberación de puertos en uso (5175, 5176, 3000)
+2. Configuración de variables de entorno
+3. Inicio del servidor API mock (http://localhost:3000)
+4. Inicio del frontend (http://localhost:5176)
+
+### Método 2: Ejecución por pasos
+```bash
+# Paso 1: Liberar puertos que puedan estar ocupados
+npm run free-ports
+
+# Paso 2: Configurar variables de entorno
+npm run setup-env
+
+# Paso 3: Iniciar el servidor API mock
+npm run api
+
+# Paso 4 (en otra terminal): Iniciar el frontend
+npm run start
+```
+
+### Método 3: Ejecución con dev:all (puede tener problemas)
+```bash
+# Primero liberar puertos
+npm run free-ports
+
+# Ejecutar backend y frontend juntos
+npm run dev:all
+```
+
+## Solución de problemas
+- Si ves errores relacionados con Supabase, asegúrate de estar usando `simple-server-direct.mjs` como backend
+- Si ves errores de puerto 5175 ocupado, ejecuta `npm run free-ports`
+- Si el comando `npm run dev:all` falla, ejecuta el servidor y frontend por separado 
+
+# MCP - Model Context Protocol para AiDuxCare
+
+Este módulo implementa un agente clínico inteligente para AiDuxCare utilizando la arquitectura MCP (Model Context Protocol).
+
+El agente está diseñado para asistir a diferentes tipos de usuarios del sistema, permitiendo:
+- Mantener contexto con memoria de la conversación
+- Ejecutar herramientas clínicas especializadas según el rol de usuario
+- Generar respuestas adaptadas al tipo de usuario
+- Mantener trazabilidad completa de las acciones
+
+## Estructura del Proyecto
+
+```
+mcp/
+├── __init__.py          # Inicialización del módulo
+├── agent_mcp.py         # Agente principal y lógica de razonamiento
+├── agent_factory.py     # Fábrica para crear agentes según rol de usuario
+├── context.py           # Contexto, estado y manejo de historia
+└── tools.py             # Herramientas clínicas disponibles
+```
+
+## Instalación
+
+El módulo MCP está diseñado para ejecutarse con dependencias mínimas:
+
+```bash
+# Clonar el repositorio
+git clone https://github.com/aiduxcare/aiduxcare.git
+cd aiduxcare
+
+# Crear un entorno virtual (opcional pero recomendado)
+python -m venv venv
+source venv/bin/activate  # En Windows: venv\Scripts\activate
+
+# Instalar dependencias
+# Actualmente solo requiere Python estándar
+```
+
+## Uso
+
+### Shell Interactivo
+
+La forma más rápida de probar el agente es ejecutar el shell interactivo:
+
+```bash
+# Desde la raíz del proyecto
+python -m mcp.agent_mcp
+```
+
+Esto iniciará una interfaz interactiva donde podrás enviar mensajes al agente y ver sus respuestas.
+
+### Integración Programática con Roles de Usuario
+
+AiDuxCare v1.17 incorpora una arquitectura modular basada en roles de usuario. Los tres roles principales son:
+- `health_professional`: Para profesionales de la salud (médicos, fisioterapeutas...)
+- `patient`: Para pacientes que acceden a su información
+- `admin_staff`: Para personal administrativo y de gestión
+
+Para integrar el agente con un rol específico:
+
+```python
+from mcp.context import MCPContext
+from mcp.agent_factory import (
+    create_agent_by_role,  # Función genérica
+    crear_agente_profesional_salud,  # Función específica para profesionales
+    crear_agente_paciente,  # Función específica para pacientes
+    crear_agente_administrativo  # Función específica para administrativos
+)
+
+# 1. Crear contexto (especificando el rol)
+contexto = MCPContext(
+    paciente_id="P001",
+    paciente_nombre="Juan Pérez",
+    visita_id="V20250508-001",
+    profesional_email="profesional@ejemplo.com",
+    motivo_consulta="Dolor cervical persistente",
+    user_role="health_professional"  # Especificar rol aquí
+)
+
+# 2A. Crear agente usando la fábrica genérica
+agente = create_agent_by_role(contexto)
+
+# 2B. Alternativamente, usar la función específica del rol
+agente = crear_agente_profesional_salud(contexto)
+
+# 3. Procesar mensajes
+respuesta = agente.procesar_mensaje("El paciente refiere dolor cervical con irradiación a brazo derecho")
+print(respuesta)
+
+# 4. Ver historia del contexto
+print(contexto.obtener_historia_formateada())
+
+# 5. Finalizar sesión
+contexto.finalizar_sesion()
+```
+
+## Comportamiento por Rol de Usuario
+
+### Rol: health_professional
+
+**Características:**
+- Acceso a todas las herramientas clínicas
+- Respuestas con terminología técnica y detalles completos
+- Razonamiento clínico explícito
+- Evaluaciones de riesgo legal detalladas
+
+**Ejemplo de respuesta:**
+```
+Respecto a la consulta del paciente Juan Pérez:
+El diagnóstico principal sugerido es Cervicalgia mecánica.
+También se deben considerar: Contractura muscular, Hernia discal cervical.
+
+⚠️ Es importante considerar los siguientes aspectos de riesgo legal:
+- Técnica de alto riesgo identificada: manipulación
+- Documentar detalladamente procedimiento y respuesta para 'manipulación'
+
+Estoy disponible para asistir con cualquier otra consulta relacionada con este caso.
+```
+
+### Rol: patient
+
+**Características:**
+- Acceso limitado a herramientas (solo historial)
+- Lenguaje simple sin terminología técnica
+- Sin acceso a evaluaciones de riesgo legal
+- Respuestas enfocadas en información general y cuidados
+
+**Ejemplo de respuesta:**
+```
+Hola Juan, respecto a tu consulta:
+Basado en tus visitas anteriores:
+- 2025-04-10 - Dolor cervical agudo
+- 2025-03-15 - Control mensual
+
+El profesional de salud considera que podrías presentar Cervicalgia mecánica.
+
+Con la información disponible, recomendaría:
+- Seguir las indicaciones de tu profesional de salud
+- Mantener un registro de tus síntomas
+- Consultar nuevamente si los síntomas persisten o empeoran
+
+Recuerda que esta información no reemplaza la consulta con tu profesional de salud.
+```
+
+### Rol: admin_staff
+
+**Características:**
+- Acceso a herramientas de historial y riesgos legales
+- Sin acceso a herramientas de diagnóstico clínico
+- Respuestas enfocadas en aspectos administrativos y legales
+- Formato estructurado para facilitar la gestión
+
+**Ejemplo de respuesta:**
+```
+Información sobre el paciente Juan Pérez para gestión administrativa:
+Basado en su historial de visitas:
+- 2025-04-10 - Dolor cervical agudo
+- 2025-03-15 - Control mensual
+
+Diagnóstico registrado: Cervicalgia mecánica
+
+⚠️ ALERTA: Aspectos legales importantes a considerar:
+- Técnica de alto riesgo identificada: manipulación
+- Documentar detalladamente procedimiento y respuesta para 'manipulación'
+
+La información proporcionada está sujeta a actualización en futuras visitas.
+```
+
+## Herramientas Disponibles
+
+El agente incluye las siguientes herramientas clínicas, disponibles según el rol de usuario:
+
+1. **sugerir_diagnostico_clinico**: Sugiere posibles diagnósticos basados en síntomas y antecedentes.
+   - Disponible para: `health_professional`
+
+2. **evaluar_riesgo_legal**: Evalúa riesgos legales del tratamiento propuesto.
+   - Disponible para: `health_professional`, `admin_staff`
+
+3. **recordar_visitas_anteriores**: Recupera información de visitas anteriores del paciente.
+   - Disponible para: `health_professional`, `patient`, `admin_staff`
+
+## Pruebas
+
+Para probar el comportamiento del agente con los diferentes roles:
+
+```bash
+# Ejecutar todas las pruebas
+python test_mcp.py
+```
+
+## Personalización Avanzada
+
+Es posible personalizar aún más el comportamiento del agente mediante configuraciones adicionales:
+
+```python
+# Configuración personalizada
+config_personalizada = {
+    "max_iteraciones": 3,
+    "herramientas_permitidas": ["recordar_visitas_anteriores"],
+    "formato_respuesta": "simplificado"
+}
+
+# Crear agente con configuración personalizada
+from mcp.context import MCPContext
+from mcp.agent_factory import create_agent_by_role
+
+contexto = MCPContext(
+    paciente_id="P001",
+    paciente_nombre="Juan Pérez",
+    visita_id="V20250508-001",
+    profesional_email="ejemplo@clinica.com",
+    motivo_consulta="Dolor lumbar",
+    user_role="health_professional"
+)
+
+# Aplicar configuración personalizada
+agente = create_agent_by_role(contexto, config_personalizada)
+```
+
+## Migración a Langraph
+
+Esta implementación está diseñada para facilitar la migración a Langraph en el futuro, manteniendo la arquitectura por roles.
+
+### Futuro Grafo de Componentes con Roles
+
+```python
+# Código futuro con Langraph (ejemplo conceptual)
+from langraph.graph import Graph, END
+from langchain_openai import ChatOpenAI
+
+def create_graph_by_role(role: str) -> Graph:
+    """Crea un grafo adaptado al rol de usuario"""
+    
+    # Herramientas disponibles según rol
+    if role == "health_professional":
+        tools = ["sugerir_diagnostico_clinico", "evaluar_riesgo_legal", "recordar_visitas_anteriores"]
+    elif role == "patient":
+        tools = ["recordar_visitas_anteriores"]
+    elif role == "admin_staff":
+        tools = ["recordar_visitas_anteriores", "evaluar_riesgo_legal"]
+    else:
+        raise ValueError(f"Rol no válido: {role}")
+    
+    # Crear grafo
+    graph = Graph()
+    
+    # Configurar nodos según rol
+    # ...
+    
+    return graph.compile()
+```
+
+## Licencia
+
+Este módulo es parte del sistema AiDuxCare. Todos los derechos reservados.
+
+## Sistema de Memoria Adaptativa
+
+AiDuxCare v1.17 incorpora un sistema de memoria contextual adaptativa que optimiza el uso de tokens en las consultas a los modelos de IA según el rol del usuario.
+
+### Conceptos Clave
+
+1. **Bloques de Conversación**
+
+Los mensajes de conversación se almacenan como bloques estructurados:
+
+```python
+{
+  "actor": "patient",  # o professional, companion, system
+  "priority": "high",  # o medium, low
+  "text": "Me duele mucho la pierna desde hace días",
+  "tokens_estimados": 15
+}
+```
+
+2. **Memoria a Corto y Largo Plazo**
+
+- **Memoria a corto plazo**: Mantiene los bloques de la conversación actual
+- **Memoria a largo plazo**: Archiva bloques importantes para referencia futura (solo disponible para roles específicos)
+
+3. **Filtrado Inteligente**
+
+El sistema filtra automáticamente los bloques por:
+- Prioridad (alta, media, baja)
+- Relevancia para el rol de usuario
+- Límite de tokens (configurable)
+
+### Configuración por Rol
+
+| Rol | Memoria Larga | Bloques Corto | Bloques Largo | Umbral Prioridad |
+|-----|:-------------:|:-------------:|:-------------:|:----------------:|
+| Health Professional | ✅ | 20 | 100 | low |
+| Patient | ❌ | 10 | 0 | medium |
+| Admin Staff | ✅ | 15 | 50 | medium |
+
+### Optimización de Tokens
+
+El sistema está diseñado para:
+- Mantener el contexto relevante bajo 300 tokens por defecto
+- Priorizar mensajes críticos o médicamente relevantes
+- Filtrar frases triviales o redundantes
+- Conservar trazabilidad completa para auditoría
+
+### Uso
+
+```python
+# Crear un contexto con memoria
+contexto = MCPContext(
+    paciente_id="P001",
+    paciente_nombre="Juan Pérez",
+    visita_id="V001",
+    profesional_email="medico@aiduxcare.com",
+    motivo_consulta="Dolor lumbar",
+    user_role="health_professional"
+)
+
+# Añadir un bloque de conversación
+contexto.agregar_bloque_conversacion(
+    actor="patient",
+    texto="Me duele mucho la pierna desde hace días",
+    prioridad="high"
+)
+
+# Obtener bloques relevantes para el prompt
+bloques_relevantes = contexto.filter_relevant_blocks(max_tokens=300)
+```
+
+### Integración con Langraph
+
+La arquitectura de memoria está diseñada para facilitar la migración a Langraph:
+
+1. Los bloques de memoria pueden transformarse directamente en nodos
+2. El filtrado inteligente puede implementarse como un edge con transformación
+3. La lógica de priorización es independiente del modelo de agente 

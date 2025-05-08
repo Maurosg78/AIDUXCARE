@@ -1,58 +1,59 @@
 import supabase from '@/core/lib/supabaseClient';
+import { z } from 'zod';
 
-/**
- * Interfaz para eventos de auditoría
- */
-export interface AuditLogEvent {
-  id?: string;
-  visitId: string;
-  action: string;
-  field: string;
-  oldValue?: string;
-  newValue?: string;
-  modifiedBy: string;
-  source: 'user' | 'copilot' | 'system';
-  timestamp: string;
-}
+export const AuditLogEventSchema = z.object({
+  id: z.string().uuid(),
+  visitId: z.string().uuid(),
+  timestamp: z.string().datetime(),
+  action: z.enum([
+    'field_updated',
+    'suggestion_accepted',
+    'copilot_intervention',
+    'manual_edit',
+    'form_submitted',
+    'ai_suggestion_accepted',
+    'ai_suggestion_modified',
+    'ai_suggestion_rejected',
+  ]),
+  field: z.string(),
+  oldValue: z.string().optional(),
+  newValue: z.string().optional(),
+  modifiedBy: z.string(),
+  source: z.enum(['user', 'copilot'])
+});
 
-/**
- * Servicio para gestionar el registro de auditoría de cambios clínicos
- */
-export class AuditLogService {
-  /**
-   * Registra un evento de auditoría
-   */
-  static async logEvent(eventData: AuditLogEvent): Promise<void> {
+export type AuditLogEvent = z.infer<typeof AuditLogEventSchema>;
+
+export const AuditLogService = {
+  async logEvent(event: Omit<AuditLogEvent, 'id' | 'timestamp'>): Promise<void> {
+    // Insertar evento en Supabase
     const { error } = await supabase.from('audit_logs').insert({
-      visit_id: eventData.visitId,
-      action: eventData.action,
-      field: eventData.field,
-      old_value: eventData.oldValue,
-      new_value: eventData.newValue,
-      modified_by: eventData.modifiedBy,
-      source: eventData.source,
-      timestamp: new Date().toISOString()
+      ...event,
+      timestamp: new Date().toISOString(),
     });
+    if (error) throw error;
+  },
 
-    if (error) {
-      throw new Error(`Error al registrar evento de auditoría: ${error.message}`);
-    }
-  }
-
-  /**
-   * Obtiene todos los eventos de auditoría para una visita
-   */
-  static async getLogsByVisitId(visitId: string) {
+  async getLogsByVisitId(visitId: string): Promise<AuditLogEvent[]> {
     const { data, error } = await supabase
       .from('audit_logs')
       .select('*')
       .eq('visit_id', visitId)
-      .order('timestamp', { ascending: false });
-
-    if (error) {
-      throw new Error(`Error al obtener eventos de auditoría: ${error.message}`);
-    }
-
-    return data || [];
-  }
-} 
+      .order('timestamp', { ascending: true });
+    if (error) throw error;
+    // Validar y mapear los datos
+    return (data ?? []).map((row) => {
+      return AuditLogEventSchema.parse({
+        id: row.id,
+        visitId: row.visit_id,
+        timestamp: row.timestamp,
+        action: row.action,
+        field: row.field,
+        oldValue: row.old_value,
+        newValue: row.new_value,
+        modifiedBy: row.modified_by,
+        source: row.source,
+      });
+    });
+  },
+}; 
