@@ -7,6 +7,7 @@ Este módulo implementa el agente MCP (Model Context Protocol) que:
 3. Genera respuestas contextualizadas
 4. Registra todas las acciones para trazabilidad
 5. Utiliza memoria adaptativa por rol para optimizar tokens
+6. Se integra con el EMR para acceder a datos de pacientes y visitas
 
 La arquitectura está diseñada para facilitar la migración a Langraph en el futuro.
 """
@@ -16,6 +17,7 @@ import sys
 import json
 import time
 import re
+import asyncio
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple, Callable, Union, Set
 
@@ -28,6 +30,19 @@ from mcp.tools import (
 )
 from mcp.context import MCPContext, crear_contexto_desde_peticion, ActorType, PriorityLevel
 
+# Nuevo: Importar funciones de integración con EMR
+try:
+    from mcp.integracion_emr import obtener_datos_visita, convertir_a_contexto_mcp, sincronizar_con_emr
+except ImportError:
+    # Función placeholder en caso de que el módulo no esté disponible
+    async def obtener_datos_visita(visit_id: str) -> Dict:
+        raise NotImplementedError("Módulo de integración EMR no disponible")
+    
+    def convertir_a_contexto_mcp(datos_visita: Dict, user_role: str = "health_professional") -> MCPContext:
+        raise NotImplementedError("Módulo de integración EMR no disponible")
+    
+    async def sincronizar_con_emr(contexto: MCPContext, visit_id: str) -> None:
+        pass
 
 # Constantes para el agente MCP
 SYSTEM_PROMPT = """
@@ -731,27 +746,32 @@ class MCPAgent:
     
     def _simulador_llm_por_defecto(self, prompt: str) -> str:
         """
-        Simulador simple de respuestas LLM para pruebas.
+        Simula respuestas del LLM para pruebas y desarrollo.
         
         Args:
-            prompt: Texto de entrada
+            prompt: Prompt para el LLM
             
         Returns:
-            Respuesta simulada
+            Respuesta simulada según el rol
         """
-        # Este es un simulador muy básico que devuelve respuestas predefinidas
-        # En un sistema real, aquí estaría la llamada al LLM
+        # Usar el rol del usuario para personalizar la respuesta
+        if hasattr(self.contexto, 'user_role'):
+            rol = self.contexto.user_role
+            
+            # Respuesta específica para profesionales de salud
+            if rol == "health_professional":
+                return self._generar_respuesta_predeterminada_profesional(prompt.split('\n'))
+            
+            # Respuesta específica para pacientes
+            elif rol == "patient":
+                return self._generar_respuesta_predeterminada_paciente(prompt.split('\n'))
+            
+            # Respuesta específica para administrativos
+            elif rol == "admin_staff":
+                return self._generar_respuesta_predeterminada_admin(prompt.split('\n'))
         
-        respuestas = [
-            "Basado en los síntomas descritos, podría tratarse de una cervicalgia mecánica. Recomiendo una evaluación completa.",
-            "Los resultados indican un posible caso de lumbalgia inespecífica. Es importante realizar ejercicios de fortalecimiento.",
-            "Considerando el historial del paciente, se debe evaluar la posibilidad de una tendinitis. Recomiendo reposo y terapia.",
-            "La evaluación sugiere una condropatía rotuliana. Se recomienda un programa de rehabilitación específico."
-        ]
-        
-        # Usar el tiempo como semilla para pseudo-aleatoriedad simple
-        indice = int(time.time()) % len(respuestas)
-        return respuestas[indice]
+        # Respuesta genérica si no hay rol o no se reconoce
+        return "Respecto a su consulta, le proporciono la siguiente información basada en la evidencia disponible y el contexto clínico. Si necesita aclaraciones adicionales, no dude en consultar."
 
     def _determinar_prioridad_mensaje(self, mensaje: str) -> PriorityLevel:
         """
@@ -862,6 +882,91 @@ class MCPAgent:
             f"se recomienda seguir el protocolo administrativo estándar. "
             f"Asegúrese de completar toda la documentación necesaria y verificar que "
             f"los consentimientos estén debidamente firmados."
+        )
+
+    @classmethod
+    async def desde_visita_emr(
+        cls,
+        visit_id: str,
+        user_role: str = "health_professional",
+        max_iteraciones: int = 5,
+        simulacion_llm: Optional[Callable] = None,
+        config: Optional[Dict[str, Any]] = None
+    ) -> "MCPAgent":
+        """
+        Crea un agente MCP a partir de un ID de visita del EMR.
+        
+        Obtiene los datos de la visita desde el EMR, crea el contexto
+        y configura el agente con el rol especificado.
+        
+        Args:
+            visit_id: ID de la visita en el EMR
+            user_role: Rol del usuario ("health_professional", "patient", "admin_staff")
+            max_iteraciones: Número máximo de iteraciones de razonamiento
+            simulacion_llm: Función opcional para simular respuestas LLM
+            config: Configuración adicional para el agente
+            
+        Returns:
+            Instancia configurada de MCPAgent
+            
+        Raises:
+            ValueError: Si la visita no existe o hay error al cargar datos
+        """
+        try:
+            # Obtener datos de la visita desde el EMR
+            datos_visita = await obtener_datos_visita(visit_id)
+            
+            # Convertir a formato de contexto MCP
+            contexto = convertir_a_contexto_mcp(datos_visita, user_role)
+            
+            # Crear instancia del agente
+            agente = cls(
+                contexto=contexto,
+                max_iteraciones=max_iteraciones,
+                simulacion_llm=simulacion_llm,
+                config=config
+            )
+            
+            # Registrar la carga desde EMR
+            contexto.agregar_evento(
+                origen="sistema",
+                tipo="inicializacion_emr",
+                contenido=f"Agente inicializado desde EMR para visita {visit_id}",
+                metadatos={
+                    "visita_id": visit_id,
+                    "user_role": user_role,
+                    "timestamp": datetime.now().isoformat()
+                }
+            )
+            
+            return agente
+            
+        except Exception as e:
+            raise ValueError(f"Error al crear agente desde visita EMR: {str(e)}")
+
+    async def sincronizar_contexto_emr(self) -> None:
+        """
+        Sincroniza el contexto actual con los datos más recientes del EMR.
+        
+        Útil cuando hay actualizaciones en el EMR durante una sesión activa.
+        """
+        if not hasattr(self.contexto, 'visita') or not self.contexto.visita.get('id'):
+            raise ValueError("El contexto no tiene un ID de visita definido")
+        
+        # Obtener el ID de la visita del contexto
+        visit_id = self.contexto.visita["id"]
+        
+        # Sincronizar con el EMR
+        await sincronizar_con_emr(self.contexto, visit_id)
+        
+        # Registrar evento de sincronización
+        self.contexto.agregar_evento(
+            origen="sistema",
+            tipo="sincronizacion",
+            contenido=f"Contexto sincronizado con EMR para visita {visit_id}",
+            metadatos={
+                "timestamp": datetime.now().isoformat()
+            }
         )
 
 
