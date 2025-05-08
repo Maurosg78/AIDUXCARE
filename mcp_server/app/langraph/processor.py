@@ -13,9 +13,9 @@ from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 from langchain_core.messages import HumanMessage, AIMessage
 
-# Importar el MCP implementado con Langraph
-sys.path.append(".")  # Asegura que podemos importar desde el directorio raíz
-from langraph_mcp import (
+# Importar el MCP implementado con Langraph 
+# Utilizar el wrapper local de langraph_mcp
+from app.langraph.langraph_mcp import (
     build_mcp_graph,
     initialize_context,
     run_graph,
