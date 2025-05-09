@@ -1,16 +1,20 @@
+#!/usr/bin/env python
 """
-Servidor principal MCP para AiDuxCare.
+Script para ejecutar el servidor MCP con todos los endpoints.
 
-Este módulo implementa el servidor FastAPI que expone los endpoints
-necesarios para el Model Context Protocol (MCP).
+Este script inicia un servidor FastAPI que incluye:
+- Endpoint de respuesta (/api/mcp/respond)
+- Endpoint de almacenamiento (/api/mcp/store)
+- Endpoint de validación (/api/mcp/validate)
 """
 
-from fastapi import FastAPI, HTTPException, Request
+import os
+import logging
+import sys
+import uvicorn
+from fastapi import FastAPI, Request, APIRouter, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import logging
-import os
-import sys
 from datetime import datetime
 
 # Configurar logging
@@ -26,29 +30,23 @@ logger = logging.getLogger("mcp-server")
 app = FastAPI(
     title="MCP Server - AiDuxCare",
     description="Model Context Protocol para AiDuxCare",
-    version="v1.29.0"  # Actualizado a la versión 1.29.0
+    version="v1.29.0"
 )
 
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, especificar los orígenes permitidos
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Importar routers
-from api.respond import router as respond_router
-from api.validate import router as validate_router
-from api.store import router as store_router
+# Crear router principal
+main_router = APIRouter()
 
-# Registrar routers
-app.include_router(respond_router)
-app.include_router(validate_router)
-app.include_router(store_router)
-
-@app.get("/", tags=["general"])
+# Endpoints principales
+@main_router.get("/", tags=["general"])
 async def root():
     """Endpoint raíz que proporciona información básica sobre el API."""
     return {
@@ -57,7 +55,7 @@ async def root():
         "health": "/api/health"
     }
 
-@app.get("/api/health", tags=["general"])
+@main_router.get("/api/health", tags=["general"])
 async def health():
     """Endpoint de estado que proporciona información sobre la salud del servicio."""
     
@@ -74,6 +72,69 @@ async def health():
         "model_provider": model_provider,
         "model": model
     }
+
+# Configurar endpoint de respuesta manual
+from core.langraph_runner import run_mcp_graph
+
+@main_router.post("/api/mcp/respond", tags=["respuestas"], summary="Generar respuesta del copiloto clínico")
+async def generate_response(request: dict):
+    """
+    Genera una respuesta del copiloto clínico según la entrada del usuario.
+    
+    Returns:
+        Dict con la respuesta generada y metadatos
+    """
+    try:
+        # Validar campos obligatorios
+        required_fields = ["visit_id", "role", "user_input"]
+        for field in required_fields:
+            if field not in request:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Campo obligatorio '{field}' no proporcionado"
+                )
+        
+        # Extraer valores
+        visit_id = request["visit_id"]
+        role = request["role"]
+        user_input = request["user_input"]
+        
+        # Valores opcionales
+        field = request.get("field")
+        previous_messages = request.get("previous_messages", [])
+        context_override = request.get("context_override", {})
+        
+        # Log de la solicitud
+        logger.info(f"Recibida solicitud para visita: {visit_id}, rol: {role}")
+        
+        # Generar respuesta usando el grafo MCP
+        response_data = await run_mcp_graph(
+            visit_id=visit_id,
+            role=role,
+            user_input=user_input,
+            field=field,
+            previous_messages=previous_messages,
+            context_override=context_override
+        )
+        
+        # Devolver respuesta
+        return response_data
+    except Exception as e:
+        # Manejar otros errores
+        logger.error(f"Error al generar respuesta: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al procesar la solicitud: {str(e)}"
+        )
+
+# Importar routers de otros módulos
+from api.validate import router as validate_router
+from api.store import router as store_router
+
+# Registrar routers
+app.include_router(main_router)
+app.include_router(validate_router)
+app.include_router(store_router)
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
@@ -118,11 +179,17 @@ async def shutdown_event():
 
 # Para ejecución directa
 if __name__ == "__main__":
-    import uvicorn
+    # Obtener puerto de variable de entorno o usar 8001 por defecto
     port = int(os.environ.get("PORT", 8001))
     
     # Mensaje de inicio
     print(f"Iniciando servidor MCP v1.29.0 en http://0.0.0.0:{port}")
     print("Presiona CTRL+C para detener el servidor")
     
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=os.environ.get("DEBUG", "FALSE").upper() == "TRUE") 
+    # Iniciar servidor
+    uvicorn.run(
+        "run_app:app", 
+        host="0.0.0.0", 
+        port=port,
+        reload=os.environ.get("DEBUG", "FALSE").upper() == "TRUE"
+    ) 

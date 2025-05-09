@@ -31,6 +31,7 @@ from schemas import (
 from core.langraph_runner import run_mcp_graph
 from core import get_langfuse_status, log_mcp_trace_async
 from services import store_emr_entry, get_supabase_status, get_emr_entries_by_visit
+from services.supabase_client import SupabaseClientError
 from settings import settings, logger
 
 # Crear router
@@ -213,7 +214,7 @@ async def store_validated_content(request: StoreEMRRequest) -> Dict[str, Any]:
                 error=str(e),
                 error_type=error_type,
                 timestamp=datetime.now()
-            ).dict()
+            ).model_dump()
         )
 
 @router.get("/mcp/entries", 
@@ -255,7 +256,7 @@ async def get_emr_entries(
                 error="El parámetro visit_id es obligatorio",
                 error_type="ValidationError",
                 timestamp=datetime.now()
-            ).dict()
+            ).model_dump()
         )
     
     try:
@@ -282,46 +283,71 @@ async def get_emr_entries(
         # Convertir los timestamps de string a objetos datetime
         parsed_entries = []
         for entry in entries:
+            # Asegurar que todos los campos requeridos están presentes
+            if not all(k in entry for k in ["field", "content", "role", "timestamp"]):
+                logger.warning(f"Entrada con datos incompletos: {entry}")
+                continue
+                
             # Convertir el timestamp
-            if isinstance(entry["timestamp"], str):
+            if isinstance(entry.get("timestamp"), str):
                 try:
                     entry["timestamp"] = datetime.fromisoformat(entry["timestamp"].replace('Z', '+00:00'))
                 except ValueError:
-                    # Si no se puede convertir, mantener el valor original
-                    pass
+                    # Si no se puede convertir, usar la fecha actual
+                    entry["timestamp"] = datetime.now()
+            
+            # Añadir campos por defecto si no existen
+            if "source" not in entry:
+                entry["source"] = "mcp"
+            if "validated" not in entry:
+                entry["validated"] = True
             
             # Añadir a la lista de entradas procesadas
-            parsed_entries.append(EMRFieldEntry(**entry))
+            try:
+                parsed_entries.append(EMRFieldEntry(**entry))
+            except Exception as e:
+                logger.warning(f"Error al procesar entrada: {e}")
+                continue
         
         # Preparar respuesta
         return EMREntriesResponse(
             visit_id=visit_id,
             entries=parsed_entries,
-            count=len(entries),
+            count=len(parsed_entries),
             filters=filters,
             timestamp=datetime.now()
         )
         
-    except Exception as e:
-        # Determinar el código de error apropiado
+    except SupabaseClientError as e:
+        # Para excepciones específicas de Supabase
         if "no existe" in str(e).lower():
             status_code = status.HTTP_404_NOT_FOUND
             error_type = "NotFoundError"
         else:
             status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            error_type = "QueryError"
+            error_type = "SupabaseError"
+            
+        logger.error(f"Error de Supabase al consultar entradas EMR: {str(e)}")
         
-        # Registrar el error
-        logger.error(f"Error al consultar entradas EMR: {str(e)}")
-        
-        # Lanzar excepción HTTP con detalles estructurados
         raise HTTPException(
             status_code=status_code,
             detail=StorageError(
                 error=str(e),
                 error_type=error_type,
                 timestamp=datetime.now()
-            ).dict()
+            ).model_dump()
+        )
+    except Exception as e:
+        # Para excepciones generales
+        logger.error(f"Error al consultar entradas EMR: {str(e)}")
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=StorageError(
+                error=f"Error interno al procesar la consulta: {str(e)}",
+                error_type="ServerError",
+                timestamp=datetime.now()
+            ).model_dump()
         )
 
 @router.get("/health")
@@ -388,5 +414,16 @@ async def mantra() -> Dict[str, Any]:
     return {
         "mantra": "Abrazo mi pasado, agradezco mi presente y construyo mi futuro con calma. No corro. No me niego. No me pierdo. Estoy aquí. Y eso es suficiente.",
         "version": settings.API_VERSION,
+        "timestamp": datetime.now().isoformat()
+    }
+
+@router.get("/entries-test")
+async def test_entries() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para entries.
+    """
+    return {
+        "status": "ok",
+        "message": "Endpoint de prueba para entries",
         "timestamp": datetime.now().isoformat()
     } 

@@ -1,12 +1,12 @@
 """
-Modelos de validación para operaciones relacionadas con el EMR.
+Modelos Pydantic para datos de Registro Médico Electrónico (EMR).
 
-Este módulo define esquemas Pydantic para las operaciones de persistencia
-de datos en el EMR, asegurando la validación de datos antes de almacenarlos.
+Este módulo define los esquemas relacionados con el almacenamiento
+y recuperación de datos clínicos estructurados.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 class StoreEMRRequest(BaseModel):
@@ -31,32 +31,62 @@ class StoreEMRResponse(BaseModel):
     data: Optional[Dict[str, Any]] = Field(None, description="Datos adicionales")
 
 class StorageError(BaseModel):
-    """
-    Modelo para errores de almacenamiento.
-    """
+    """Datos de error para almacenamiento."""
     success: bool = False
-    error: str = Field(..., description="Descripción del error")
-    error_type: str = Field(..., description="Tipo de error")
+    error: str
+    error_type: str
     timestamp: datetime = Field(default_factory=datetime.now)
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat()
+        }
+    
+    def model_dump(self, **kwargs):
+        """Serializar a diccionario con fechas en formato ISO."""
+        data = super().model_dump(**kwargs)
+        # Convertir cualquier datetime a string ISO
+        if "timestamp" in data and isinstance(data["timestamp"], datetime):
+            data["timestamp"] = data["timestamp"].isoformat()
+        return data
 
 class EMRFieldEntry(BaseModel):
     """
-    Modelo para entradas individuales del EMR.
+    Entrada de un campo específico del EMR.
+    
+    Representa una pieza de información clínica validada, como puede ser
+    una anamnesis, un diagnóstico o un plan terapéutico.
     """
-    field: str = Field(..., description="Campo del EMR (anamnesis, diagnostico, etc)")
-    content: str = Field(..., description="Contenido de la entrada")
-    role: str = Field(..., description="Rol del usuario que creó la entrada")
-    timestamp: datetime = Field(..., description="Fecha y hora de creación")
-    source: str = Field("mcp", description="Origen de la entrada")
-    validated: bool = Field(True, description="Si la entrada ha sido validada por un profesional")
-    id: Optional[str] = Field(None, description="ID único de la entrada")
+    field: str
+    content: str
+    role: str
+    timestamp: datetime
+    source: str = "mcp"
+    validated: bool = True
+    metadata: Dict[str, Any] = {}
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "field": "anamnesis",
+                "content": "Paciente masculino de 45 años...",
+                "role": "health_professional",
+                "timestamp": "2023-09-01T12:00:00",
+                "source": "mcp",
+                "validated": True,
+                "metadata": {"confidence": 0.92}
+            }
+        }
 
 class EMREntriesResponse(BaseModel):
     """
-    Modelo para respuestas de consulta de entradas de EMR.
+    Respuesta para consultas de entradas del EMR.
+    
+    Contiene una lista de entradas clínicas que cumplen con los criterios
+    de búsqueda especificados.
     """
-    visit_id: str = Field(..., description="ID de la visita médica")
-    entries: List[EMRFieldEntry] = Field(default_factory=list, description="Lista de entradas clínicas")
-    count: int = Field(..., description="Número de entradas encontradas")
-    filters: Optional[Dict[str, Any]] = Field(None, description="Filtros aplicados a la consulta")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Timestamp de la consulta") 
+    visit_id: str
+    entries: List[EMRFieldEntry]
+    count: int
+    filters: Dict[str, str]
+    timestamp: datetime = Field(default_factory=datetime.now) 

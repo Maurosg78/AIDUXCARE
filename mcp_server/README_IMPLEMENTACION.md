@@ -175,4 +175,49 @@ curl -X POST http://localhost:8000/api/mcp/respond \
 - Corrección de problemas de importación en langraph_mcp
 - Implementación de servidor de prueba para desarrollo
 - Mejoras en validación de solicitudes y respuestas
-- Documentación completa para desarrollo y producción 
+- Documentación completa para desarrollo y producción
+
+## Implementación de AiDuxCare MCP Server
+
+Este documento describe la implementación técnica del servidor MCP (Model Context Protocol) para AiDuxCare.
+
+## Versiones
+
+### v1.29.0 - Flujo Automatizado de Validación desde Audio
+
+Implementación del flujo clínico completo que conecta:
+
+- **Captura de audio**: Grabación de voz del profesional clínico
+- **Transcripción por campos**: Segmentación del texto en campos clínicos estándar
+- **Almacenamiento automático**: Persistencia de cada campo vía `/api/mcp/store`
+- **Validación legal automática**: Activación de `/api/mcp/validate` y registro de alertas
+- **Resumen de estado legal**: Presentación al profesional del estado de la validación
+
+La principal innovación es la automatización completa del flujo desde la captura de voz hasta la validación legal, garantizando:
+- Trazabilidad completa del origen de cada dato clínico
+- Validación inmediata sin intervención manual
+- Retroalimentación instantánea sobre la calidad del registro
+- Cumplimiento normativo documentado desde el origen del dato
+
+### v1.28.0 - Registro Legal de Validaciones Clínicas
+
+Implementación de un sistema de registro legal para las validaciones clínicas realizadas por el MCP:
+
+- **Nueva tabla `validation_alerts`**: Almacena todas las alertas generadas en validaciones
+- **Funcionalidad `store_validation_alerts`**: Guarda cada alerta en Supabase
+- **Modificación del endpoint `/validate`**: Ahora almacena automáticamente las alertas generadas
+- **Trazabilidad con Langfuse**: Registra el proceso completo de validación
+
+La principal innovación es que cada alerta de validación queda registrada como parte del historial clínico legal, facilitando:
+- Auditorías de seguridad
+- Revisión de calidad de los registros
+- Cumplimiento normativo
+- Evidencia temporal sobre el proceso de validación clínica
+
+### v1.27.0 - Implementación de Endpoints Básicos
+
+Implementación de los tres endpoints principales del MCP:
+
+- **`/api/mcp/respond`**: Genera respuestas contextuales
+- **`/api/mcp/store`**: Almacena campos en Supabase
+- **`/api/mcp/validate`**: Detecta omisiones y contenido insuficiente 

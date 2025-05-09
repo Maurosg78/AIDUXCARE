@@ -1,306 +1,315 @@
 """
-Cliente de Supabase para persistencia de datos del MCP.
+Cliente para interactuar con Supabase desde el microservicio MCP.
 
-Este módulo proporciona funciones para interactuar con la base de datos
-Supabase, permitiendo almacenar entradas validadas del EMR y consultar
-información de visitas existentes.
+Este módulo proporciona una clase para realizar operaciones CRUD
+en Supabase de forma simplificada y adaptada a las necesidades del proyecto.
 """
 
-import os
+from typing import Dict, Any, List, Optional, Union
 import httpx
 import json
-from typing import Dict, Any, Optional, List
+import logging
+from settings import settings
 from datetime import datetime
 import uuid
+from core.validators import ValidationAlert
 
-from settings import settings, logger
-
-# Configuración de Supabase
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
-
-# Headers para las peticiones a Supabase
-SUPABASE_HEADERS = {
-    "apikey": SUPABASE_KEY,
-    "Authorization": f"Bearer {SUPABASE_KEY}",
-    "Content-Type": "application/json",
-    "Prefer": "return=representation"
-}
+# Configurar logging
+logger = logging.getLogger(__name__)
 
 class SupabaseClientError(Exception):
     """Excepción personalizada para errores del cliente Supabase."""
     pass
 
-async def check_visit_exists(visit_id: str) -> bool:
+class SupabaseClient:
     """
-    Verifica si una visita existe en Supabase.
+    Cliente simplificado para Supabase.
     
-    Args:
-        visit_id: ID de la visita a verificar
+    Proporciona métodos para realizar operaciones básicas CRUD
+    adaptadas a las necesidades del proyecto.
+    """
+    
+    def __init__(self):
+        """Inicializa el cliente con la configuración de conexión."""
+        # Para pruebas, si no hay URL de Supabase, usar datos de prueba
+        self.is_mock = not settings.SUPABASE_URL or not settings.SUPABASE_KEY
+        self.base_url = settings.SUPABASE_URL
+        self.key = settings.SUPABASE_KEY
         
-    Returns:
-        True si la visita existe, False en caso contrario
-    """
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        logger.warning("Supabase no está configurado. Se asume que la visita existe.")
-        return True
+        if self.is_mock:
+            logger.warning("Usando datos de prueba para Supabase")
+            self.mock_data = self._load_mock_data()
     
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{SUPABASE_URL}/rest/v1/visits",
-                headers=SUPABASE_HEADERS,
-                params={"visit_id": f"eq.{visit_id}", "select": "visit_id"}
-            )
-            
-            if response.status_code != 200:
-                logger.error(f"Error al verificar visita: {response.text}")
-                return False
-                
-            # Si hay al menos un resultado, la visita existe
-            return len(response.json()) > 0
-    
-    except Exception as e:
-        logger.error(f"Error al verificar existencia de visita: {str(e)}")
-        return False
-
-async def check_field_exists(visit_id: str, field: str) -> bool:
-    """
-    Verifica si un campo de EMR ya existe para una visita.
-    
-    Args:
-        visit_id: ID de la visita
-        field: Campo del EMR (ej: anamnesis, diagnostico)
-        
-    Returns:
-        True si el campo ya existe, False en caso contrario
-    """
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        logger.warning("Supabase no está configurado. Se asume que el campo no existe.")
-        return False
-    
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{SUPABASE_URL}/rest/v1/emr_entries",
-                headers=SUPABASE_HEADERS,
-                params={
-                    "visit_id": f"eq.{visit_id}",
-                    "field": f"eq.{field}",
-                    "select": "id"
+    def _load_mock_data(self) -> Dict[str, List[Dict[str, Any]]]:
+        """Carga datos de prueba para uso sin conexión real a Supabase."""
+        return {
+            "emr_entries": [
+                {
+                    "id": "1",
+                    "visit_id": "VIS001",
+                    "field": "anamnesis",
+                    "content": "Paciente masculino de 45 años que acude por dolor torácico...",
+                    "role": "health_professional",
+                    "timestamp": "2023-09-01T10:00:00",
+                    "source": "mcp",
+                    "validated": True
+                },
+                {
+                    "id": "2",
+                    "visit_id": "VIS001",
+                    "field": "diagnóstico",
+                    "content": "Sospecha de angina estable...",
+                    "role": "health_professional",
+                    "timestamp": "2023-09-01T10:30:00",
+                    "source": "mcp",
+                    "validated": True
                 }
-            )
-            
-            if response.status_code != 200:
-                logger.error(f"Error al verificar campo: {response.text}")
-                return False
-                
-            # Si hay al menos un resultado, el campo existe
-            return len(response.json()) > 0
-    
-    except Exception as e:
-        logger.error(f"Error al verificar existencia de campo: {str(e)}")
-        return False
-
-async def get_emr_entries_by_visit(
-    visit_id: str,
-    field: Optional[str] = None,
-    role: Optional[str] = None
-) -> List[Dict[str, Any]]:
-    """
-    Obtiene las entradas clínicas para una visita específica.
-    
-    Args:
-        visit_id: ID de la visita médica
-        field: Campo específico a filtrar (opcional)
-        role: Rol del usuario a filtrar (opcional)
-        
-    Returns:
-        Lista de entradas clínicas que coinciden con los criterios
-        
-    Raises:
-        SupabaseClientError: Si la visita no existe o hay un error de conexión
-    """
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        logger.warning("Supabase no está configurado. No se pueden obtener entradas.")
-        return []
-    
-    try:
-        # Verificar que la visita existe
-        visit_exists = await check_visit_exists(visit_id)
-        if not visit_exists:
-            raise SupabaseClientError(f"La visita {visit_id} no existe")
-        
-        # Construir parámetros de consulta
-        params = {"visit_id": f"eq.{visit_id}"}
-        
-        # Añadir filtros opcionales
-        if field:
-            params["field"] = f"eq.{field}"
-        if role:
-            params["role"] = f"eq.{role}"
-            
-        # Campos a seleccionar
-        select = "id,visit_id,field,content,role,timestamp,source,validated"
-        
-        # Ordenar por timestamp descendente (más reciente primero)
-        order = "timestamp.desc"
-        
-        # Realizar la consulta
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{SUPABASE_URL}/rest/v1/emr_entries",
-                headers=SUPABASE_HEADERS,
-                params={
-                    **params,
-                    "select": select,
-                    "order": order
-                }
-            )
-            
-            if response.status_code != 200:
-                logger.error(f"Error al consultar entradas EMR: {response.text}")
-                return []
-            
-            entries = response.json()
-            
-            # Log de la consulta realizada
-            filter_info = []
-            if field:
-                filter_info.append(f"field={field}")
-            if role:
-                filter_info.append(f"role={role}")
-                
-            filter_str = ", ".join(filter_info) if filter_info else "sin filtros adicionales"
-            logger.info(f"Consultadas {len(entries)} entradas EMR para visita {visit_id} ({filter_str})")
-            
-            return entries
-            
-    except SupabaseClientError as e:
-        logger.warning(f"Error de cliente Supabase: {str(e)}")
-        raise
-    except Exception as e:
-        logger.error(f"Error al consultar entradas EMR: {str(e)}")
-        return []
-
-async def store_emr_entry(
-    visit_id: str,
-    field: str,
-    role: str,
-    content: str,
-    overwrite: bool = False
-) -> Optional[Dict[str, Any]]:
-    """
-    Almacena una entrada validada del EMR en Supabase.
-    
-    Args:
-        visit_id: ID de la visita médica
-        field: Campo del EMR (ej: anamnesis, diagnostico)
-        role: Rol del usuario que valida (health_professional, admin_staff)
-        content: Contenido validado para almacenar
-        overwrite: Si se debe sobrescribir un campo existente
-        
-    Returns:
-        Registro insertado o None si hay error
-    """
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        logger.warning("Supabase no está configurado. No se puede almacenar la entrada.")
-        return None
-    
-    try:
-        # Verificar que la visita existe
-        visit_exists = await check_visit_exists(visit_id)
-        if not visit_exists:
-            raise SupabaseClientError(f"La visita {visit_id} no existe")
-        
-        # Verificar si el campo ya existe
-        field_exists = await check_field_exists(visit_id, field)
-        if field_exists and not overwrite:
-            raise SupabaseClientError(f"El campo {field} ya existe para la visita {visit_id}")
-        
-        # Preparar datos para insertar o actualizar
-        entry_data = {
-            "id": str(uuid.uuid4()),
-            "visit_id": visit_id,
-            "field": field,
-            "role": role,
-            "content": content,
-            "timestamp": datetime.now().isoformat(),
-            "source": "mcp",
-            "validated": True
+            ]
         }
-        
-        # Determinar si insertar o actualizar
-        method = 'POST'
-        if field_exists and overwrite:
-            method = 'PATCH'
-            params = {
-                "visit_id": f"eq.{visit_id}",
-                "field": f"eq.{field}"
-            }
-        else:
-            params = {}
-        
-        # Realizar la petición a Supabase
-        async with httpx.AsyncClient() as client:
-            if method == 'POST':
-                response = await client.post(
-                    f"{SUPABASE_URL}/rest/v1/emr_entries",
-                    headers=SUPABASE_HEADERS,
-                    json=entry_data
-                )
-            else:  # PATCH
-                response = await client.patch(
-                    f"{SUPABASE_URL}/rest/v1/emr_entries",
-                    headers=SUPABASE_HEADERS,
-                    params=params,
-                    json=entry_data
-                )
-            
-            if response.status_code not in (200, 201):
-                logger.error(f"Error al almacenar en Supabase: {response.text}")
-                return None
-            
-            result = response.json()
-            logger.info(f"EMR entry almacenada correctamente: {visit_id}/{field}")
-            return result[0] if isinstance(result, list) else result
     
-    except SupabaseClientError as e:
-        logger.warning(f"Error de cliente Supabase: {str(e)}")
-        raise
-    except Exception as e:
-        logger.error(f"Error al almacenar entrada EMR: {str(e)}")
-        return None
+    async def query(self, 
+                  table: str, 
+                  operation: str, 
+                  params: Dict[str, Any]
+                  ) -> List[Dict[str, Any]]:
+        """
+        Ejecuta una operación en Supabase.
+        
+        Args:
+            table: Nombre de la tabla
+            operation: Tipo de operación (select, insert, update, delete)
+            params: Parámetros específicos de la operación
+            
+        Returns:
+            Resultados de la operación
+            
+        Raises:
+            SupabaseClientError: Si hay un error en la operación
+        """
+        if self.is_mock:
+            return await self._mock_query(table, operation, params)
+        
+        # Implementación real para conexión con Supabase
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                headers = {
+                    "apikey": self.key,
+                    "Authorization": f"Bearer {self.key}",
+                    "Content-Type": "application/json"
+                }
+                
+                if operation == "select":
+                    # Construir URL con filtros
+                    url = f"{self.base_url}/rest/v1/{table}"
+                    headers["Prefer"] = "return=representation"
+                    
+                    # Añadir filtros como parámetros de query
+                    query_params = {}
+                    if "filters" in params:
+                        for key, value in params["filters"].items():
+                            query_params[key] = f"eq.{value}"
+                    
+                    # Ejecutar consulta
+                    response = await client.get(url, headers=headers, params=query_params)
+                
+                elif operation == "insert":
+                    url = f"{self.base_url}/rest/v1/{table}"
+                    headers["Prefer"] = "return=representation"
+                    response = await client.post(url, headers=headers, json=params["data"])
+                
+                elif operation == "update":
+                    url = f"{self.base_url}/rest/v1/{table}"
+                    headers["Prefer"] = "return=representation"
+                    
+                    # Construir filtros para Where
+                    query_params = {}
+                    for key, value in params["filters"].items():
+                        query_params[key] = f"eq.{value}"
+                    
+                    response = await client.patch(url, headers=headers, params=query_params, json=params["data"])
+                
+                elif operation == "delete":
+                    url = f"{self.base_url}/rest/v1/{table}"
+                    headers["Prefer"] = "return=representation"
+                    
+                    # Construir filtros para Where
+                    query_params = {}
+                    for key, value in params["filters"].items():
+                        query_params[key] = f"eq.{value}"
+                    
+                    response = await client.delete(url, headers=headers, params=query_params)
+                
+                else:
+                    raise SupabaseClientError(f"Operación no soportada: {operation}")
+                
+                # Verificar respuesta
+                if response.status_code >= 400:
+                    raise SupabaseClientError(f"Error en Supabase: {response.text}")
+                
+                # Devolver resultados
+                return response.json()
+        
+        except httpx.RequestError as e:
+            raise SupabaseClientError(f"Error de conexión con Supabase: {str(e)}")
+        except Exception as e:
+            raise SupabaseClientError(f"Error al ejecutar operación en Supabase: {str(e)}")
+    
+    async def _mock_query(self, 
+                        table: str, 
+                        operation: str, 
+                        params: Dict[str, Any]
+                        ) -> List[Dict[str, Any]]:
+        """
+        Simula operaciones en Supabase para pruebas.
+        
+        Args:
+            table: Nombre de la tabla simulada
+            operation: Tipo de operación simulada
+            params: Parámetros para la simulación
+            
+        Returns:
+            Resultados simulados
+        """
+        # Verificar que la tabla existe en los datos de prueba
+        if table not in self.mock_data:
+            self.mock_data[table] = []
+        
+        if operation == "select":
+            # Filtrar datos según los criterios
+            results = self.mock_data[table]
+            
+            if "filters" in params:
+                for key, value in params["filters"].items():
+                    results = [item for item in results if item.get(key) == value]
+            
+            return results
+        
+        elif operation == "insert":
+            # Añadir un nuevo registro
+            new_id = str(len(self.mock_data[table]) + 1)
+            new_record = {**params["data"], "id": new_id}
+            self.mock_data[table].append(new_record)
+            return [new_record]
+        
+        elif operation == "update":
+            # Actualizar registros existentes
+            results = []
+            for i, item in enumerate(self.mock_data[table]):
+                match = True
+                for key, value in params["filters"].items():
+                    if item.get(key) != value:
+                        match = False
+                        break
+                
+                if match:
+                    self.mock_data[table][i] = {**item, **params["data"]}
+                    results.append(self.mock_data[table][i])
+            
+            return results
+        
+        elif operation == "delete":
+            # Eliminar registros
+            initial_count = len(self.mock_data[table])
+            results = []
+            
+            # Identificar registros a eliminar
+            to_delete = []
+            for i, item in enumerate(self.mock_data[table]):
+                match = True
+                for key, value in params["filters"].items():
+                    if item.get(key) != value:
+                        match = False
+                        break
+                
+                if match:
+                    to_delete.append(i)
+                    results.append(item)
+            
+            # Eliminar en orden inverso para no afectar índices
+            for i in sorted(to_delete, reverse=True):
+                del self.mock_data[table][i]
+            
+            return results
+        
+        else:
+            raise SupabaseClientError(f"Operación no soportada: {operation}")
 
 async def get_supabase_status() -> Dict[str, Any]:
     """
     Verifica el estado de la conexión con Supabase.
     
     Returns:
-        Dict con información sobre el estado de Supabase
+        Información sobre el estado de la conexión
     """
-    status = {
-        "connected": False,
-        "url": SUPABASE_URL.replace(SUPABASE_KEY, "***") if SUPABASE_URL else "No configurado",
-        "timestamp": datetime.now().isoformat()
-    }
-    
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return status
+    client = SupabaseClient()
     
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{SUPABASE_URL}/rest/v1/",
-                headers=SUPABASE_HEADERS
-            )
-            
-            status["connected"] = response.status_code == 200
-            status["status_code"] = response.status_code
-            
-            return status
+        if client.is_mock:
+            return {
+                "connected": True,
+                "url": "mock://supabase.local",
+                "mock": True
+            }
+        
+        # Intentar una operación simple para verificar conexión
+        result = await client.query(
+            "emr_entries",
+            "select",
+            {"filters": {}, "limit": 1}
+        )
+        
+        return {
+            "connected": True,
+            "url": client.base_url,
+            "mock": False
+        }
     
     except Exception as e:
-        logger.error(f"Error al verificar estado de Supabase: {str(e)}")
-        status["error"] = str(e)
-        return status 
+        logger.error(f"Error al verificar conexión con Supabase: {str(e)}")
+        return {
+            "connected": False,
+            "url": client.base_url if not client.is_mock else "mock://supabase.local",
+            "error": str(e),
+            "mock": client.is_mock
+        }
+
+async def store_validation_alerts(visit_id: str, alerts: List[ValidationAlert]) -> bool:
+    """
+    Almacena alertas de validación en la tabla validation_alerts de Supabase.
+    
+    Args:
+        visit_id: ID de la visita validada
+        alerts: Lista de alertas de validación encontradas
+        
+    Returns:
+        True si el almacenamiento fue exitoso, False en caso contrario
+    """
+    client = SupabaseClient()
+    logger.info(f"Almacenando {len(alerts)} alertas de validación para visita {visit_id}")
+    
+    timestamp = datetime.now().isoformat()
+    
+    try:
+        for alert in alerts:
+            alert_data = {
+                "id": str(uuid.uuid4()),
+                "visit_id": visit_id,
+                "field": alert.field if alert.field else "general",
+                "severity": "warning",  # Por defecto todas son warnings
+                "type": alert.type,
+                "message": alert.message,
+                "timestamp": timestamp
+            }
+            
+            await client.query(
+                table="validation_alerts",
+                operation="insert",
+                params={"data": alert_data}
+            )
+        
+        logger.info(f"Alertas almacenadas correctamente para visita {visit_id}")
+        return True
+    
+    except Exception as e:
+        logger.error(f"Error al almacenar alertas de validación: {str(e)}")
+        return False 

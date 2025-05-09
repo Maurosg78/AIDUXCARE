@@ -1,12 +1,13 @@
 """
-Esquemas para validación de respuestas del API.
+Modelos Pydantic para las respuestas del API.
 
-Este módulo define los modelos Pydantic para validación de datos
-en las respuestas del microservicio MCP.
+Este módulo define los esquemas para las respuestas enviadas por el API,
+garantizando un formato consistente.
 """
 
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 from .request import ConversationItem, RoleType, SenderType
 
@@ -17,11 +18,15 @@ class ToolResult(BaseModel):
     result: str = Field(..., description="Resultado de la ejecución de la herramienta")
 
 class TraceEntry(BaseModel):
-    """Entrada de traza para seguimiento de la ejecución."""
+    """
+    Entrada de trazabilidad para debugging y monitoreo.
     
-    timestamp: str = Field(..., description="Marca de tiempo ISO")
-    action: str = Field(..., description="Acción o evento registrado")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Metadatos asociados")
+    Registra acciones, decisiones y eventos internos durante el procesamiento
+    de una solicitud por el MCP.
+    """
+    timestamp: str
+    action: str
+    metadata: Dict[str, Any] = {}
 
 class MCPResponse(BaseModel):
     """Modelo para las respuestas del endpoint MCP."""
@@ -49,80 +54,72 @@ class MCPResponse(BaseModel):
     )
 
 class ErrorResponse(BaseModel):
-    """Modelo para respuestas de error."""
+    """
+    Modelo estándar para respuestas de error.
     
-    error: Dict[str, Any] = Field(
-        ...,
-        description="Detalles del error ocurrido"
-    )
+    Proporciona un formato consistente para todos los errores devueltos
+    por el API.
+    """
+    error: Dict[str, Any]
+    timestamp: datetime = Field(default_factory=datetime.now)
     
-    status_code: int = Field(
-        ...,
-        description="Código de estado HTTP"
-    )
-    
-    message: str = Field(
-        ...,
-        description="Mensaje de error"
-    )
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "error": {
+                    "message": "Error interno del servidor",
+                    "status_code": 500,
+                    "details": {"error": "Descripción detallada del error"}
+                },
+                "timestamp": "2023-09-01T12:00:00"
+            }
+        }
 
 class ContextSummary(BaseModel):
     """
-    Resumen del estado contextual del MCP para mostrar en el frontend.
+    Resumen del contexto para el frontend.
+    
+    Proporciona información sobre el estado actual del agente MCP,
+    incluyendo herramientas activas y otra información contextual.
     """
-    
-    active_tools: List[str] = Field(
-        default_factory=list,
-        description="Herramientas utilizadas en la respuesta actual"
-    )
-    
-    memory_blocks_count: int = Field(
-        0,
-        description="Número de bloques de memoria utilizados"
-    )
-    
-    processing_time_ms: float = Field(
-        0.0,
-        description="Tiempo de procesamiento en milisegundos"
-    )
-    
-    user_role: RoleType = Field(
-        ...,
-        description="Rol del usuario para el que se generó la respuesta"
-    )
-    
-    error: Optional[bool] = Field(
-        None,
-        description="Indica si ocurrió un error en el procesamiento"
-    )
-    
-    error_message: Optional[str] = Field(
-        None,
-        description="Mensaje de error si ocurrió alguno"
-    )
+    active_tools: List[str] = []
+    memory_blocks_count: int = 0
+    processing_time_ms: float = 0.0
+    user_role: RoleType
+    error: Optional[bool] = None
+    error_message: Optional[str] = None
 
 class FrontendMCPResponse(BaseModel):
     """
-    Modelo para las respuestas al frontend desde el endpoint /mcp/respond.
-    Diseñado para ser fácilmente consumido y mostrado en React.
+    Respuesta del MCP optimizada para el frontend.
+    
+    Incluye tanto la respuesta textual como metadatos adicionales para
+    mostrar en la interfaz y facilitar el debugging.
     """
+    response: str
+    conversation_item: ConversationItem
+    context_summary: ContextSummary
+    trace: List[TraceEntry] = []
+
+class StorageError(BaseModel):
+    """
+    Error específico para operaciones de almacenamiento.
     
-    response: str = Field(
-        ...,
-        description="Texto de respuesta generado por el agente MCP"
-    )
+    Utilizado en endpoints relacionados con EMR y persistencia de datos.
+    """
+    error: str
+    error_type: str
+    timestamp: datetime = Field(default_factory=datetime.now)
+
+class StoreEMRResponse(BaseModel):
+    """
+    Respuesta para operaciones de almacenamiento en EMR.
     
-    conversation_item: ConversationItem = Field(
-        ...,
-        description="Objeto de conversación listo para añadir al historial en la UI"
-    )
-    
-    context_summary: ContextSummary = Field(
-        ...,
-        description="Resumen del estado contextual para mostrar en la interfaz"
-    )
-    
-    trace: List[TraceEntry] = Field(
-        default_factory=list,
-        description="Traza de ejecución para debugging y transparencia"
-    ) 
+    Confirma el almacenamiento exitoso de una entrada clínica.
+    """
+    success: bool
+    entry_id: Optional[str] = None
+    field: str
+    timestamp: datetime
+    message: str
+    data: Dict[str, Any] = {} 

@@ -2,66 +2,79 @@
 """
 Script para iniciar el servidor MCP.
 
-Este script inicia el servidor MCP utilizando uvicorn.
-Uso: python run.py [--host HOST] [--port PORT] [--reload]
+Este script ofrece diferentes opciones de configuración para ejecutar
+el servidor en distintos modos, facilitando desarrollo y despliegue.
 """
 
-import argparse
 import os
 import sys
 import uvicorn
+import argparse
+from typing import Optional
 
-def main():
-    """Función principal para iniciar el servidor MCP."""
-    parser = argparse.ArgumentParser(description="Iniciar servidor MCP")
+# Asegurar que el directorio actual está en el path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+def main(
+    port: int = 8000,
+    host: str = "0.0.0.0",
+    reload: bool = False,
+    workers: Optional[int] = None,
+    log_level: str = "info"
+) -> None:
+    """
+    Inicia el servidor FastAPI con la configuración especificada.
     
-    parser.add_argument(
-        "--host",
-        type=str,
-        default="0.0.0.0",
-        help="Host donde escuchará el servidor (por defecto: 0.0.0.0)"
-    )
-    
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8000,
-        help="Puerto donde escuchará el servidor (por defecto: 8000)"
-    )
-    
-    parser.add_argument(
-        "--reload",
-        action="store_true",
-        help="Activar auto-recarga en cambios (para desarrollo)"
-    )
-    
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Activar modo debug"
-    )
-    
-    args = parser.parse_args()
-    
-    if args.debug:
-        os.environ["DEBUG"] = "true"
+    Args:
+        port: Puerto en el que escuchará el servidor
+        host: Host en el que se ejecutará el servidor
+        reload: Si debe reiniciarse en cambios (para desarrollo)
+        workers: Número de workers para uvicorn
+        log_level: Nivel de logging (debug, info, warning, error, critical)
+    """
+    print(f"Iniciando servidor MCP en {host}:{port}")
     
     # Configuración de uvicorn
     uvicorn_config = {
-        "app": "app.main:app",
-        "host": args.host,
-        "port": args.port,
-        "reload": args.reload,
-        "log_level": "debug" if args.debug else "info"
+        "app": "main:app",
+        "host": host,
+        "port": port,
+        "log_level": log_level,
+        "reload": reload
     }
     
-    print(f"Iniciando servidor MCP en http://{args.host}:{args.port}")
-    print(f"Para acceder a la documentación, visita http://{args.host}:{args.port}/docs")
-    print(f"Auto-recarga: {'Activada' if args.reload else 'Desactivada'}")
-    print(f"Modo debug: {'Activado' if args.debug else 'Desactivado'}")
+    # Agregar workers solo si se especifican
+    if workers:
+        uvicorn_config["workers"] = workers
     
     # Iniciar servidor
     uvicorn.run(**uvicorn_config)
 
 if __name__ == "__main__":
-    main() 
+    parser = argparse.ArgumentParser(description="Servidor MCP para AiDuxCare")
+    
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)),
+                     help="Puerto para el servidor (default: 8000)")
+    
+    parser.add_argument("--host", type=str, default=os.environ.get("HOST", "0.0.0.0"),
+                     help="Host para el servidor (default: 0.0.0.0)")
+    
+    parser.add_argument("--reload", action="store_true",
+                     help="Activar recarga automática en cambios")
+    
+    parser.add_argument("--workers", type=int, default=None,
+                     help="Número de workers (default: None)")
+    
+    parser.add_argument("--log-level", type=str, default=os.environ.get("LOG_LEVEL", "info"),
+                     choices=["debug", "info", "warning", "error", "critical"],
+                     help="Nivel de logging (default: info)")
+    
+    args = parser.parse_args()
+    
+    main(
+        port=args.port,
+        host=args.host,
+        reload=args.reload,
+        workers=args.workers,
+        log_level=args.log_level
+    ) 

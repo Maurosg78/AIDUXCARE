@@ -1,45 +1,53 @@
 """
-Esquemas del microservicio MCP.
+Paquete de esquemas Pydantic para el microservicio MCP.
 
-Este paquete define los modelos de datos utilizados para:
-- Validación de peticiones y respuestas
-- Estructuras de datos internas
-- Comunicación con el frontend
+Este paquete proporciona los modelos de validación para todos los datos
+que entran y salen del API.
 """
 
-# Modelos base
-from .base_models import (
-    ErrorResponse,
-    ConversationItem,
-    ContextSummary,
-    TraceEntry
-)
-
-# Modelos MCP
-from .mcp_models import (
-    FrontendMCPRequest,
-    FrontendMCPResponse
-)
-
-# Modelos EMR
-from .emr_models import (
+# Importar todos los modelos de request.py
+from .request import (
+    FrontendMCPRequest, 
     StoreEMRRequest,
-    StoreEMRResponse,
+    ConversationItem,
+    RoleType,
+    SenderType
+)
+
+# Importar todos los modelos de response.py
+from .response import (
+    FrontendMCPResponse,
+    ErrorResponse,
+    ContextSummary,
+    TraceEntry,
     StorageError,
+    StoreEMRResponse
+)
+
+# Importar todos los modelos de emr_models.py
+from .emr_models import (
     EMRFieldEntry,
     EMREntriesResponse
 )
 
+# Exportar todos los modelos para uso externo
 __all__ = [
-    "ErrorResponse",
+    # Modelos de request
+    "FrontendMCPRequest",
+    "StoreEMRRequest", 
     "ConversationItem",
+    "RoleType",
+    "SenderType",
+    
+    # Modelos de response
+    "FrontendMCPResponse",
+    "ErrorResponse",
     "ContextSummary",
     "TraceEntry",
-    "FrontendMCPRequest",
-    "FrontendMCPResponse",
-    "StoreEMRRequest",
-    "StoreEMRResponse",
     "StorageError",
+    "StoreEMRResponse",
+    
+    # Modelos de EMR
     "EMRFieldEntry",
     "EMREntriesResponse"
 ] 

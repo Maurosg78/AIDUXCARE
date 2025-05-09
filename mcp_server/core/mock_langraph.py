@@ -1,196 +1,119 @@
 """
-Implementación simulada del MCP para desarrollo y pruebas.
+Implementación mock de LangGraph para desarrollo y pruebas.
 
-Este módulo proporciona una implementación simulada del MCP para uso
-durante desarrollo y pruebas, sin dependencia de Langraph o modelos LLM reales.
+Este módulo proporciona versiones simuladas de las funciones y clases
+de LangGraph, permitiendo ejecutar pruebas sin dependencias externas.
 """
 
-import time
-import random
-from typing import Dict, Any, List, Union, Optional
+from typing import Dict, Any, List, Optional
 from datetime import datetime
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, BaseMessage
+import uuid
+from dataclasses import dataclass
 
 from settings import logger, settings
 
-class MCPState(dict):
-    """Simulación del estado del grafo MCP."""
+@dataclass
+class MCPState:
+    """Clase simulada para el estado del MCP."""
+    messages: List[Any] = None
+    memory_blocks: List[Dict[str, Any]] = None
+    tool_results: List[Dict[str, Any]] = None
     
-    @property
-    def messages(self) -> List[Union[HumanMessage, AIMessage, SystemMessage]]:
-        return self.get("messages", [])
-    
-    @property
-    def context(self) -> Dict[str, Any]:
-        return self.get("context", {})
-    
-    @property
-    def memory_blocks(self) -> List[Dict[str, Any]]:
-        return self.get("memory_blocks", [])
-    
-    @property
-    def filtered_memory(self) -> List[Dict[str, Any]]:
-        return self.get("filtered_memory", [])
-    
-    @property
-    def tool_results(self) -> List[Dict[str, Any]]:
-        return self.get("tool_results", [])
-    
-    @property
-    def token_count(self) -> int:
-        return self.get("token_count", 0)
+    def __post_init__(self):
+        self.messages = self.messages or []
+        self.memory_blocks = self.memory_blocks or []
+        self.tool_results = self.tool_results or []
 
-def build_mcp_graph(model_name: str = "gpt-3.5-turbo") -> Any:
+class MockGraph:
+    """Clase simulada para el grafo LangGraph."""
+    
+    def __init__(self, model_name: str = "gpt-3.5-turbo"):
+        self.model_name = model_name
+        logger.info(f"Mock LangGraph inicializado con modelo: {model_name}")
+    
+    async def ainvoke(self, context: Dict[str, Any], messages: List[Any]) -> MCPState:
+        """Simula la invocación asíncrona del grafo."""
+        logger.info("Llamada simulada a LangGraph.ainvoke")
+        return await self._process(context, messages)
+        
+    async def _process(self, context: Dict[str, Any], messages: List[Any]) -> MCPState:
+        """Procesa internamente la solicitud y genera una respuesta simulada."""
+        # Simular una respuesta básica
+        visit_id = context.get("visit_id", "unknown")
+        role = context.get("user_role", "unknown")
+        
+        # Obtener el último mensaje
+        user_message = messages[-1].content if messages else "Sin entrada de usuario"
+        
+        # Generar respuesta simulada
+        ai_message = {
+            "content": f"[RESPUESTA SIMULADA] Como copiloto clínico, basado en el contexto de la visita {visit_id}, puedo ayudar con tu consulta. La información que proporcionas es relevante para el diagnóstico.",
+            "role": "assistant"
+        }
+        
+        # Agregar mensaje del usuario y respuesta simulada
+        all_messages = list(messages)  # Copiar mensajes existentes
+        all_messages.append(ai_message)  # Agregar respuesta
+        
+        # Simular herramientas utilizadas
+        tools = ["ContextRetriever", "MedicalKnowledgeBase"]
+        
+        # Crear estado resultante
+        return MCPState(
+            messages=all_messages,
+            memory_blocks=[
+                {"id": str(uuid.uuid4()), "content": "Bloque de memoria simulado"}
+            ],
+            tool_results=[
+                {"tool": tool, "result": f"Resultado simulado de {tool}"} 
+                for tool in tools
+            ]
+        )
+
+def build_mcp_graph(model_name: str = "gpt-3.5-turbo") -> MockGraph:
     """
-    Crea una simulación del grafo MCP.
+    Crea una instancia simulada del grafo MCP.
     
     Args:
-        model_name: Nombre del modelo (solo para registro)
+        model_name: Nombre del modelo a utilizar
         
     Returns:
-        Objeto simulado del grafo
+        Instancia de MockGraph
     """
-    logger.info(f"Creando grafo MCP simulado con modelo: {model_name}")
-    return {"name": "MockMCPGraph", "model": model_name}
+    return MockGraph(model_name=model_name)
 
-def initialize_context(visit_id: str, user_role: str = "health_professional") -> Dict[str, Any]:
+def initialize_context(visit_id: str, user_role: str) -> Dict[str, Any]:
     """
-    Inicializa un contexto simulado para la ejecución del MCP.
+    Inicializa el contexto para el MCP.
     
     Args:
         visit_id: ID de la visita
         user_role: Rol del usuario
         
     Returns:
-        Contexto simulado
+        Contexto inicializado
     """
-    logger.debug(f"Inicializando contexto simulado para visita: {visit_id}, rol: {user_role}")
-    
     return {
-        "visit": {
-            "id": visit_id,
-            "created_at": datetime.now().isoformat(),
-            "patient_info": {
-                "name": "Paciente de prueba",
-                "age": 45,
-                "gender": "No especificado"
-            }
-        },
+        "visit_id": visit_id,
         "user_role": user_role,
-        "session_id": f"mock-session-{int(time.time())}",
+        "timestamp": datetime.now().isoformat(),
         "system_info": {
             "version": settings.API_VERSION,
-            "environment": settings.ENVIRONMENT,
-            "model": settings.LLM_MODEL
+            "environment": settings.ENVIRONMENT
         }
     }
 
-def run_graph(graph: Any, context: Dict[str, Any], messages: List[BaseMessage]) -> MCPState:
+async def run_graph(graph: MockGraph, context: Dict[str, Any], messages: List[Any]) -> MCPState:
     """
-    Ejecuta una simulación del grafo MCP.
+    Ejecuta el grafo MCP con los mensajes y contexto dados.
     
     Args:
-        graph: Grafo simulado
-        context: Contexto de ejecución
+        graph: Instancia del grafo
+        context: Contexto de la ejecución
         messages: Lista de mensajes
         
     Returns:
-        Estado resultante de la ejecución
+        Estado resultante
     """
-    logger.debug("Ejecutando grafo MCP simulado")
-    
-    # Simular tiempo de procesamiento
-    time.sleep(0.5)
-    
-    # Obtener el último mensaje del usuario
-    user_input = messages[-1].content if messages else ""
-    
-    # Determinar respuesta basada en palabras clave
-    response = generate_mock_response(user_input, context.get("user_role", "health_professional"))
-    
-    # Crear mensajes resultantes
-    result_messages = list(messages)
-    result_messages.append(AIMessage(content=response))
-    
-    # Simular uso de herramientas
-    tool_results = generate_mock_tool_results(user_input)
-    
-    # Crear bloques de memoria
-    memory_blocks = []
-    for i, msg in enumerate(messages):
-        memory_blocks.append({
-            "id": f"memory_{i}",
-            "text": str(msg.content),
-            "timestamp": datetime.now().isoformat(),
-            "priority": random.choice(["high", "medium", "low"])
-        })
-    
-    # Estimar tokens (aproximación simple)
-    total_text = user_input + response + sum(tool["result"] for tool in tool_results)
-    token_count = len(total_text) // 4  # Aproximadamente 4 caracteres por token
-    
-    # Construir y retornar estado
-    state = MCPState({
-        "messages": result_messages,
-        "context": context,
-        "memory_blocks": memory_blocks,
-        "filtered_memory": memory_blocks[:3],  # Simular filtrado
-        "tool_results": tool_results,
-        "token_count": token_count
-    })
-    
-    return state
-
-def generate_mock_response(user_input: str, role: str) -> str:
-    """
-    Genera una respuesta simulada basada en el input del usuario.
-    
-    Args:
-        user_input: Mensaje del usuario
-        role: Rol del usuario
-        
-    Returns:
-        Respuesta simulada
-    """
-    lower_input = user_input.lower()
-    
-    if "dolor" in lower_input:
-        return "Basado en los síntomas de dolor que refiere, es importante evaluar si hay compromiso neurológico. Recomiendo realizar una exploración detallada de la sensibilidad y fuerza en el miembro afectado. También sería útil descartar compresión radicular mediante pruebas complementarias."
-    elif "fiebre" in lower_input:
-        return "La presencia de fiebre junto con los otros síntomas podría indicar un proceso infeccioso. Sugiero solicitar hemograma completo, PCR y valorar la necesidad de hemocultivos según la evolución clínica."
-    elif "tratamiento" in lower_input or "medicación" in lower_input:
-        return "Para el manejo sintomático recomiendo iniciar con medidas no farmacológicas como reposo relativo y aplicación local de calor/frío según tolerancia. En cuanto a tratamiento farmacológico, podría valorarse iniciar con antiinflamatorios no esteroideos a dosis estándar, monitorizando efectos secundarios y evolución clínica."
-    else:
-        return "He analizado la información proporcionada sobre el paciente. Recomendaría completar la anamnesis con antecedentes familiares relevantes y valorar la realización de pruebas complementarias específicas según la evolución clínica."
-
-def generate_mock_tool_results(user_input: str) -> List[Dict[str, Any]]:
-    """
-    Genera resultados de herramientas simulados basados en el input.
-    
-    Args:
-        user_input: Mensaje del usuario
-        
-    Returns:
-        Lista de resultados de herramientas
-    """
-    results = []
-    
-    if "dolor" in user_input.lower():
-        results.append({
-            "tool": "evaluacion_clinica",
-            "result": "Posible compresión radicular cervical. Evaluación neurológica recomendada."
-        })
-    
-    if "tratamiento" in user_input.lower() or "medicación" in user_input.lower():
-        results.append({
-            "tool": "recomendacion_terapeutica",
-            "result": "Tratamiento recomendado: AINE + reposo relativo + evaluación por especialista."
-        })
-    
-    # Siempre incluir análisis de contexto
-    results.append({
-        "tool": "analisis_contexto",
-        "result": "Análisis de contexto clínico completado. Patrones identificados en consulta."
-    })
-    
-    return results 
+    logger.info(f"Ejecutando mock de LangGraph para visita: {context.get('visit_id')}")
+    return await graph.ainvoke(context, messages) 

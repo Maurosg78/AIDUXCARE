@@ -1,18 +1,18 @@
 """
-Paquete core del microservicio MCP.
+Paquete core para componentes centrales del MCP.
 
-Este paquete proporciona la funcionalidad central para:
-- Integración con Langraph
-- Ejecución del grafo MCP
-- Utilidades y herramientas comunes
-- Trazabilidad con Langfuse
+Este paquete contiene los componentes centrales del MCP:
+- Validadores de registros clínicos
+- Ejecutores de grafos LangGraph
+- Integración con Langfuse
 """
 
+from .langfuse_tracing import create_trace
 from .langraph_runner import run_mcp_graph
-from .tracing import log_mcp_trace_async, get_langfuse_status
+from .validators import validate_emr_record
 
 __all__ = [
+    "create_trace",
     "run_mcp_graph",
-    "log_mcp_trace_async",
-    "get_langfuse_status"
+    "validate_emr_record"
 ] 

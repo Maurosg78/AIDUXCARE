@@ -9,6 +9,7 @@ Este módulo proporciona configuraciones basadas en Pydantic para:
 """
 
 import os
+import sys
 from typing import List, Union, Dict, Any
 from pydantic import field_validator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,9 +19,9 @@ class Settings(BaseSettings):
     """Configuración de la aplicación utilizando Pydantic Settings."""
     
     # Metadatos de la aplicación
-    APP_NAME: str = "MCP Server - AiDuxCare"
-    API_VERSION: str = "v1.21.0"
-    API_PREFIX: str = "/api"
+    APP_NAME: str = Field(default="MCP Server - AiDuxCare", description="Nombre de la aplicación")
+    API_VERSION: str = Field(default="v1.29.0", description="Versión del API")
+    API_PREFIX: str = Field(default="/api", description="Prefijo para rutas del API")
     
     # Entorno y depuración
     DEBUG: bool = Field(default=False, description="Modo de depuración")
@@ -29,7 +30,10 @@ class Settings(BaseSettings):
     
     # Configuración de servidor
     HOST: str = Field(default="0.0.0.0", description="Host de la aplicación")
-    PORT: int = Field(default=8000, description="Puerto de la aplicación")
+    PORT: int = Field(default=8001, description="Puerto de la aplicación")
+    
+    # Trazabilidad
+    ENABLE_TRACE: bool = Field(default=True, description="Habilitar trazabilidad con Langfuse")
     
     # Configuración de CORS
     CORS_ORIGINS: Union[str, List[str]] = Field(
@@ -37,13 +41,24 @@ class Settings(BaseSettings):
         description="Orígenes permitidos para CORS (separados por comas)"
     )
     
-    # Configuración de Langraph
-    LLM_MODEL: str = Field(default="gpt-3.5-turbo", description="Modelo LLM a utilizar")
+    # Configuración de LLM
+    MODEL_PROVIDER: str = Field(default="anthropic", description="Proveedor del modelo LLM (openai, anthropic)")
+    DEFAULT_MODEL: str = Field(default="claude-3-sonnet-20240229", description="Modelo LLM a utilizar")
     MAX_TOKENS: int = Field(default=2000, description="Máximo de tokens por respuesta")
     TEMPERATURE: float = Field(default=0.7, description="Temperatura para generación de respuestas")
     
     # Configuración de API Keys
     OPENAI_API_KEY: str = Field(default="", description="API Key de OpenAI")
+    ANTHROPIC_API_KEY: str = Field(default="", description="API Key de Anthropic")
+    
+    # Configuración Langfuse
+    LANGFUSE_HOST: str = Field(default="https://cloud.langfuse.com", description="URL de Langfuse")
+    LANGFUSE_PUBLIC_KEY: str = Field(default="", description="Clave pública de Langfuse")
+    LANGFUSE_SECRET_KEY: str = Field(default="", description="Clave secreta de Langfuse")
+    
+    # Configuración Supabase
+    SUPABASE_URL: str = Field(default="", description="URL de Supabase")
+    SUPABASE_SERVICE_ROLE_KEY: str = Field(default="", description="Clave de servicio de Supabase")
     
     # Timeouts y configuraciones de rendimiento
     REQUEST_TIMEOUT: int = Field(default=60, description="Timeout para solicitudes en segundos")
@@ -80,7 +95,7 @@ def setup_logging():
     config = {
         "handlers": [
             {
-                "sink": os.stdout,
+                "sink": sys.stdout,
                 "format": "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
                 "level": log_level,
             }

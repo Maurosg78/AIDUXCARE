@@ -1,30 +1,27 @@
 """
-Rutas de API para el microservicio MCP.
+Router para el endpoint de entradas (/api/mcp/entries).
 
-Este módulo define las rutas principales del microservicio, incluyendo:
-- GET /mcp/entries: Endpoint para consultar entradas clínicas almacenadas
-- GET /health: Endpoint para verificar el estado del servicio
+Este módulo define las rutas relacionadas con la consulta y manejo de 
+entradas clínicas almacenadas en el EMR.
 """
 
-import sys
-import os
-from fastapi import APIRouter, HTTPException, Request, status, Query
-from typing import Dict, Any, Optional, List
+from fastapi import APIRouter, HTTPException, Query, status
+from typing import Dict, Any, Optional
 from datetime import datetime
-import time
 
-# Asegurarse de que el directorio raíz está en el path
-sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
-
-# Importar componentes
-from schemas.emr_models import EMRFieldEntry, EMREntriesResponse, StorageError
-from services.supabase_client import get_emr_entries_by_visit, SupabaseClientError
-from settings import settings, logger
+from schemas.emr_models import EMRFieldEntry, EMREntriesResponse
+from schemas.response import StorageError
+from services.emr_service import get_emr_entries_by_visit
+from services.supabase_client import SupabaseClientError
+from settings import logger
 
 # Crear router
-router = APIRouter()
+router = APIRouter(
+    prefix="/mcp/entries",
+    tags=["entries"],
+)
 
-@router.get("/mcp/entries", 
+@router.get("", 
            response_model=EMREntriesResponse,
            responses={
                404: {"model": StorageError},
@@ -53,7 +50,7 @@ async def get_emr_entries(
         HTTPException: Si la visita no existe o hay un error de conexión
     """
     logger.info(f"Consultando entradas EMR para visita: {visit_id}, campo: {field or 'todos'}, rol: {role or 'todos'}")
-    start_time = time.time()
+    start_time = datetime.now()
     
     # Validar que se proporcionó el visit_id
     if not visit_id:
@@ -63,7 +60,7 @@ async def get_emr_entries(
                 error="El parámetro visit_id es obligatorio",
                 error_type="ValidationError",
                 timestamp=datetime.now()
-            ).dict()
+            ).model_dump()
         )
     
     try:
@@ -84,7 +81,7 @@ async def get_emr_entries(
             filters["role"] = role
         
         # Calcular tiempo de proceso
-        process_time = (time.time() - start_time) * 1000  # ms
+        process_time = (datetime.now() - start_time).total_seconds() * 1000  # ms
         logger.info(f"Consulta procesada en {process_time:.2f}ms, se encontraron {len(entries)} entradas")
         
         # Convertir los timestamps de string a objetos datetime
@@ -142,7 +139,7 @@ async def get_emr_entries(
                 error=str(e),
                 error_type=error_type,
                 timestamp=datetime.now()
-            ).dict()
+            ).model_dump()
         )
     except Exception as e:
         # Para excepciones generales
@@ -154,21 +151,5 @@ async def get_emr_entries(
                 error=f"Error interno al procesar la consulta: {str(e)}",
                 error_type="ServerError",
                 timestamp=datetime.now()
-            ).dict()
-        )
-
-@router.get("/health")
-async def health_check() -> Dict[str, Any]:
-    """
-    Verifica el estado del servicio MCP.
-    
-    Returns:
-        Estado del servicio y versión
-    """
-    return {
-        "status": "ok",
-        "version": settings.API_VERSION,
-        "service": settings.APP_NAME,
-        "environment": settings.ENVIRONMENT,
-        "model": settings.LLM_MODEL
-    } 
+            ).model_dump()
+        ) 

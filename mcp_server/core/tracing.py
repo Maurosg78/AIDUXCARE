@@ -14,7 +14,6 @@ import uuid
 
 from langfuse import Langfuse
 from langfuse.decorators import observe
-from langfuse.api.resources.commons.types import GenerationUsage
 
 from settings import settings, logger
 
@@ -104,11 +103,11 @@ async def log_mcp_trace(
             model=settings.LLM_MODEL,
             input=user_input,
             output=response_text,
-            usage=GenerationUsage(
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
-                total_tokens=input_tokens + output_tokens
-            ),
+            usage={
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": input_tokens + output_tokens
+            },
             metadata={
                 "temperature": settings.TEMPERATURE,
                 "max_tokens": settings.MAX_TOKENS

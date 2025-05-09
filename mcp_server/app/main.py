@@ -9,17 +9,22 @@ Este módulo configura la aplicación FastAPI, incluyendo:
 """
 
 import time
+import sys
+import os
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
-from app.api.routes import router as api_router
-from app.core.config import settings
-from app.core.utils import setup_logging, logger, create_error_response
+# Asegurarse de que el directorio raíz está en el path
+sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+
+# Importar componentes
+from settings import settings, logger, setup_logging
+from api.routes import router as api_router
 
 # Configurar logging
-setup_logging(debug_mode=settings.DEBUG)
+logger = setup_logging()
 
 # Crear aplicación FastAPI
 app = FastAPI(
@@ -70,11 +75,12 @@ async def log_requests(request: Request, call_next):
         # Devolver respuesta de error
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content=create_error_response(
-                message="Error interno del servidor",
-                status_code=500,
-                details={"error": str(e)}
-            )
+            content={
+                "error": "Error interno del servidor",
+                "error_type": "ServerError",
+                "details": str(e),
+                "timestamp": time.time()
+            }
         )
 
 # Manejador de errores de validación
@@ -87,11 +93,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=create_error_response(
-            message="Error de validación en los datos de entrada",
-            status_code=422,
-            details={"errors": exc.errors()}
-        )
+        content={
+            "error": "Error de validación en los datos de entrada",
+            "error_type": "ValidationError",
+            "details": [err for err in exc.errors()],
+            "timestamp": time.time()
+        }
     )
 
 # Incluir rutas API
@@ -116,6 +123,7 @@ async def startup_event():
     """
     logger.info(f"Iniciando servidor MCP v{settings.API_VERSION}")
     logger.info(f"Modo DEBUG: {settings.DEBUG}")
+    logger.info(f"Entorno: {settings.ENVIRONMENT}")
     logger.info(f"Modelo LLM: {settings.LLM_MODEL}")
     logger.info(f"CORS habilitado para: {settings.CORS_ORIGINS}")
 

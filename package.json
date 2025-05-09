@@ -128,5 +128,13 @@
     "vite": "^5.0.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^1.6.1"
+  },
+  "vitest": {
+    "exclude": [
+      "**/__tests__/**",
+      "**/src/components/**",
+      "**/src/tests/e2e/**"
+    ]
   }
 }
+

@@ -14,8 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar archivos necesarios
 COPY . .
 
-# Puerto para el API
-EXPOSE 8000
+# Puerto para el API (Railway asignará un puerto en producción)
+ENV PORT=${PORT:-8001}
+EXPOSE $PORT
 
 # Configurar comando de inicio
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"] 
+CMD ["python", "run_app.py"] 
