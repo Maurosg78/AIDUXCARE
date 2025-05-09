@@ -4,6 +4,7 @@ Rutas del API para el microservicio MCP.
 Este módulo define las rutas disponibles en el API:
 - POST /mcp/respond: Endpoint optimizado para integración con frontend
 - GET /health: Endpoint para verificar el estado del servicio
+- GET /tracing/status: Endpoint para verificar estado de trazabilidad
 """
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -20,6 +21,7 @@ from schemas import (
     TraceEntry
 )
 from core.langraph_runner import run_mcp_graph
+from core import get_langfuse_status
 from settings import settings, logger
 
 # Crear router
@@ -110,6 +112,24 @@ async def health_check() -> Dict[str, Any]:
         "service": settings.APP_NAME,
         "environment": settings.ENVIRONMENT,
         "model": settings.LLM_MODEL
+    }
+
+@router.get("/tracing/status")
+async def tracing_status() -> Dict[str, Any]:
+    """
+    Verifica el estado de la integración con Langfuse.
+    
+    Returns:
+        Estado de la integración de trazabilidad
+    """
+    langfuse_status = get_langfuse_status()
+    
+    return {
+        "status": "ok" if langfuse_status["enabled"] else "disabled",
+        "tracing_provider": "Langfuse",
+        "version": langfuse_status["version"],
+        "host": langfuse_status["host"],
+        "timestamp": datetime.now().isoformat()
     }
 
 @router.get("/mantra")

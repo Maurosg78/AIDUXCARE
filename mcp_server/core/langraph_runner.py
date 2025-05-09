@@ -33,6 +33,7 @@ from schemas import (
     TraceEntry
 )
 from settings import settings, logger
+from .tracing import log_mcp_trace_async
 
 class MCPGraphRunner:
     """
@@ -64,6 +65,7 @@ class MCPGraphRunner:
             Respuesta adaptada para el frontend
         """
         start_time = time.time()
+        error = None
         
         # Crear trace para seguimiento
         trace_entries = []
@@ -160,14 +162,26 @@ class MCPGraphRunner:
             )
             
             # Construir respuesta final
-            return FrontendMCPResponse(
+            response_data = FrontendMCPResponse(
                 response=response,
                 conversation_item=conversation_item,
                 context_summary=context_summary,
                 trace=trace_entries
             )
             
+            # Registrar traza en Langfuse (asíncrono)
+            await log_mcp_trace_async(
+                visit_id=request.visit_id,
+                role=request.role,
+                user_input=request.user_input,
+                response_data=response_data.dict(),
+                trace_info=trace_entries
+            )
+            
+            return response_data
+            
         except Exception as e:
+            error = e
             logger.error(f"Error procesando solicitud MCP: {str(e)}")
             error_trace = traceback.format_exc()
             logger.error(error_trace)
@@ -184,7 +198,7 @@ class MCPGraphRunner:
             # Construir respuesta de error
             timestamp = datetime.now().isoformat()
             
-            return FrontendMCPResponse(
+            error_response = FrontendMCPResponse(
                 response=f"Se produjo un error al procesar la solicitud: {str(e)}",
                 conversation_item=ConversationItem(
                     id="error",
@@ -207,6 +221,18 @@ class MCPGraphRunner:
                 ),
                 trace=trace_entries
             )
+            
+            # Registrar error en Langfuse (asíncrono)
+            await log_mcp_trace_async(
+                visit_id=request.visit_id,
+                role=request.role,
+                user_input=request.user_input,
+                response_data=error_response.dict(),
+                trace_info=trace_entries,
+                error=e
+            )
+            
+            return error_response
     
     def _create_trace_entry(self, action: str, metadata: Dict[str, Any]) -> TraceEntry:
         """Crea una entrada de traza con marca de tiempo."""
@@ -224,7 +250,7 @@ async def run_mcp_graph(request: FrontendMCPRequest) -> FrontendMCPResponse:
     Función para ejecutar el grafo MCP con una solicitud del frontend.
     
     Esta es la función principal que utiliza el API para procesar
-    solicitudes al MCP.
+    solicitudes al MCP. Integra automáticamente trazabilidad con Langfuse.
     
     Args:
         request: Solicitud desde el frontend
