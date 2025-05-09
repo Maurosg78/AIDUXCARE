@@ -1,10 +1,5 @@
 {
   "framework": "vite",
-  "buildCommand": "CI=false vite build",
-  "outputDirectory": "dist",
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  "buildCommand": "CI=false npm run build:safe",
+  "outputDirectory": "dist"
 } 

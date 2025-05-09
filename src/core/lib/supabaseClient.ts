@@ -4,6 +4,16 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const isBrowser = typeof window !== 'undefined';
 
+// Debugging para entornos de producción
+console.log('🔍 Inicializando Supabase Client, Browser=', isBrowser);
+console.log('🔍 Environment variables disponibles:', JSON.stringify({
+  VITE_AVAILABLE: typeof import.meta.env !== 'undefined',
+  HAS_SUPABASE_URL: typeof import.meta.env.VITE_SUPABASE_URL !== 'undefined',
+  HAS_SUPABASE_KEY: typeof import.meta.env.VITE_SUPABASE_ANON_KEY !== 'undefined',
+  ENV_MODE: import.meta.env.MODE
+}));
+
+// Intentar recuperar las variables de entorno con seguridad
 const SUPABASE_URL = isBrowser
   ? import.meta.env.VITE_SUPABASE_URL
   : process.env.SUPABASE_URL;
@@ -11,12 +21,21 @@ const SUPABASE_ANON_KEY = isBrowser
   ? import.meta.env.VITE_SUPABASE_ANON_KEY
   : process.env.SUPABASE_ANON_KEY;
 
+// Validar si las variables están definidas
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error(`❌ supabaseClient: missing env vars. Browser=${isBrowser} URL=${SUPABASE_URL} KEY=${SUPABASE_ANON_KEY}`);
+  console.error('❌ Error crítico: Variables de entorno de Supabase no disponibles');
+  console.error(`Browser=${isBrowser}, URL=${SUPABASE_URL ? 'definida' : 'undefined'}, KEY=${SUPABASE_ANON_KEY ? 'definida (longitud: ' + SUPABASE_ANON_KEY.length + ')' : 'undefined'}`);
+  
+  if (isBrowser) {
+    // En producción, mostrar mensaje de error más detallado pero sin exponer información sensible
+    console.error('Verifica que las variables VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY estén configuradas en Vercel');
+  }
+  
+  throw new Error(`❌ supabaseClient: missing env vars. Browser=${isBrowser} URL=${SUPABASE_URL ? 'defined' : 'undefined'} KEY=${SUPABASE_ANON_KEY ? 'defined' : 'undefined'}`);
 }
 
-console.log('▶️ Supabase URL:', SUPABASE_URL);
-console.log('▶️ Supabase anon key length:', SUPABASE_ANON_KEY.length);
+console.log('✅ Supabase URL:', SUPABASE_URL.substring(0, 20) + '...');
+console.log('✅ Supabase anon key length:', SUPABASE_ANON_KEY.length);
 
 // Creamos el cliente de Supabase con headers seguros predefinidos
 const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -83,6 +102,8 @@ if (isBrowser && window.fetch) {
     console.error('No se pudo instalar interceptor de fetch:', error);
   }
 }
+
+console.log('✅ Cliente Supabase inicializado correctamente');
 
 export const authClient = supabase.auth;
 export default supabase;
