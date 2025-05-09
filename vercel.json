@@ -1,5 +1,5 @@
 {
   "framework": "vite",
-  "buildCommand": "CI=false npm run build:vercel",
+  "buildCommand": "CI=false npm run build:safe",
   "outputDirectory": "dist"
 } 
