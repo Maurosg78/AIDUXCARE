@@ -76,7 +76,7 @@
     "api:mock": "node simple-server-direct.mjs",
     "safe-dev": "npm run pre-dev && npm run dev:all",
     "quickstart": "bash run.sh",
-    "vercel-build": "npm install --legacy-peer-deps && npm run build:safe"
+    "vercel-build": "npm ci --omit=dev --legacy-peer-deps && vite build"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
