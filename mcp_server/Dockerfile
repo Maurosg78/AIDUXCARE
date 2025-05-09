@@ -5,18 +5,17 @@ WORKDIR /app
 # Establecer variables de entorno
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PORT=8001
 
-# Instalar dependencias
+# Copiar requirements.txt primero para aprovechar la caché de Docker
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar archivos necesarios
+# Copiar el resto de los archivos
 COPY . .
 
-# Puerto para el API (Railway asignará un puerto en producción)
-ENV PORT=${PORT:-8001}
-EXPOSE $PORT
+# Exponer el puerto
+EXPOSE ${PORT}
 
-# Configurar comando de inicio
-CMD ["python", "run_app.py"] 
+# Comando por defecto
+CMD ["python", "main.py"] 

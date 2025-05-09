@@ -1,8 +1,9 @@
 [phases.setup]
 nixPkgs = ["python311"]
+workdir = "mcp_server"
 
 [phases.install]
-cmds = ["cd mcp_server && pip install -r requirements.txt"]
+cmds = ["pip install -r requirements.txt"]
 
 [start]
-cmd = "cd mcp_server && python main.py" 
+cmd = "python main.py" 
