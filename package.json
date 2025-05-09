@@ -49,8 +49,9 @@
     "setup-env": "node scripts/setupEnv.mjs",
     "setup": "node scripts/setup.mjs",
     "pre-dev": "npm run free-ports && npm run setup-env",
-    "build": "tsc && vite build",
-    "build:safe": "vite build",
+    "build": "tsc && vite build && node scripts/postbuild.js",
+    "build:safe": "vite build && node scripts/postbuild.js",
+    "build:vercel": "vite build && cp public/env-config.js dist/ && node scripts/postbuild.js",
     "preview": "vite preview",
     "clean:maple": "ts-node scripts/cleanMapleReferences.ts",
     "scan:maple": "ts-node scripts/scanMapleReferences.ts",
@@ -76,7 +77,7 @@
     "api:mock": "node simple-server-direct.mjs",
     "safe-dev": "npm run pre-dev && npm run dev:all",
     "quickstart": "bash run.sh",
-    "vercel-build": "vite build"
+    "vercel-build": "npm run build:vercel"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
