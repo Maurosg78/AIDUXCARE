@@ -2,21 +2,17 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Establecer variables de entorno
-ENV PYTHONPATH=/app \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PORT=8001
-
-# Copiar requirements.txt primero para aprovechar la caché de Docker
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copiar el resto de los archivos
+# Copiar todos los archivos
 COPY . .
 
-# Exponer puerto (Railway lo establecerá automáticamente)
+# Instalar dependencias
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Puerto por defecto
+ENV PORT=8001
+
+# Exponer puerto
 EXPOSE ${PORT}
 
-# Comando para iniciar la aplicación
+# Iniciar aplicación
 CMD python main.py 

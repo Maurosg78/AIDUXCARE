@@ -1,3 +1,28 @@
+# AiDuxCare MCP Server
+
+## Despliegue en Railway
+
+Para desplegar este microservicio en Railway:
+
+1. Haz fork de este repositorio en GitHub
+2. Conéctalo a Railway desde la plataforma
+3. Configura las variables de entorno necesarias:
+   - `ANTHROPIC_API_KEY`: Tu clave de API de Anthropic/Claude
+   - `MODEL_PROVIDER`: "anthropic"
+   - `DEFAULT_MODEL`: "claude-3-sonnet-20240229"
+   - `SUPABASE_URL`: URL de tu proyecto Supabase
+   - `SUPABASE_SERVICE_ROLE_KEY`: Clave de servicio de Supabase
+   - `LANGFUSE_PUBLIC_KEY`: Clave pública de Langfuse
+   - `LANGFUSE_SECRET_KEY`: Clave secreta de Langfuse
+   - `LANGFUSE_HOST`: URL de Langfuse (normalmente "https://cloud.langfuse.com")
+   - `PORT`: 8001 (Railway lo configurará automáticamente)
+   - `ENABLE_TRACE`: "true"
+   - `DEBUG`: "false"
+   - `ENVIRONMENT`: "production"
+   - `LOG_LEVEL`: "INFO"
+
+Railway utilizará el Dockerfile en la carpeta mcp_server para construir y ejecutar la aplicación.
+
 # AiDuxCare
 
 Sistema de gestión clínica inteligente con asistente IA para fisioterapeutas.
