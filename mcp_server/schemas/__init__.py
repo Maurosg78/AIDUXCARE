@@ -1,37 +1,41 @@
 """
-Paquete de esquemas para validación de datos.
+Esquemas del microservicio MCP.
 
-Este paquete proporciona modelos Pydantic para la validación
-de solicitudes y respuestas del microservicio MCP.
+Este paquete define los modelos de datos utilizados para:
+- Validación de peticiones y respuestas
+- Estructuras de datos internas
+- Comunicación con el frontend
 """
 
-from .request import (
-    RoleType,
-    SenderType,
-    MCPRequest,
+# Modelos base
+from .base_models import (
+    ErrorResponse,
     ConversationItem,
-    FrontendMCPRequest
+    ContextSummary,
+    TraceEntry
 )
 
-from .response import (
-    ToolResult,
-    TraceEntry,
-    MCPResponse,
-    ErrorResponse,
-    ContextSummary,
+# Modelos MCP
+from .mcp_models import (
+    FrontendMCPRequest,
     FrontendMCPResponse
 )
 
+# Modelos EMR
+from .emr_models import (
+    StoreEMRRequest,
+    StoreEMRResponse,
+    StorageError
+)
+
 __all__ = [
-    "RoleType",
-    "SenderType",
-    "MCPRequest",
-    "ConversationItem",
-    "FrontendMCPRequest",
-    "ToolResult",
-    "TraceEntry",
-    "MCPResponse",
     "ErrorResponse",
+    "ConversationItem",
     "ContextSummary",
-    "FrontendMCPResponse"
+    "TraceEntry",
+    "FrontendMCPRequest",
+    "FrontendMCPResponse",
+    "StoreEMRRequest",
+    "StoreEMRResponse",
+    "StorageError"
 ] 

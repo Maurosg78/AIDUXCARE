@@ -16,7 +16,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
-from langgraph.checkpoint import MemorySaver
+from langgraph.persistence import MemorySaver
 from langgraph.pregel import Pregel
 
 # Tipos para el sistema
