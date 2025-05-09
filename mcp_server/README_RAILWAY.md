@@ -142,3 +142,22 @@ Railway proporciona herramientas para monitorear el estado de la aplicación y v
 ---
 
 Para más detalles sobre la implementación del MCP, consultar el archivo `README.md` principal del proyecto. 
+
+from api.entries import router as entries_router
+app.include_router(entries_router) 
+
+try:
+    from api.respond import router as respond_router
+    from api.validate import router as validate_router
+    from api.store import router as store_router
+    from api.entries import router as entries_router
+    
+    # Registrar routers
+    app.include_router(respond_router)
+    app.include_router(validate_router)
+    app.include_router(store_router)
+    app.include_router(entries_router)
+    logger.info("Routers cargados correctamente")
+except ImportError as e:
+    logger.error(f"Error al importar routers: {str(e)}")
+    logger.warning("La aplicación continuará funcionando solo con endpoints básicos") 

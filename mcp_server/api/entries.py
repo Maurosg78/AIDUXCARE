@@ -6,27 +6,64 @@ entradas clínicas almacenadas en el EMR.
 """
 
 from fastapi import APIRouter, HTTPException, Query, status
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
+import json
 
-from schemas.emr_models import EMRFieldEntry, EMREntriesResponse
-from schemas.response import StorageError
-from services.emr_service import get_emr_entries_by_visit
 from services.supabase_client import SupabaseClientError
 from settings import logger
 
 # Crear router
 router = APIRouter(
-    prefix="/mcp/entries",
+    prefix="/api/mcp/entries",
     tags=["entries"],
 )
 
-@router.get("", 
-           response_model=EMREntriesResponse,
-           responses={
-               404: {"model": StorageError},
-               500: {"model": StorageError}
-           })
+# Datos mock para pruebas
+MOCK_ENTRIES = [
+    {
+        "id": "entry1",
+        "visit_id": "VIS001",
+        "field": "anamnesis",
+        "content": "Paciente presenta dolor lumbar desde hace 3 días, irradiado a miembro inferior derecho.",
+        "role": "health_professional",
+        "timestamp": "2023-05-15T10:30:00",
+        "source": "mcp",
+        "validated": True
+    },
+    {
+        "id": "entry2",
+        "visit_id": "VIS001",
+        "field": "exploracion",
+        "content": "Dolor a la palpación en región lumbar. Lasegue positivo en miembro inferior derecho.",
+        "role": "health_professional",
+        "timestamp": "2023-05-15T10:35:00",
+        "source": "mcp",
+        "validated": True
+    },
+    {
+        "id": "entry3",
+        "visit_id": "VIS001",
+        "field": "diagnostico",
+        "content": "Lumbociática derecha.",
+        "role": "health_professional",
+        "timestamp": "2023-05-15T10:40:00",
+        "source": "mcp",
+        "validated": True
+    },
+    {
+        "id": "entry4",
+        "visit_id": "VIS001",
+        "field": "plan",
+        "content": "AINE, reposo relativo, reevaluación en 7 días.",
+        "role": "health_professional",
+        "timestamp": "2023-05-15T10:45:00",
+        "source": "mcp",
+        "validated": True
+    }
+]
+
+@router.get("")
 async def get_emr_entries(
     visit_id: str = Query(..., description="ID de la visita médica"),
     field: Optional[str] = Query(None, description="Campo específico a consultar (ej: anamnesis)"),
@@ -45,31 +82,30 @@ async def get_emr_entries(
         
     Returns:
         Lista de entradas clínicas que cumplen con los criterios
-        
-    Raises:
-        HTTPException: Si la visita no existe o hay un error de conexión
     """
     logger.info(f"Consultando entradas EMR para visita: {visit_id}, campo: {field or 'todos'}, rol: {role or 'todos'}")
-    start_time = datetime.now()
-    
-    # Validar que se proporcionó el visit_id
-    if not visit_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=StorageError(
-                error="El parámetro visit_id es obligatorio",
-                error_type="ValidationError",
-                timestamp=datetime.now()
-            ).model_dump()
-        )
     
     try:
-        # Consultar las entradas
-        entries = await get_emr_entries_by_visit(
-            visit_id=visit_id,
-            field=field,
-            role=role
-        )
+        # Filtrar datos mock según los parámetros
+        filtered_entries = MOCK_ENTRIES.copy()
+        
+        # Si la visita no es VIS001, devolver error 404
+        if visit_id != "VIS001":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": f"La visita {visit_id} no existe",
+                    "error_type": "NotFoundError",
+                    "timestamp": datetime.now().isoformat()
+                }
+            )
+        
+        # Aplicar filtros
+        if field:
+            filtered_entries = [e for e in filtered_entries if e["field"] == field]
+        
+        if role:
+            filtered_entries = [e for e in filtered_entries if e["role"] == role]
         
         # Construir filtros aplicados para el response
         filters = {
@@ -80,76 +116,31 @@ async def get_emr_entries(
         if role:
             filters["role"] = role
         
-        # Calcular tiempo de proceso
-        process_time = (datetime.now() - start_time).total_seconds() * 1000  # ms
-        logger.info(f"Consulta procesada en {process_time:.2f}ms, se encontraron {len(entries)} entradas")
-        
-        # Convertir los timestamps de string a objetos datetime
-        parsed_entries = []
-        for entry in entries:
-            # Asegurar que todos los campos requeridos están presentes
-            if not all(k in entry for k in ["field", "content", "role", "timestamp"]):
-                logger.warning(f"Entrada con datos incompletos: {entry}")
-                continue
-                
-            # Convertir el timestamp
-            if isinstance(entry.get("timestamp"), str):
-                try:
-                    entry["timestamp"] = datetime.fromisoformat(entry["timestamp"].replace('Z', '+00:00'))
-                except ValueError:
-                    # Si no se puede convertir, usar la fecha actual
-                    entry["timestamp"] = datetime.now()
-            
-            # Añadir campos por defecto si no existen
-            if "source" not in entry:
-                entry["source"] = "mcp"
-            if "validated" not in entry:
-                entry["validated"] = True
-            
-            # Añadir a la lista de entradas procesadas
-            try:
-                parsed_entries.append(EMRFieldEntry(**entry))
-            except Exception as e:
-                logger.warning(f"Error al procesar entrada: {e}")
-                continue
-        
         # Preparar respuesta
-        return EMREntriesResponse(
-            visit_id=visit_id,
-            entries=parsed_entries,
-            count=len(parsed_entries),
-            filters=filters,
-            timestamp=datetime.now()
-        )
+        response = {
+            "visit_id": visit_id,
+            "entries": filtered_entries,
+            "count": len(filtered_entries),
+            "filters": filters,
+            "timestamp": datetime.now().isoformat()
+        }
         
-    except SupabaseClientError as e:
-        # Para excepciones específicas de Supabase
-        if "no existe" in str(e).lower():
-            status_code = status.HTTP_404_NOT_FOUND
-            error_type = "NotFoundError"
-        else:
-            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            error_type = "SupabaseError"
-            
-        logger.error(f"Error de Supabase al consultar entradas EMR: {str(e)}")
+        # Registrar trazabilidad si está habilitada
+        logger.info(f"Devolviendo {len(filtered_entries)} entradas para la visita {visit_id}")
         
-        raise HTTPException(
-            status_code=status_code,
-            detail=StorageError(
-                error=str(e),
-                error_type=error_type,
-                timestamp=datetime.now()
-            ).model_dump()
-        )
+        return response
+        
     except Exception as e:
-        # Para excepciones generales
+        # Manejar excepciones generales
         logger.error(f"Error al consultar entradas EMR: {str(e)}")
         
+        # Devolver error genérico
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=StorageError(
-                error=f"Error interno al procesar la consulta: {str(e)}",
-                error_type="ServerError",
-                timestamp=datetime.now()
-            ).model_dump()
+            detail={
+                "error": "Error interno del servidor",
+                "error_type": "ServerError",
+                "detail": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
         ) 

@@ -77,6 +77,9 @@ class EMRFieldEntry(BaseModel):
                 "metadata": {"confidence": 0.92}
             }
         }
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat()
+        }
 
 class EMREntriesResponse(BaseModel):
     """
@@ -89,4 +92,9 @@ class EMREntriesResponse(BaseModel):
     entries: List[EMRFieldEntry]
     count: int
     filters: Dict[str, str]
-    timestamp: datetime = Field(default_factory=datetime.now) 
+    timestamp: datetime = Field(default_factory=datetime.now)
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat()
+        } 

@@ -44,11 +44,13 @@ try:
     from api.respond import router as respond_router
     from api.validate import router as validate_router
     from api.store import router as store_router
+    from api.entries import router as entries_router
     
     # Registrar routers
     app.include_router(respond_router)
     app.include_router(validate_router)
     app.include_router(store_router)
+    app.include_router(entries_router)
     logger.info("Routers cargados correctamente")
 except ImportError as e:
     logger.error(f"Error al importar routers: {str(e)}")
