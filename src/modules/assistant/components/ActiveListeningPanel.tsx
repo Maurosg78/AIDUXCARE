@@ -1,6 +1,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useLangfuse } from '@/core/hooks/useLangfuse';
-import { Button, Card, Checkbox, Alert } from '@/components/ui';
+// Comentar temporalmente la importación de useLangfuse hasta que esté disponible
+// import { useLangfuse } from '@/core/hooks/useLangfuse';
+// Importamos los componentes individualmente desde sus ubicaciones directas para evitar problemas
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert } from '@/components/ui/alert';
 
 interface DetectedPhrase {
   id: string;
@@ -24,7 +29,8 @@ export const ActiveListeningPanel: React.FC<ActiveListeningPanelProps> = ({
   const [hasConsent, setHasConsent] = useState(false);
   const [detectedPhrases, setDetectedPhrases] = useState<DetectedPhrase[]>([]);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  const { } = useLangfuse();
+  // Comentar temporalmente hasta que tengamos una implementación real
+  // const { } = useLangfuse();
 
   // Simulación de detección de frases clínicas
   const mockPhrases = [
