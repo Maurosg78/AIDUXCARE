@@ -39,15 +39,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Importar routers
-from api.respond import router as respond_router
-from api.validate import router as validate_router
-from api.store import router as store_router
-
-# Registrar routers
-app.include_router(respond_router)
-app.include_router(validate_router)
-app.include_router(store_router)
+# Importar routers - Con manejo de errores para asegurar que la app inicie
+try:
+    from api.respond import router as respond_router
+    from api.validate import router as validate_router
+    from api.store import router as store_router
+    
+    # Registrar routers
+    app.include_router(respond_router)
+    app.include_router(validate_router)
+    app.include_router(store_router)
+    logger.info("Routers cargados correctamente")
+except ImportError as e:
+    logger.error(f"Error al importar routers: {str(e)}")
+    logger.warning("La aplicación continuará funcionando solo con endpoints básicos")
 
 @app.get("/", tags=["general"])
 async def root():
@@ -139,10 +144,14 @@ if __name__ == "__main__":
     # Determinar si se debe usar reload
     reload_mode = args.reload or os.environ.get("DEBUG", "FALSE").upper() == "TRUE"
     
-    # Ejecutar servidor
-    uvicorn.run(
-        "main:app", 
-        host=args.host, 
-        port=args.port,
-        reload=reload_mode
-    ) 
+    try:
+        # Ejecutar servidor
+        uvicorn.run(
+            "main:app", 
+            host=args.host, 
+            port=args.port,
+            reload=reload_mode
+        )
+    except Exception as e:
+        logger.error(f"Error al iniciar el servidor: {str(e)}")
+        sys.exit(1) 

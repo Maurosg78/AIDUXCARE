@@ -3,7 +3,8 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Establecer variables de entorno
-ENV PYTHONDONTWRITEBYTECODE=1 \
+ENV PYTHONPATH=/app \
+    PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8001
 
@@ -14,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el resto de los archivos
 COPY . .
 
-# Exponer el puerto (Railway requiere PORT)
+# Exponer puerto (Railway lo establecerá automáticamente)
 EXPOSE ${PORT}
 
-# Comando por defecto
+# Comando para iniciar la aplicación
 CMD python main.py 
