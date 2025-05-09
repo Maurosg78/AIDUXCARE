@@ -5,37 +5,55 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const isBrowser = typeof window !== 'undefined';
 
 // Debugging para entornos de producción
-console.log('🔍 Inicializando Supabase Client, Browser=', isBrowser);
-console.log('🔍 Environment variables disponibles:', JSON.stringify({
-  VITE_AVAILABLE: typeof import.meta.env !== 'undefined',
-  HAS_SUPABASE_URL: typeof import.meta.env.VITE_SUPABASE_URL !== 'undefined',
-  HAS_SUPABASE_KEY: typeof import.meta.env.VITE_SUPABASE_ANON_KEY !== 'undefined',
-  ENV_MODE: import.meta.env.MODE
-}));
+console.log('🔍 [Supabase] Inicializando cliente, Browser=', isBrowser);
 
-// Intentar recuperar las variables de entorno con seguridad
-const SUPABASE_URL = isBrowser
-  ? import.meta.env.VITE_SUPABASE_URL
-  : process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = isBrowser
-  ? import.meta.env.VITE_SUPABASE_ANON_KEY
-  : process.env.SUPABASE_ANON_KEY;
+// Log más detallado del entorno y las variables
+console.log('🔍 [Supabase] Estado de variables de entorno:', {
+  MODE: import.meta.env.MODE,
+  PROD: import.meta.env.PROD,
+  DEV: import.meta.env.DEV,
+  BASE_URL: import.meta.env.BASE_URL,
+  ENV_LOADED: typeof import.meta.env !== 'undefined',
+  HAS_SUPABASE_URL: typeof import.meta.env.VITE_SUPABASE_URL === 'string' && import.meta.env.VITE_SUPABASE_URL.length > 0,
+  HAS_SUPABASE_KEY: typeof import.meta.env.VITE_SUPABASE_ANON_KEY === 'string' && import.meta.env.VITE_SUPABASE_ANON_KEY.length > 0,
+});
 
-// Validar si las variables están definidas
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('❌ Error crítico: Variables de entorno de Supabase no disponibles');
-  console.error(`Browser=${isBrowser}, URL=${SUPABASE_URL ? 'definida' : 'undefined'}, KEY=${SUPABASE_ANON_KEY ? 'definida (longitud: ' + SUPABASE_ANON_KEY.length + ')' : 'undefined'}`);
+// Intentar recuperar las variables con valores fallback para mayor seguridad
+let SUPABASE_URL = '';
+let SUPABASE_ANON_KEY = '';
+
+try {
+  // Acceso seguro a variables de entorno
+  SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+  SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
   
-  if (isBrowser) {
-    // En producción, mostrar mensaje de error más detallado pero sin exponer información sensible
-    console.error('Verifica que las variables VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY estén configuradas en Vercel');
+  // Valores hardcodeados de fallback solo para cuando las variables no estén disponibles en producción
+  if ((!SUPABASE_URL || !SUPABASE_ANON_KEY) && import.meta.env.PROD) {
+    console.warn('⚠️ [Supabase] Usando valores de fallback porque las variables de entorno no están disponibles');
+    SUPABASE_URL = SUPABASE_URL || 'https://mchyxyuaegsbrwodengr.supabase.co';
+    SUPABASE_ANON_KEY = SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jaHl4eXVhZWdzYnJ3b2RlbmdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1NjU1MzQsImV4cCI6MjA2MjE0MTUzNH0.cXMj4nlE7oExTRetNT2x4ktq6yoCuwy0dVDziq5C-co';
   }
+} catch (error) {
+  console.error('❌ [Supabase] Error al acceder a variables de entorno:', error);
+  
+  // Fallback para producción
+  if (import.meta.env.PROD) {
+    SUPABASE_URL = 'https://mchyxyuaegsbrwodengr.supabase.co';
+    SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jaHl4eXVhZWdzYnJ3b2RlbmdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1NjU1MzQsImV4cCI6MjA2MjE0MTUzNH0.cXMj4nlE7oExTRetNT2x4ktq6yoCuwy0dVDziq5C-co';
+  }
+}
+
+// Validar si las variables están definidas después de fallbacks
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('❌ [Supabase] Error crítico: Variables de entorno no disponibles');
+  console.error(`Browser=${isBrowser}, URL=${SUPABASE_URL ? 'definida' : 'undefined'}, KEY=${SUPABASE_ANON_KEY ? 'definida (longitud: ' + SUPABASE_ANON_KEY.length + ')' : 'undefined'}`);
   
   throw new Error(`❌ supabaseClient: missing env vars. Browser=${isBrowser} URL=${SUPABASE_URL ? 'defined' : 'undefined'} KEY=${SUPABASE_ANON_KEY ? 'defined' : 'undefined'}`);
 }
 
-console.log('✅ Supabase URL:', SUPABASE_URL.substring(0, 20) + '...');
-console.log('✅ Supabase anon key length:', SUPABASE_ANON_KEY.length);
+console.log('✅ [Supabase] Variables disponibles:');
+console.log('- URL:', SUPABASE_URL.substring(0, 20) + '...');
+console.log('- Key Length:', SUPABASE_ANON_KEY.length);
 
 // Creamos el cliente de Supabase con headers seguros predefinidos
 const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -65,12 +83,12 @@ if (typeof supabaseAny._getClientInfo === 'function') {
         return 'supabase-js/2.x';
       }
     };
-    console.log('✅ Monkey-patch aplicado a Supabase._getClientInfo');
+    console.log('✅ [Supabase] Monkey-patch aplicado a _getClientInfo');
   } catch (error) {
-    console.error('Error al aplicar monkey-patch:', error);
+    console.error('[Supabase] Error al aplicar monkey-patch:', error);
   }
 } else {
-  console.warn('⚠️ No se encontró el método _getClientInfo en Supabase');
+  console.warn('⚠️ [Supabase] No se encontró el método _getClientInfo');
 }
 
 // Interceptor de fetch si estamos en el navegador para sanear headers
@@ -92,18 +110,18 @@ if (isBrowser && window.fetch) {
             (headers as any)['X-Client-Info'] = 'supabase-js/2.x';
           }
         } catch (error) {
-          console.warn('Error al sanear X-Client-Info header:', error);
+          console.warn('[Supabase] Error al sanear X-Client-Info header:', error);
         }
       }
       return originalFetch.apply(this, args);
     };
-    console.log('🔒 Interceptor de fetch instalado para sanear headers problemáticos');
+    console.log('🔒 [Supabase] Interceptor de fetch instalado');
   } catch (error) {
-    console.error('No se pudo instalar interceptor de fetch:', error);
+    console.error('[Supabase] No se pudo instalar interceptor de fetch:', error);
   }
 }
 
-console.log('✅ Cliente Supabase inicializado correctamente');
+console.log('✅ [Supabase] Cliente inicializado correctamente');
 
 export const authClient = supabase.auth;
 export default supabase;

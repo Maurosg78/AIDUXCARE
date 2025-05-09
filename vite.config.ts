@@ -13,6 +13,8 @@ export default defineConfig(({ mode }) => {
     hasPublicKey: !!env.VITE_LANGFUSE_PUBLIC_KEY,
     hasSecretKey: !!env.VITE_LANGFUSE_SECRET_KEY,
     hasBaseUrl: !!env.VITE_LANGFUSE_BASE_URL,
+    hasSupabaseUrl: !!env.VITE_SUPABASE_URL,
+    hasSupabaseKey: !!env.VITE_SUPABASE_ANON_KEY,
     apiBaseUrl: env.VITE_API_BASE_URL,
     port: PORT
   });
@@ -34,6 +36,8 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_LANGFUSE_PUBLIC_KEY': JSON.stringify(env.VITE_LANGFUSE_PUBLIC_KEY),
       'import.meta.env.VITE_LANGFUSE_SECRET_KEY': JSON.stringify(env.VITE_LANGFUSE_SECRET_KEY),
       'import.meta.env.VITE_LANGFUSE_BASE_URL': JSON.stringify(env.VITE_LANGFUSE_BASE_URL),
+      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
+      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
     },
   };
 });
