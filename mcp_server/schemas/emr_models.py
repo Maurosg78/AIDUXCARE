@@ -6,7 +6,7 @@ de datos en el EMR, asegurando la validación de datos antes de almacenarlos.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 class StoreEMRRequest(BaseModel):
@@ -37,4 +37,26 @@ class StorageError(BaseModel):
     success: bool = False
     error: str = Field(..., description="Descripción del error")
     error_type: str = Field(..., description="Tipo de error")
-    timestamp: datetime = Field(default_factory=datetime.now) 
+    timestamp: datetime = Field(default_factory=datetime.now)
+
+class EMRFieldEntry(BaseModel):
+    """
+    Modelo para entradas individuales del EMR.
+    """
+    field: str = Field(..., description="Campo del EMR (anamnesis, diagnostico, etc)")
+    content: str = Field(..., description="Contenido de la entrada")
+    role: str = Field(..., description="Rol del usuario que creó la entrada")
+    timestamp: datetime = Field(..., description="Fecha y hora de creación")
+    source: str = Field("mcp", description="Origen de la entrada")
+    validated: bool = Field(True, description="Si la entrada ha sido validada por un profesional")
+    id: Optional[str] = Field(None, description="ID único de la entrada")
+
+class EMREntriesResponse(BaseModel):
+    """
+    Modelo para respuestas de consulta de entradas de EMR.
+    """
+    visit_id: str = Field(..., description="ID de la visita médica")
+    entries: List[EMRFieldEntry] = Field(default_factory=list, description="Lista de entradas clínicas")
+    count: int = Field(..., description="Número de entradas encontradas")
+    filters: Optional[Dict[str, Any]] = Field(None, description="Filtros aplicados a la consulta")
+    timestamp: datetime = Field(default_factory=datetime.now, description="Timestamp de la consulta") 

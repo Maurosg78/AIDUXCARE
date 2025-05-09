@@ -25,7 +25,9 @@ from .mcp_models import (
 from .emr_models import (
     StoreEMRRequest,
     StoreEMRResponse,
-    StorageError
+    StorageError,
+    EMRFieldEntry,
+    EMREntriesResponse
 )
 
 __all__ = [
@@ -37,5 +39,7 @@ __all__ = [
     "FrontendMCPResponse",
     "StoreEMRRequest",
     "StoreEMRResponse",
-    "StorageError"
+    "StorageError",
+    "EMRFieldEntry",
+    "EMREntriesResponse"
 ] 

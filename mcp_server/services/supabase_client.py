@@ -9,7 +9,7 @@ información de visitas existentes.
 import os
 import httpx
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 import uuid
 
@@ -101,6 +101,87 @@ async def check_field_exists(visit_id: str, field: str) -> bool:
     except Exception as e:
         logger.error(f"Error al verificar existencia de campo: {str(e)}")
         return False
+
+async def get_emr_entries_by_visit(
+    visit_id: str,
+    field: Optional[str] = None,
+    role: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """
+    Obtiene las entradas clínicas para una visita específica.
+    
+    Args:
+        visit_id: ID de la visita médica
+        field: Campo específico a filtrar (opcional)
+        role: Rol del usuario a filtrar (opcional)
+        
+    Returns:
+        Lista de entradas clínicas que coinciden con los criterios
+        
+    Raises:
+        SupabaseClientError: Si la visita no existe o hay un error de conexión
+    """
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        logger.warning("Supabase no está configurado. No se pueden obtener entradas.")
+        return []
+    
+    try:
+        # Verificar que la visita existe
+        visit_exists = await check_visit_exists(visit_id)
+        if not visit_exists:
+            raise SupabaseClientError(f"La visita {visit_id} no existe")
+        
+        # Construir parámetros de consulta
+        params = {"visit_id": f"eq.{visit_id}"}
+        
+        # Añadir filtros opcionales
+        if field:
+            params["field"] = f"eq.{field}"
+        if role:
+            params["role"] = f"eq.{role}"
+            
+        # Campos a seleccionar
+        select = "id,visit_id,field,content,role,timestamp,source,validated"
+        
+        # Ordenar por timestamp descendente (más reciente primero)
+        order = "timestamp.desc"
+        
+        # Realizar la consulta
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{SUPABASE_URL}/rest/v1/emr_entries",
+                headers=SUPABASE_HEADERS,
+                params={
+                    **params,
+                    "select": select,
+                    "order": order
+                }
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"Error al consultar entradas EMR: {response.text}")
+                return []
+            
+            entries = response.json()
+            
+            # Log de la consulta realizada
+            filter_info = []
+            if field:
+                filter_info.append(f"field={field}")
+            if role:
+                filter_info.append(f"role={role}")
+                
+            filter_str = ", ".join(filter_info) if filter_info else "sin filtros adicionales"
+            logger.info(f"Consultadas {len(entries)} entradas EMR para visita {visit_id} ({filter_str})")
+            
+            return entries
+            
+    except SupabaseClientError as e:
+        logger.warning(f"Error de cliente Supabase: {str(e)}")
+        raise
+    except Exception as e:
+        logger.error(f"Error al consultar entradas EMR: {str(e)}")
+        return []
 
 async def store_emr_entry(
     visit_id: str,
