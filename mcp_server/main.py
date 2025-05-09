@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 import logging
 import os
 import sys
+import argparse
 from datetime import datetime
 
 # Configurar logging
@@ -119,10 +120,29 @@ async def shutdown_event():
 # Para ejecución directa
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8001))
+    
+    # Parsear argumentos de línea de comandos
+    parser = argparse.ArgumentParser(description="Servidor MCP para AiDuxCare")
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8001)),
+                      help="Puerto en el que se ejecutará la aplicación")
+    parser.add_argument("--host", type=str, default="0.0.0.0",
+                      help="Host en el que se ejecutará la aplicación")
+    parser.add_argument("--reload", action="store_true",
+                      help="Activar recarga automática")
+    
+    args = parser.parse_args()
     
     # Mensaje de inicio
-    print(f"Iniciando servidor MCP v1.29.0 en http://0.0.0.0:{port}")
+    print(f"Iniciando servidor MCP v1.29.0 en http://{args.host}:{args.port}")
     print("Presiona CTRL+C para detener el servidor")
     
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=os.environ.get("DEBUG", "FALSE").upper() == "TRUE") 
+    # Determinar si se debe usar reload
+    reload_mode = args.reload or os.environ.get("DEBUG", "FALSE").upper() == "TRUE"
+    
+    # Ejecutar servidor
+    uvicorn.run(
+        "main:app", 
+        host=args.host, 
+        port=args.port,
+        reload=reload_mode
+    ) 

@@ -8,6 +8,8 @@ La estructura del proyecto para el despliegue debe ser la siguiente:
 
 ```
 AIDUXCARE/
+├── railway.json         # Archivo principal de configuración
+├── nixpacks.toml        # Configuración específica para Nixpacks
 ├── mcp_server/
 │   ├── app/
 │   ├── api/
@@ -17,25 +19,44 @@ AIDUXCARE/
 │   ├── tests/
 │   ├── main.py
 │   ├── requirements.txt
-│   └── railway.json
+│   └── Procfile
 ├── README.md
 └── .git
 ```
 
 ## Archivos Clave para el Despliegue
 
-### railway.json
+### railway.json (en la raíz del proyecto)
 
 Este archivo indica a Railway cómo construir y ejecutar la aplicación:
 
 ```json
 {
   "build": {
-    "rootDir": "mcp_server",
-    "buildCommand": "pip install -r requirements.txt",
-    "startCommand": "python main.py"
+    "builder": "NIXPACKS",
+    "buildCommand": "cd mcp_server && pip install -r requirements.txt",
+    "startCommand": "cd mcp_server && python main.py"
   }
 }
+```
+
+### nixpacks.toml (en la raíz del proyecto)
+
+```toml
+[phases.setup]
+nixPkgs = ["python311"]
+
+[phases.install]
+cmds = ["cd mcp_server && pip install -r requirements.txt"]
+
+[start]
+cmd = "cd mcp_server && python main.py"
+```
+
+### Procfile (en mcp_server/)
+
+```
+web: python main.py
 ```
 
 ### requirements.txt
