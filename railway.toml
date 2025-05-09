@@ -1,0 +1,19 @@
+# Este archivo define cómo Railway debe construir y ejecutar la aplicación
+
+# Información general
+name = "aiduxcare-mcp"
+
+# Configuración de entorno
+environment = "production"
+
+# Directorio principal
+root = "mcp_server"
+
+# Comandos de construcción y ejecución
+build_command = "pip install -r requirements.txt"
+start_command = "python main.py"
+
+# Python específico
+[python]
+version = "3.11.0"
+package_manager = "pip" 

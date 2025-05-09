@@ -14,8 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el resto de los archivos
 COPY . .
 
-# Exponer el puerto
+# Exponer el puerto (Railway requiere PORT)
 EXPOSE ${PORT}
 
 # Comando por defecto
-CMD ["python", "main.py"] 
+CMD python main.py 
