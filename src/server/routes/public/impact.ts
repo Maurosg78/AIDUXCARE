@@ -1,4 +1,3 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import { Langfuse } from 'langfuse-node';
 import { evaluatePatientVisit } from '@/utils/evals/structuredVisit';
 
@@ -10,14 +9,11 @@ interface LangfuseTrace {
   };
 }
 
-interface LangfuseResponse {
-  data: LangfuseTrace[];
-}
-
+// Inicializar cliente de Langfuse con la configuración correcta
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
   secretKey: process.env.LANGFUSE_SECRET_KEY || '',
-  baseUrl: process.env.VITE_LANGFUSE_BASE_URL || ''
+  baseUrl: process.env.VITE_LANGFUSE_BASE_URL || 'https://cloud.langfuse.com'
 });
 
 interface ImpactStats {
@@ -27,9 +23,40 @@ interface ImpactStats {
   topWarnings: Array<{ warning: string; count: number }>;
 }
 
+// Función auxiliar para obtener traces manualmente (ya que langfuse no tiene getTraces)
+async function fetchTraces(startTime: string, name: string): Promise<LangfuseTrace[]> {
+  try {
+    if (!process.env.VITE_LANGFUSE_BASE_URL) {
+      return [];
+    }
+    
+    const apiUrl = `${process.env.VITE_LANGFUSE_BASE_URL}/api/public/traces`;
+    const url = new URL(apiUrl);
+    url.searchParams.append('startTime', startTime);
+    url.searchParams.append('name', name);
+    
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': `${process.env.VITE_LANGFUSE_PUBLIC_KEY}:${process.env.LANGFUSE_SECRET_KEY}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al obtener traces: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.data || [];
+  } catch (error) {
+    console.error('Error al obtener traces:', error);
+    return [];
+  }
+}
+
 export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<ImpactStats | { message: string }>
+  req: Request,
+  res: Response
 ) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Método no permitido' });
@@ -40,12 +67,7 @@ export default async function handler(
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const response = await langfuse.getTraces({
-      startTime: thirtyDaysAgo.toISOString(),
-      name: 'form.update'
-    }) as LangfuseResponse;
-
-    const traces = response.data;
+    const traces = await fetchTraces(thirtyDaysAgo.toISOString(), 'form.update');
 
     // Agrupar por paciente (último trace por paciente)
     const patientTraces = new Map<string, LangfuseTrace>();
@@ -61,9 +83,19 @@ export default async function handler(
 
     // Realizar evaluaciones
     const evaluations = await Promise.all(
-      Array.from(patientTraces.values()).map(trace => 
-        evaluatePatientVisit(langfuse, trace.id)
-      )
+      Array.from(patientTraces.values()).map(async trace => {
+        try {
+          return await evaluatePatientVisit(langfuse, trace.id);
+        } catch (error) {
+          console.error(`Error evaluando visita para trace ${trace.id}:`, error);
+          return {
+            patientId: trace.metadata?.patientId || 'unknown',
+            completenessScore: 0,
+            missingFields: [],
+            warnings: []
+          };
+        }
+      })
     );
 
     // Calcular estadísticas

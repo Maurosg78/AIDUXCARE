@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from '@/core/utils/router';
 import { useAuth } from '@/core/context/AuthContext';
 import { z } from 'zod';
 

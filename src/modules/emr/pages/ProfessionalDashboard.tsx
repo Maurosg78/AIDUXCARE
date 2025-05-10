@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/core/context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 export default function ProfessionalDashboard() {
   const { user } = useAuth();

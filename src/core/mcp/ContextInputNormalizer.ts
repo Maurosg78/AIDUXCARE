@@ -61,7 +61,9 @@ export class ContextInputNormalizer {
             .join('\n');
       
       default:
-        throw new Error(`Tipo de entrada no soportado: ${input.type}`);
+        // Exhaustive check con TypeScript
+        const exhaustiveCheck: never = input;
+        throw new Error(`Tipo de entrada no soportado: ${exhaustiveCheck}`);
     }
   }
-} 
+}

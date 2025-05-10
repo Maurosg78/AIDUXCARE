@@ -1,103 +1,108 @@
-import React, { useMemo } from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
-import { PatientVisit } from '@/modules/emr/models/PatientVisit';
+import React, { useEffect, useState } from 'react';
+import { Box, Typography, LinearProgress, Grid, Paper, Tooltip } from '@mui/material';
+import { PatientVisit, PatientEval } from '@/core/types';
 
 interface VisitQualityPanelProps {
   visit: PatientVisit;
+  evalData?: PatientEval;
 }
 
-type CompletionLevel = 'Bajo' | 'Medio' | 'Alto';
+export default function VisitQualityPanel({ visit, evalData }: VisitQualityPanelProps) {
+  const [completeness, setCompleteness] = useState<number>(0);
+  const [metrics, setMetrics] = useState<Record<string, boolean>>({});
 
-export default function VisitQualityPanel({ visit }: VisitQualityPanelProps) {
-  // Mock de validación de audio (en producción vendría de la visita)
-  const isAudioValidated = useMemo(() => Math.random() > 0.5, []);
+  useEffect(() => {
+    // Calcular métricas de completitud
+    const calculatedMetrics = {
+      // Usar evalData si está disponible, o las propiedades de visit como fallback
+      motivoConsulta: !!(evalData?.anamnesis?.trim() || evalData?.motivo?.trim()),
+      diagnosticoFisioterapeutico: !!(evalData?.diagnosis?.trim() || evalData?.diagnosticoFisioterapeutico?.trim()),
+      tratamientoPropuesto: !!(evalData?.treatment?.trim() || evalData?.tratamientoPropuesto?.trim()),
+      
+      // Campos obligatorios
+      tieneVisitDate: !!visit.visitDate?.trim(),
+      tieneVisitType: !!visit.visitType?.trim(),
+      
+      // Si hay notas generales
+      tieneNotas: !!visit.notes?.trim()
+    };
+    
+    setMetrics(calculatedMetrics);
+    
+    // Calcular porcentaje de completitud (campos obligatorios)
+    const completedFields = Object.values(calculatedMetrics).filter(Boolean).length;
+    const totalFields = Object.keys(calculatedMetrics).length;
+    setCompleteness(Math.round((completedFields / totalFields) * 100));
+  }, [visit, evalData]);
 
-  // Mock de eventos Langfuse (en producción usar el cliente real)
-  const hasLangfuseEvents = useMemo(() => Math.random() > 0.3, []);
-
-  // Verificar campos completos
-  const completedFields = {
-    motivoConsulta: !!visit.motivo?.trim(),
-    diagnosticoFisioterapeutico: !!visit.diagnosticoFisioterapeutico?.trim(),
-    tratamientoPropuesto: !!visit.tratamientoPropuesto?.trim(),
-  };
-
-  const completedCount = Object.values(completedFields).filter(Boolean).length;
-
-  // Calcular nivel de completitud
-  const completionLevel: CompletionLevel = useMemo(() => {
-    if (completedCount <= 1) return 'Bajo';
-    if (completedCount === 2) return 'Medio';
-    return isAudioValidated ? 'Alto' : 'Medio';
-  }, [completedCount, isAudioValidated]);
-
-  // Estilos según nivel
-  const levelStyles = {
-    Bajo: { color: '#ef4444', icon: '🔴' },
-    Medio: { color: '#f59e0b', icon: '🟡' },
-    Alto: { color: '#22c55e', icon: '🟢' },
+  const getQualityColor = (value: number): string => {
+    if (value < 50) return '#f44336'; // Rojo
+    if (value < 75) return '#ff9800'; // Naranja
+    return '#4caf50'; // Verde
   };
 
   return (
-    <Card sx={{ mb: 3 }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          📋 Calidad de la Visita
-        </Typography>
-
-        {/* Campos Completos */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Campos Completados:
-          </Typography>
-          <Box component="ul" sx={{ pl: 2 }}>
-            <Typography component="li">
-              {completedFields.motivoConsulta ? '✅' : '❌'} Motivo de Consulta
-            </Typography>
-            <Typography component="li">
-              {completedFields.diagnosticoFisioterapeutico ? '✅' : '❌'} Diagnóstico Fisioterapéutico
-            </Typography>
-            <Typography component="li">
-              {completedFields.tratamientoPropuesto ? '✅' : '❌'} Tratamiento Propuesto
-            </Typography>
-          </Box>
+    <Paper elevation={0} sx={{ p: 2, border: '1px solid rgba(0, 0, 0, 0.12)', borderRadius: 1 }}>
+      <Typography variant="subtitle1" gutterBottom>
+        Calidad del reporte
+      </Typography>
+      
+      <Box sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+          <Typography variant="body2">Completitud</Typography>
+          <Typography variant="body2">{completeness}%</Typography>
         </Box>
-
-        {/* Alertas */}
-        {completedCount < 3 && (
-          <Box sx={{ mb: 2 }}>
-            <Typography color="warning.main">
-              ⚠️ Faltan {3 - completedCount} campos por completar
-            </Typography>
-          </Box>
-        )}
-
-        {/* Estado de Validación */}
-        <Box sx={{ mb: 2 }}>
-          <Typography>
-            🔒 Validación por Audio: {isAudioValidated ? 'Completada' : 'Pendiente'}
-          </Typography>
-          <Typography>
-            📡 Eventos Registrados: {hasLangfuseEvents ? 'Sí' : 'No'}
-          </Typography>
-        </Box>
-
-        {/* Nivel de Completitud */}
-        <Box sx={{ 
-          p: 2, 
-          bgcolor: 'background.paper',
-          borderRadius: 1,
-          border: 1,
-          borderColor: levelStyles[completionLevel].color
-        }}>
-          <Typography 
-            variant="subtitle1"
-            sx={{ color: levelStyles[completionLevel].color }}
-          >
-            {levelStyles[completionLevel].icon} Nivel de Completitud: {completionLevel}
-          </Typography>
-        </Box>
-      </CardContent>
-    </Card>
+        <LinearProgress 
+          variant="determinate" 
+          value={completeness} 
+          sx={{ 
+            height: 8, 
+            borderRadius: 5,
+            bgcolor: 'rgba(0, 0, 0, 0.09)',
+            '& .MuiLinearProgress-bar': {
+              bgcolor: getQualityColor(completeness)
+            }
+          }}
+        />
+      </Box>
+      
+      <Grid container spacing={1}>
+        {Object.entries(metrics).map(([key, isComplete]) => (
+          <Grid item xs={6} key={key}>
+            <Tooltip title={isComplete ? 'Completado' : 'Pendiente'}>
+              <Box sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}>
+                <Box sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  bgcolor: isComplete ? '#4caf50' : '#f5f5f5',
+                  border: isComplete ? 'none' : '1px solid #e0e0e0'
+                }} />
+                <Typography variant="body2" color={isComplete ? 'textPrimary' : 'text.secondary'}>
+                  {translateMetricName(key)}
+                </Typography>
+              </Box>
+            </Tooltip>
+          </Grid>
+        ))}
+      </Grid>
+    </Paper>
   );
+}
+
+function translateMetricName(key: string): string {
+  const translations: Record<string, string> = {
+    motivoConsulta: 'Motivo de consulta',
+    diagnosticoFisioterapeutico: 'Diagnóstico',
+    tratamientoPropuesto: 'Tratamiento',
+    tieneVisitDate: 'Fecha registrada',
+    tieneVisitType: 'Tipo de visita',
+    tieneNotas: 'Notas generales'
+  };
+  
+  return translations[key] || key;
 } 

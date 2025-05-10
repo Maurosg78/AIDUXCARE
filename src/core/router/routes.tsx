@@ -1,42 +1,73 @@
-import { createBrowserRouter } from 'react-router-dom';
+import React from 'react';
+import { createBrowserRouter, RouteObject } from '@/core/utils/router';
 import Layout from '@/core/components/Layout';
 import DashboardRedirect from '@/pages/dashboard';
 import DashboardProfessional from '@/pages/dashboard/professional';
 import DashboardSecretary from '@/pages/dashboard/secretary';
 import DashboardAdmin from '@/pages/dashboard/admin';
 import DashboardDev from '@/pages/dashboard/dev';
-import MockLogin from '@/pages/auth/MockLogin';
+import LoginPage from '@/pages/auth/login';
+import ProfessionalDashboard from '@/pages/professional/Dashboard';
+import VisitDetailPage from '@/modules/emr/pages/VisitDetailPage';
+import PatientListPage from '@/pages/PatientListPage';
+import NotFoundPage from '@/pages/404';
+import RoleBasedRedirect from '@/core/components/RoleBasedRedirect';
 
-export const router = createBrowserRouter([
+export const routes: RouteObject[] = [
   {
     path: '/',
     element: <Layout />,
     children: [
       {
-        path: '/',
-        element: <MockLogin />
+        path: '',
+        element: <RoleBasedRedirect />
       },
       {
-        path: '/dashboard',
+        path: 'login',
+        element: <LoginPage />
+      },
+      {
+        path: 'auth/login',
+        element: <LoginPage />
+      },
+      {
+        path: 'dashboard',
         element: <DashboardRedirect />
       },
       {
-        path: '/dashboard/professional',
+        path: 'dashboard/professional',
         element: <DashboardProfessional />
       },
       {
-        path: '/dashboard/secretary',
+        path: 'dashboard/secretary',
         element: <DashboardSecretary />
       },
       {
-        path: '/dashboard/admin',
+        path: 'dashboard/admin',
         element: <DashboardAdmin />
       },
       {
-        path: '/dashboard/dev',
+        path: 'dashboard/dev',
         element: <DashboardDev />
+      },
+      {
+        path: 'professional',
+        element: <ProfessionalDashboard />
+      },
+      {
+        path: 'visits/:visitId',
+        element: <VisitDetailPage />
+      },
+      {
+        path: 'patients',
+        element: <PatientListPage />
+      },
+      {
+        path: '*',
+        element: <NotFoundPage />
       }
-      // ... otras rutas existentes
     ]
   }
-]); 
+];
+
+export const router = createBrowserRouter(routes); 

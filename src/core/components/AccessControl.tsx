@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/core/context/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from '@/core/utils/router';
 
 interface AccessControlProps {
   children: React.ReactNode;

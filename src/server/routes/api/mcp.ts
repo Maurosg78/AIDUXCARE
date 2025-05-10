@@ -1,9 +1,10 @@
-import { Router } from 'express';
+import express from 'express';
 import { z } from 'zod';
 import { trackEvent } from '../../../core/lib/langfuse.client';
-import { visitExists } from '../../../core/services/VisitService';
+import { visitExists } from '../../../core/services/visit/VisitService';
+import { ExpressRequest, ExpressResponse } from '../../../types/express.d';
 
-const router = Router();
+const router = express.Router();
 
 // Schema para validar el cuerpo de la petición
 const RequestSchema = z.object({
@@ -11,13 +12,14 @@ const RequestSchema = z.object({
   timestamp: z.string().datetime()
 });
 
-router.post('/invoke', async (req, res) => {
+router.post('/invoke', async (req: ExpressRequest, res: ExpressResponse) => {
   try {
     // Validar el cuerpo de la petición
     const { visit_id } = RequestSchema.parse(req.body);
 
     // Verificar si la visita existe
-    if (!visitExists(visit_id)) {
+    const visitExistsResult = await visitExists(visit_id);
+    if (!visitExistsResult) {
       await trackEvent('mcp_error', {
         reason: 'invalid_visit_id',
         visit_id,

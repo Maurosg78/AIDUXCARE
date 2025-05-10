@@ -1,11 +1,15 @@
 import React from 'react';
 import { usePatients } from '@/hooks/usePatients';
 import { Box, Typography, Paper, List, ListItem, ListItemText, CircularProgress, Button } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Patient } from '@/core/types';
 
 const PatientListPage = () => {
   const { patients, isLoading, error } = usePatients();
-  const navigate = useNavigate();
+
+  // Navegación con window.location en lugar de useNavigate
+  const navigateTo = (path: string) => {
+    window.location.href = path;
+  };
 
   if (isLoading) {
     return (
@@ -37,16 +41,16 @@ const PatientListPage = () => {
       ) : (
         <Paper elevation={2}>
           <List>
-            {patients.map((patient) => (
+            {patients.map((patient: Patient) => (
               <ListItem
                 key={patient.id}
                 divider
                 button
-                onClick={() => navigate(`/patients/${patient.id}/visits`)}
+                onClick={() => navigateTo(`/patients/${patient.id}/visits`)}
               >
                 <ListItemText
-                  primary={patient.full_name}
-                  secondary={`Ingreso: ${new Date(patient.created_at).toLocaleDateString()} • ${patient.tags.join(', ')}`}
+                  primary={`${patient.firstName} ${patient.lastName}`}
+                  secondary={`Ingreso: ${new Date(patient.createdAt).toLocaleDateString()}`}
                 />
               </ListItem>
             ))}
@@ -62,7 +66,7 @@ const PatientListPage = () => {
           variant="contained" 
           color="primary" 
           sx={{ mt: 2 }}
-          onClick={() => navigate('/professional/dashboard')}
+          onClick={() => navigateTo('/professional/dashboard')}
         >
           Volver al Dashboard
         </Button>

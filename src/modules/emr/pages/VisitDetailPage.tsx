@@ -1,22 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from '@/core/utils/router';
 import { Box, Divider, Paper, Button, Alert, Typography } from "@mui/material";
 import { Refresh } from "@mui/icons-material";
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import VisitService, { Visit } from "@/core/services/visit/VisitService";
 import { PatientService } from "@/core/services/patient/PatientService";
 import EvalTimeline from "@/modules/emr/components/EvalTimeline";
-import { StructuredVisitForm } from "@/modules/emr/components/StructuredVisitForm";
+import StructuredVisitForm from "@/components/emr/StructuredVisitForm";
 import AudioChecklist from "@/components/AudioChecklist";
 import { PatientEval } from "@/modules/emr/types/Evaluation";
 import { trackEvent } from '@/core/lib/langfuse.client';
 import ClinicalCopilotPanel from "@/modules/emr/components/ClinicalCopilotPanel";
+import { Patient } from '@/modules/emr/models/Patient';
+import { LegacyVisit } from '@/types/legacy-adapters';
 
 const VisitDetailPage: React.FC = () => {
   const { visitId } = useParams<{ visitId: string }>();
   const navigate = useNavigate();
   const [visit, setVisit] = useState<Visit | null>(null);
-  const [patient, setPatient] = useState<any>(null);
+  const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<PatientEval>({
@@ -27,30 +29,30 @@ const VisitDetailPage: React.FC = () => {
     tratamientoPropuesto: ""
   });
 
-  useEffect(() => {
-    const loadVisitData = async () => {
-      try {
-        if (!visitId) {
-          throw new Error('ID de visita no proporcionado');
-        }
-
-        const visitData = await VisitService.getVisitById(visitId);
-        if (!visitData) {
-          throw new Error('Visita no encontrada');
-        }
-        setVisit(visitData);
-
-        const patientData = await PatientService.getPatientById(visitData.patientId);
-        if (patientData) {
-          setPatient(patientData);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error al cargar la visita');
-      } finally {
-        setLoading(false);
+  const loadVisitData = async () => {
+    try {
+      if (!visitId) {
+        throw new Error('ID de visita no proporcionado');
       }
-    };
 
+      const visitData = await VisitService.getVisitById(visitId);
+      if (!visitData) {
+        throw new Error('Visita no encontrada');
+      }
+      setVisit(visitData);
+
+      const patientData = await PatientService.getPatientById(visitData.patientId);
+      if (patientData) {
+        setPatient(patientData);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar la visita');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadVisitData();
   }, [visitId]);
 
@@ -122,7 +124,7 @@ const VisitDetailPage: React.FC = () => {
 
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex justify-between items-start mb-6">
-          <h1 className="text-2xl font-bold">Visita: {patient.nombre}</h1>
+          <h1 className="text-2xl font-bold">Visita: {patient.name}</h1>
           <span className={`px-3 py-1 rounded-full text-sm ${
             visit.paymentStatus === 'paid' 
               ? 'bg-green-100 text-green-800' 
@@ -136,10 +138,10 @@ const VisitDetailPage: React.FC = () => {
           <div>
             <h2 className="text-lg font-semibold mb-3">Información del Paciente</h2>
             <div className="space-y-2">
-              <p><span className="font-medium">Nombre:</span> {patient.nombre}</p>
-              <p><span className="font-medium">Edad:</span> {patient.edad} años</p>
+              <p><span className="font-medium">Nombre:</span> {patient.name}</p>
+              <p><span className="font-medium">Edad:</span> {patient.age} años</p>
               <p><span className="font-medium">Email:</span> {patient.email}</p>
-              <p><span className="font-medium">Teléfono:</span> {patient.telefono}</p>
+              <p><span className="font-medium">Teléfono:</span> {patient.phone}</p>
             </div>
           </div>
 
@@ -203,7 +205,12 @@ const VisitDetailPage: React.FC = () => {
       </Paper>
 
       <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-        <ClinicalCopilotPanel visit={visit} />
+        <ClinicalCopilotPanel visit={{
+          ...visit,
+          visitDate: visit?.scheduledDate || new Date().toISOString(),
+          visitType: visit?.modalidad || 'Consulta',
+          date: visit?.scheduledDate || new Date().toISOString()
+        }} />
       </Paper>
 
       <Paper elevation={2} sx={{ p: 3, mb: 3 }}>

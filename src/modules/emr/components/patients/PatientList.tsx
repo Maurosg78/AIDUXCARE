@@ -1,17 +1,14 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { Table, TableHead, TableBody, TableRow, TableCell, Paper, TableContainer } from "@mui/material";
-import { Patient } from "../../models";
+import { Patient } from "@/core/types";
 
 interface PatientListProps {
   patients: Patient[];
 }
 
 const PatientList: React.FC<PatientListProps> = ({ patients }) => {
-  const navigate = useNavigate();
-
   const handleClick = (id: string) => {
-    navigate(`/patients/${id}/visits`);
+    window.location.href = `/patients/${id}/visits`;
   };
 
   return (
@@ -35,7 +32,7 @@ const PatientList: React.FC<PatientListProps> = ({ patients }) => {
             >
               <TableCell>{patient.firstName}</TableCell>
               <TableCell>{patient.lastName}</TableCell>
-              <TableCell>{patient.dateOfBirth}</TableCell>
+              <TableCell>{patient.birthDate}</TableCell>
               <TableCell>{patient.gender}</TableCell>
             </TableRow>
           ))}

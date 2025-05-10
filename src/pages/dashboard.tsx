@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAuth } from "@/core/context/AuthContext";
 import { Grid, Card, CardContent, Typography, Box, CircularProgress } from "@mui/material";
 import { useMemo } from "react";

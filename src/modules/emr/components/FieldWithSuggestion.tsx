@@ -1,14 +1,27 @@
 import React from 'react';
-import type { StructuredSuggestion } from '@/hooks/useCopilot';
 import { AuditLogService } from '@/core/services/AuditLogService';
 import { useAuth } from '@/core/context/AuthContext';
+
+// Definición del tipo StructuredSuggestion
+interface StructuredSuggestionType {
+  id: string;
+  field: string;
+  value: string;
+  confidence: number;
+  source: string;
+  reference?: {
+    url: string;
+    source: string;
+    year: number;
+  };
+}
 
 interface FieldWithSuggestionProps {
   field: string;
   value: string;
-  suggestion?: StructuredSuggestion;
-  onAcceptSuggestion: (suggestion: StructuredSuggestion) => void;
-  onRejectSuggestion: (suggestion: StructuredSuggestion) => void;
+  suggestion?: StructuredSuggestionType;
+  onAcceptSuggestion: (suggestion: StructuredSuggestionType) => void;
+  onRejectSuggestion: (suggestion: StructuredSuggestionType) => void;
   visitId: string;
 }
 
@@ -31,7 +44,7 @@ export const FieldWithSuggestion: React.FC<FieldWithSuggestionProps> = ({
         field,
         oldValue: String(suggestion.value),
         newValue: value,
-        modifiedBy: user?.email || 'desconocido',
+        modifiedBy: user?.user.email || 'desconocido',
         action: 'ai_suggestion_modified',
         source: 'copilot',
       });
@@ -40,7 +53,7 @@ export const FieldWithSuggestion: React.FC<FieldWithSuggestionProps> = ({
         visitId,
         field,
         newValue: String(suggestion.value),
-        modifiedBy: user?.email || 'desconocido',
+        modifiedBy: user?.user.email || 'desconocido',
         action: 'ai_suggestion_accepted',
         source: 'copilot',
       });
@@ -54,7 +67,7 @@ export const FieldWithSuggestion: React.FC<FieldWithSuggestionProps> = ({
       visitId,
       field,
       oldValue: String(suggestion.value),
-      modifiedBy: user?.email || 'desconocido',
+      modifiedBy: user?.user.email || 'desconocido',
       action: 'ai_suggestion_rejected',
       source: 'copilot',
     });
@@ -125,4 +138,4 @@ export const FieldWithSuggestion: React.FC<FieldWithSuggestionProps> = ({
       )}
     </div>
   );
-}; 
+};

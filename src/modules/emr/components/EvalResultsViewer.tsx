@@ -4,7 +4,24 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import PersonIcon from '@mui/icons-material/Person';
-import type { EvalResult } from '@/mock/evalResults';
+
+// Definición de tipo para EvalResult
+interface EvalResult {
+  id: string;
+  patientId: string;
+  visitId: string;
+  evaluationType: string;
+  content: string;
+  timestamp: string;
+  suggestedByAI: boolean;
+  acceptedByProfessional?: boolean;
+  confidence?: number;
+  sources?: Array<{
+    name: string;
+    url: string;
+    year: number;
+  }>;
+}
 
 // Mapeo de tipos de evaluación a etiquetas más amigables
 const EVAL_TYPE_LABELS: Record<string, string> = {
@@ -182,10 +199,11 @@ const EvalResultsViewer: React.FC<EvalResultsViewerProps> = ({
                       {result.suggestedByAI && (
                         <Tooltip title="Nivel de confianza de la IA">
                           <Chip 
-                            label={`${Math.round(result.confidence * 100)}% confianza`} 
-                            size="small"
-                            color={result.confidence > 0.9 ? "success" : result.confidence > 0.7 ? "primary" : "warning"}
                             variant="outlined"
+                            label={`${Math.round((result.confidence || 0) * 100)}% confianza`}
+                            size="small"
+                            color={result.confidence && result.confidence > 0.9 ? "success" : result.confidence && result.confidence > 0.7 ? "primary" : "warning"}
+                            sx={{ ml: 1 }}
                           />
                         </Tooltip>
                       )}

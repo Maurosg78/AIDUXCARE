@@ -1,15 +1,18 @@
-import { LucideIcon } from 'lucide-react';
+import React from 'react';
+import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/solid';
+import { Card, CardContent } from './card';
 import { cn } from '@/lib/utils';
 
-interface StatCardProps {
+export interface StatCardProps {
   title: string;
   value: string | number;
-  icon: LucideIcon;
-  subtitle?: string;
+  icon?: React.ElementType;
+  iconColor?: string;
   trend?: {
     value: number;
     isPositive: boolean;
   };
+  subtitle?: string;
   className?: string;
 }
 
@@ -17,43 +20,50 @@ export function StatCard({
   title,
   value,
   icon: Icon,
-  subtitle,
+  iconColor = 'text-blue-500',
   trend,
-  className,
+  subtitle,
+  className
 }: StatCardProps) {
   return (
-    <div
-      className={cn(
-        'bg-white rounded-2xl shadow-md p-6 relative overflow-hidden',
-        className
-      )}
-    >
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-slate-500">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-semibold text-slate-900">{value}</p>
+    <Card className={cn("overflow-hidden", className)}>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-500">{title}</p>
+            <h3 className="text-2xl font-bold mt-1">{value}</h3>
+            
             {trend && (
-              <span
-                className={cn(
-                  'text-sm font-medium',
-                  trend.isPositive ? 'text-green-600' : 'text-red-600'
-                )}
-              >
-                {trend.isPositive ? '+' : ''}
-                {trend.value}%
-              </span>
+              <div className="flex items-center mt-1">
+                <span
+                  className={cn(
+                    "text-xs font-medium mr-1",
+                    trend.isPositive ? "text-green-600" : "text-red-600"
+                  )}
+                >
+                  {trend.isPositive ? (
+                    <ArrowUpIcon className="inline h-3 w-3 mr-0.5" />
+                  ) : (
+                    <ArrowDownIcon className="inline h-3 w-3 mr-0.5" />
+                  )}
+                  {trend.value}%
+                </span>
+              </div>
+            )}
+            
+            {subtitle && (
+              <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
             )}
           </div>
-          {subtitle && (
-            <p className="text-sm text-slate-500">{subtitle}</p>
+          
+          {Icon && (
+            <div className={cn("rounded-full p-3 bg-blue-50", iconColor.replace('text-', 'bg-').replace('500', '50'))}>
+              <Icon className={cn("h-6 w-6", iconColor)} />
+            </div>
           )}
         </div>
-        <div className="p-2 bg-slate-50 rounded-lg">
-          <Icon className="w-6 h-6 text-slate-600" />
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

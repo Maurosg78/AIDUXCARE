@@ -1,5 +1,5 @@
 import { Box, Button, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Home } from '@mui/icons-material';
 
 export default function NotFoundPage() {

@@ -1,7 +1,9 @@
-import { Patient, PatientSchema } from '@/core/schemas/PatientSchema';
+import { Patient, PatientService as IPatientService } from '@/core/types';
+import { supabase } from '@/core/lib/supabase';
 import { trackEvent } from '@/core/lib/langfuse.client';
-import supabase from '@/core/lib/supabaseClient';
-import { Database } from '../types/supabase';
+import { PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js';
+
+const TABLE_NAME = 'patients';
 
 export class PatientNotFoundError extends Error {
   constructor(patientId: string) {
@@ -10,175 +12,245 @@ export class PatientNotFoundError extends Error {
   }
 }
 
-export class PatientService {
+/**
+ * Servicio para la gestión de pacientes utilizando Supabase
+ * Implementa la interfaz PatientService definida en core/types
+ */
+export class PatientServiceImpl implements IPatientService {
   /**
-   * Obtiene los datos completos de un paciente
+   * Obtiene un paciente por su ID
    */
-  async getPatientById(patientId: string): Promise<Patient> {
+  async getById(id: string): Promise<Patient> {
     try {
-      await trackEvent('emr.get_patient_data', {
-        patient_id: patientId,
-        timestamp: new Date().toISOString()
+      await trackEvent('emr.get_patient', {
+        patientId: id,
+        action: 'query',
+        operation: 'getById'
       });
 
-      const { data: patient, error } = await supabase
-        .from('patients')
+      const { data, error }: PostgrestSingleResponse<Patient> = await supabase
+        .from(TABLE_NAME)
         .select('*')
-        .eq('id', patientId)
+        .eq('id', id)
         .single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
+      if (!data) throw new PatientNotFoundError(id);
 
-      if (!patient) {
-        throw new PatientNotFoundError(patientId);
-      }
-
-      return PatientSchema.parse(patient);
+      return data;
     } catch (error) {
-      console.error('Error al obtener datos del paciente:', error);
+      console.error('Error obteniendo paciente por ID:', error);
       throw error;
     }
   }
 
   /**
-   * Obtiene información básica del paciente
+   * Obtiene todos los pacientes
    */
-  async getPatientBasicInfo(patientId: string): Promise<Pick<Patient, 'id' | 'full_name' | 'birth_date' | 'sex'>> {
-    const { data: patient, error } = await supabase
-      .from('patients')
-      .select('id, full_name, birth_date, sex')
-      .eq('id', patientId)
-      .single();
+  async getAll(): Promise<Patient[]> {
+    try {
+      await trackEvent('emr.get_all_patients', {
+        action: 'query',
+        operation: 'getAll'
+      });
 
-    if (error) {
+      const response = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .order('createdAt', { ascending: false });
+
+      if (response.error) throw response.error;
+      return response.data || [];
+    } catch (error) {
+      console.error('Error obteniendo todos los pacientes:', error);
       throw error;
     }
-
-    if (!patient) {
-      throw new PatientNotFoundError(patientId);
-    }
-
-    return patient;
-  }
-
-  /**
-   * Obtiene el historial clínico de un paciente
-   */
-  async getPatientHistory(patientId: string): Promise<string[]> {
-    const { data: patient, error } = await supabase
-      .from('patients')
-      .select('clinical_history')
-      .eq('id', patientId)
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    if (!patient) {
-      throw new PatientNotFoundError(patientId);
-    }
-
-    return Array.isArray(patient.clinical_history) 
-      ? patient.clinical_history 
-      : [patient.clinical_history];
   }
 
   /**
    * Crea un nuevo paciente
    */
-  async createPatient(patientData: Database['public']['Tables']['patients']['Insert']): Promise<Patient> {
+  async create(patient: Omit<Patient, 'id' | 'createdAt' | 'updatedAt'>): Promise<Patient> {
     try {
+      const now = new Date().toISOString();
+      const newPatient = {
+        ...patient,
+        id: crypto.randomUUID(),
+        createdAt: now,
+        updatedAt: now,
+      };
+
       await trackEvent('emr.create_patient', {
-        timestamp: new Date().toISOString()
+        patientId: newPatient.id,
+        action: 'insert',
+        operation: 'create'
       });
 
-      const { data: patient, error } = await supabase
-        .from('patients')
-        .insert([patientData])
+      const { data, error }: PostgrestSingleResponse<Patient> = await supabase
+        .from(TABLE_NAME)
+        .insert(newPatient)
         .select()
         .single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
+      if (!data) throw new Error('Error al crear el paciente');
 
-      return PatientSchema.parse(patient);
+      return data;
     } catch (error) {
-      console.error('Error al crear paciente:', error);
+      console.error('Error creando paciente:', error);
       throw error;
     }
   }
 
   /**
-   * Actualiza los datos de un paciente
+   * Actualiza un paciente existente
    */
-  async updatePatient(
-    patientId: string, 
-    updateData: Database['public']['Tables']['patients']['Update']
-  ): Promise<Patient> {
+  async update(id: string, patient: Partial<Patient>): Promise<Patient> {
     try {
+      const updateData = {
+        ...patient,
+        updatedAt: new Date().toISOString()
+      };
+
       await trackEvent('emr.update_patient', {
-        patient_id: patientId,
-        timestamp: new Date().toISOString()
+        patientId: id,
+        action: 'update',
+        operation: 'update'
       });
 
-      const { data: patient, error } = await supabase
-        .from('patients')
+      const { data, error }: PostgrestSingleResponse<Patient> = await supabase
+        .from(TABLE_NAME)
         .update(updateData)
-        .eq('id', patientId)
+        .eq('id', id)
         .select()
         .single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
+      if (!data) throw new PatientNotFoundError(id);
 
-      if (!patient) {
-        throw new PatientNotFoundError(patientId);
-      }
-
-      return PatientSchema.parse(patient);
+      return data;
     } catch (error) {
-      console.error('Error al actualizar paciente:', error);
+      console.error('Error actualizando paciente:', error);
       throw error;
     }
   }
 
   /**
-   * Elimina un paciente
+   * Elimina un paciente por su ID
    */
-  async deletePatient(patientId: string): Promise<void> {
+  async delete(id: string): Promise<void> {
     try {
       await trackEvent('emr.delete_patient', {
-        patient_id: patientId,
-        timestamp: new Date().toISOString()
+        patientId: id,
+        action: 'delete',
+        operation: 'delete'
       });
 
       const { error } = await supabase
-        .from('patients')
+        .from(TABLE_NAME)
         .delete()
-        .eq('id', patientId);
+        .eq('id', id);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
     } catch (error) {
-      console.error('Error al eliminar paciente:', error);
+      console.error('Error eliminando paciente:', error);
       throw error;
     }
   }
 
-  async getAllPatients() {
-    const { data, error } = await supabase.from('patients').select('*');
-    if (error) {
-      console.error('Error fetching patients:', error);
+  /**
+   * Busca pacientes por nombre
+   */
+  async searchByName(name: string): Promise<Patient[]> {
+    try {
+      await trackEvent('emr.search_patients', {
+        search: name,
+        field: 'name',
+        action: 'query',
+        operation: 'searchByName'
+      });
+
+      const response = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .ilike('firstName', `%${name}%`);
+
+      if (response.error) throw response.error;
+      return response.data || [];
+    } catch (error) {
+      console.error('Error buscando pacientes por nombre:', error);
       throw error;
     }
-    return data;
+  }
+
+  /**
+   * Busca pacientes por apellido
+   */
+  async searchBySurname(surname: string): Promise<Patient[]> {
+    try {
+      await trackEvent('emr.search_patients', {
+        search: surname,
+        field: 'lastName',
+        action: 'query',
+        operation: 'searchBySurname'
+      });
+
+      const response = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .ilike('lastName', `%${surname}%`);
+
+      if (response.error) throw response.error;
+      return response.data || [];
+    } catch (error) {
+      console.error('Error buscando pacientes por apellido:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verifica si un paciente existe
+   */
+  async patientExists(patientId: string): Promise<boolean> {
+    try {
+      const { count, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*', { count: 'exact', head: true })
+        .eq('id', patientId);
+
+      if (error) throw error;
+      return !!count && count > 0;
+    } catch (error) {
+      console.error('Error verificando existencia de paciente:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Método para obtener un paciente por su ID (alias de getById para compatibilidad)
+   */
+  async getPatientById(id: string): Promise<Patient> {
+    return this.getById(id);
+  }
+
+  /**
+   * Método para crear un paciente (alias de create para compatibilidad)
+   */
+  async createPatient(patient: Omit<Patient, 'id' | 'createdAt' | 'updatedAt'>): Promise<Patient> {
+    return this.create(patient);
+  }
+
+  /**
+   * Método para actualizar un paciente (alias de update para compatibilidad)
+   */
+  async updatePatient(id: string, patient: Partial<Patient>): Promise<Patient> {
+    return this.update(id, patient);
   }
 }
 
-export default PatientService
+// Crear una instancia del servicio
+const patientService = new PatientServiceImpl();
+
+// Exportar como default y nombrado para mantener compatibilidad
+export const PatientService = patientService;
+export default patientService;

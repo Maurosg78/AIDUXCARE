@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import { Alert, Container, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { MCPContextView } from '../../components/MCPContextView/MCPContextView';

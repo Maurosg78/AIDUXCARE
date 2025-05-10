@@ -1,59 +1,85 @@
-import supabase from '@/core/lib/supabaseClient';
-import { z } from 'zod';
+import supabase from '@/core/lib/supabase';
+import { getCurrentUserId } from '@/core/utils/auth';
+import type { AuditLogEvent as AuditLogEventType } from '@/core/types';
 
-export const AuditLogEventSchema = z.object({
-  id: z.string().uuid(),
-  visitId: z.string().uuid(),
-  timestamp: z.string().datetime(),
-  action: z.enum([
-    'field_updated',
-    'suggestion_accepted',
-    'copilot_intervention',
-    'manual_edit',
-    'form_submitted',
-    'ai_suggestion_accepted',
-    'ai_suggestion_modified',
-    'ai_suggestion_rejected',
-  ]),
-  field: z.string(),
-  oldValue: z.string().optional(),
-  newValue: z.string().optional(),
-  modifiedBy: z.string(),
-  source: z.enum(['user', 'copilot'])
-});
+/**
+ * Servicio para gestionar logs de auditoría
+ */
+export class AuditLogServiceImpl {
+  /**
+   * Registra un evento de auditoría en la base de datos
+   */
+  async logEvent(eventData: Omit<AuditLogEventType, 'id' | 'timestamp'>): Promise<void> {
+    try {
+      const userId = eventData.userId || (await getCurrentUserId()) || 'unknown';
+      
+      const { error } = await supabase
+        .from('audit_logs')
+        .insert({
+          user_id: userId,
+          action: eventData.action,
+          resource: eventData.resource,
+          resource_id: eventData.resourceId,
+          details: eventData.details || {},
+          timestamp: new Date().toISOString()
+        });
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error al registrar log de auditoría:', error);
+      throw error;
+    }
+  }
 
-export type AuditLogEvent = z.infer<typeof AuditLogEventSchema>;
+  /**
+   * Obtiene los logs de auditoría filtrados por recurso y/o usuario
+   */
+  async getAuditLogs(
+    options: {
+      resourceType?: string;
+      resourceId?: string;
+      userId?: string;
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<AuditLogEventType[]> {
+    try {
+      let query = supabase
+        .from('audit_logs')
+        .select('*')
+        .order('timestamp', { ascending: false });
+      
+      if (options.resourceType) {
+        query = query.eq('resource', options.resourceType);
+      }
+      
+      if (options.resourceId) {
+        query = query.eq('resource_id', options.resourceId);
+      }
+      
+      if (options.userId) {
+        query = query.eq('user_id', options.userId);
+      }
+      
+      if (options.limit) {
+        query = query.limit(options.limit);
+      }
+      
+      if (options.offset) {
+        query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      return data ?? [];
+    } catch (error) {
+      console.error('Error al obtener logs de auditoría:', error);
+      throw error;
+    }
+  }
+}
 
-export const AuditLogService = {
-  async logEvent(event: Omit<AuditLogEvent, 'id' | 'timestamp'>): Promise<void> {
-    // Insertar evento en Supabase
-    const { error } = await supabase.from('audit_logs').insert({
-      ...event,
-      timestamp: new Date().toISOString(),
-    });
-    if (error) throw error;
-  },
-
-  async getLogsByVisitId(visitId: string): Promise<AuditLogEvent[]> {
-    const { data, error } = await supabase
-      .from('audit_logs')
-      .select('*')
-      .eq('visit_id', visitId)
-      .order('timestamp', { ascending: true });
-    if (error) throw error;
-    // Validar y mapear los datos
-    return (data ?? []).map((row) => {
-      return AuditLogEventSchema.parse({
-        id: row.id,
-        visitId: row.visit_id,
-        timestamp: row.timestamp,
-        action: row.action,
-        field: row.field,
-        oldValue: row.old_value,
-        newValue: row.new_value,
-        modifiedBy: row.modified_by,
-        source: row.source,
-      });
-    });
-  },
-}; 
+// Instancia del servicio para uso en la aplicación
+export const AuditLogService = new AuditLogServiceImpl(); 

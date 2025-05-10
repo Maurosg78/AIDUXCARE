@@ -1,36 +1,45 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import { Paper, Typography, CircularProgress, Alert, List, ListItem, ListItemText } from "@mui/material";
 import PatientService from "@/core/services/patient/PatientService";
 import VisitService from "@/core/services/visit/VisitService";
-import { Patient, PatientVisit } from "../../models";
+import { Patient, Visit } from "@/core/types";
 
-const PatientDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+interface PatientDetailProps {
+  patientId: string;
+}
+
+const PatientDetail: React.FC<PatientDetailProps> = ({ patientId }) => {
   const [patient, setPatient] = useState<Patient | null>(null);
-  const [visits, setVisits] = useState<PatientVisit[]>([]);
+  const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const patientData = await PatientService.getById(id!);
-        const patientVisits = await VisitService.getByPatientId(id!);
+        if (!patientId) {
+          setError("ID de paciente no proporcionado");
+          setLoading(false);
+          return;
+        }
+        
+        const patientData = await PatientService.getById(patientId);
+        const patientVisits = await VisitService.getByPatientId(patientId);
         if (!patientData) {
           setError("Paciente no encontrado");
         } else {
           setPatient(patientData);
           setVisits(patientVisits);
         }
-      } catch (err) {
+      } catch (err: unknown) {
+        console.error("Error cargando datos:", err);
         setError("Error cargando el detalle del paciente.");
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, [id]);
+  }, [patientId]);
 
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">{error}</Alert>;
@@ -41,7 +50,7 @@ const PatientDetail: React.FC = () => {
       <Typography variant="h5" gutterBottom>
         {patient.firstName} {patient.lastName}
       </Typography>
-      <Typography variant="body1">Fecha de nacimiento: {patient.dateOfBirth}</Typography>
+      <Typography variant="body1">Fecha de nacimiento: {patient.birthDate}</Typography>
       <Typography variant="body1">Género: {patient.gender}</Typography>
       <Typography variant="body1">Email: {patient.email || "No disponible"}</Typography>
       <Typography variant="body1">Teléfono: {patient.phone || "No disponible"}</Typography>
@@ -55,7 +64,7 @@ const PatientDetail: React.FC = () => {
             <ListItem key={visit.id}>
               <ListItemText
                 primary={`Fecha: ${visit.visitDate}`}
-                secondary={`Tipo: ${visit.visitType} | Estado: ${visit.status}`}
+                secondary={`Tipo: ${visit.type} | Estado: ${visit.status}`}
               />
             </ListItem>
           ))}

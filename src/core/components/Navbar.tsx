@@ -1,6 +1,6 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Box, AppBar, Toolbar, Typography, Button } from '@mui/material';
+import { Link as RouterLink } from '@/core/utils/router';
 import { useAuth } from '@/core/context/AuthContext';
 
 const Navbar: React.FC = () => {

@@ -5,6 +5,7 @@ import { PatientEval } from '@/modules/emr/types/Evaluation';
 import { CopilotFeedback } from '@/modules/ai/CopilotService';
 import VisitAlert from '@/modules/emr/components/alerts/VisitAlert';
 import CopilotPanel from '@/modules/assistant/components/CopilotPanel';
+import VisitService from '@/core/services/visit/VisitService';
 
 const drawerWidth = 340;
 
@@ -66,7 +67,7 @@ const StructuredVisitForm = () => {
     console.log('Aplicando sugerencia:', feedback);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const newWarnings: string[] = [];
     if (!formData.visitDate) newWarnings.push("Falta la fecha de la visita.");
     if (!formData.visitType) newWarnings.push("Falta el tipo de visita.");
@@ -79,8 +80,13 @@ const StructuredVisitForm = () => {
     setWarnings(newWarnings);
 
     if (newWarnings.length === 0) {
-      VisitService.create(formData);
-      alert("Visita guardada correctamente.");
+      try {
+        await VisitService.create(formData);
+        alert("Visita guardada correctamente.");
+      } catch (error) {
+        console.error("Error al guardar visita:", error);
+        alert("Error al guardar la visita. Por favor, inténtelo de nuevo.");
+      }
     }
   };
 

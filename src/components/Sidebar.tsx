@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/core/utils/router';
 import { useAuth } from '../core/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { 

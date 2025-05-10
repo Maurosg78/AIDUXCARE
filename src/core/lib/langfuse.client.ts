@@ -1,45 +1,49 @@
-// Interface para metadatos de eventos
-interface EventMetadata {
-  [key: string]: unknown;
-}
+import { langfuseClient, verifyLangfuseConfig as verifyConfig, mockLangfuseEvent } from './langfuse.config';
 
-// Interface para objetos de eventos de seguimiento
-interface TrackEventObject {
-  name: string;
-  payload?: Record<string, unknown>;
-  traceId?: string;
-}
-
-/** Verifica que las vars de entorno de Langfuse estén definidas */
-export function verifyLangfuseConfig(): void {
-  if (!import.meta.env.VITE_LANGFUSE_PUBLIC_KEY) {
-    throw new Error('Missing env VITE_LANGFUSE_PUBLIC_KEY');
-  }
-  if (!import.meta.env.VITE_LANGFUSE_BASE_URL) {
-    throw new Error('Missing env VITE_LANGFUSE_BASE_URL');
-  }
-}
-
-// Mock de Langfuse para desarrollo
-const mockTrackEvent = async (nameOrEvent: string | TrackEventObject, data: EventMetadata = {}): Promise<null> => {
-  if (typeof nameOrEvent === 'string') {
-    console.log('Mock Langfuse Event:', { name: nameOrEvent, ...data });
-  } else {
-    console.log('Mock Langfuse Event:', { 
-      name: nameOrEvent.name, 
-      payload: nameOrEvent.payload,
-      traceId: nameOrEvent.traceId 
-    });
-  }
-  return null;
+/**
+ * Función unificada para verificar la configuración de Langfuse
+ * @returns {boolean} true si la configuración es válida
+ */
+export const verifyLangfuseConfig = (): boolean => {
+  return verifyConfig();
 };
 
-export const trackEvent = async (nameOrEvent: string | TrackEventObject, data: EventMetadata = {}): Promise<null> => {
+/**
+ * Registra un evento en Langfuse o usa el mock en desarrollo
+ * @param {string} name - Nombre del evento
+ * @param {Record<string, unknown>} metadata - Metadatos adicionales
+ * @returns {Promise<void>}
+ */
+export const trackEvent = async (
+  name: string,
+  metadata: Record<string, unknown> = {}
+): Promise<void> => {
   try {
-    // En desarrollo, usamos el mock
-    return await mockTrackEvent(nameOrEvent, data);
+    if (langfuseClient) {
+      await langfuseClient.event({
+        name,
+        metadata
+      });
+    } else {
+      // Si no hay cliente real, usar mock
+      await mockLangfuseEvent(name, metadata);
+    }
   } catch (error) {
-    console.warn('Error al trackear evento:', error);
-    return null;
+    console.warn('[AiDuxCare] Error al registrar evento Langfuse:', error);
+  }
+};
+
+/**
+ * Obtiene el ID del trazo actual (o un ID simulado en desarrollo)
+ * @param {string} fallbackId - ID alternativo si no hay trace
+ * @returns {string} ID del trace
+ */
+export const getCurrentTraceId = (fallbackId?: string): string => {
+  try {
+    // Implementación simulada - en producción requeriría más lógica
+    return fallbackId || `trace-${Date.now()}`;
+  } catch (error) {
+    console.warn('[AiDuxCare] Error al obtener trace ID:', error);
+    return fallbackId || 'mock-trace';
   }
 };

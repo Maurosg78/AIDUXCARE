@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import AuditLogViewer from './AuditLogViewer';
 import { AuditLogService } from '@/core/services/AuditLogService';
 

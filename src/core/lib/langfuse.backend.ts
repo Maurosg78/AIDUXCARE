@@ -4,7 +4,7 @@ import { Langfuse } from 'langfuse-node';
 export const langfuseBackend = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY!,
   secretKey: process.env.LANGFUSE_SECRET_KEY!,
-  baseUrl: process.env.VITE_LANGFUSE_BASE_URL
+  // La propiedad baseUrl no es soportada en la nueva versión
 });
 
 // Configuración para verificar en el backend
@@ -15,7 +15,7 @@ export const config = {
 
 // Verifica la configuración del backend
 export function verifyBackendConfig() {
-  if (!config.hasSecretKey || !config.baseUrl) {
+  if (!config.hasSecretKey) {
     throw new Error('Missing required Langfuse backend configuration');
   }
 }

@@ -1,135 +1,162 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation } from '@/core/utils/router';
 import { useAuth } from '@/core/context/AuthContext';
-import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
 import {
   Users,
   Calendar,
-  CreditCard,
-  Activity,
-  FileText,
-  Settings,
-  Terminal,
-  Bug,
+  ClipboardCheck,
   Brain,
-  LogOut,
-  User
+  Settings,
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 
-interface MenuItem {
-  label: string;
-  path: string;
-  icon: React.ReactNode;
+interface SidebarProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
 }
 
-const menuItemsByRole: Record<string, MenuItem[]> = {
-  professional: [
-    { label: 'sidebar.my_visits', path: '/dashboard/professional', icon: <FileText size={20} /> },
-    { label: 'sidebar.mcp', path: '/mcp', icon: <Brain size={20} /> },
-    { label: 'sidebar.patients', path: '/patients', icon: <Users size={20} /> }
-  ],
-  secretary: [
-    { label: 'sidebar.schedule', path: '/dashboard/secretary', icon: <Calendar size={20} /> },
-    { label: 'sidebar.payments', path: '/pagos', icon: <CreditCard size={20} /> },
-    { label: 'sidebar.patients', path: '/patients', icon: <Users size={20} /> }
-  ],
-  admin: [
-    { label: 'sidebar.users', path: '/dashboard/admin', icon: <Users size={20} /> },
-    { label: 'sidebar.metrics', path: '/metrics', icon: <Activity size={20} /> },
-    { label: 'sidebar.patients', path: '/patients', icon: <Users size={20} /> }
-  ],
-  developer: [
-    { label: 'sidebar.logs', path: '/langfuse', icon: <Terminal size={20} /> },
-    { label: 'sidebar.tests', path: '/tests', icon: <Bug size={20} /> }
-  ]
-};
-
-const Sidebar: React.FC = () => {
+export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
 
-  if (!user || !user.role) {
-    return null;
-  }
+  const menuItems = [
+    {
+      name: 'Pacientes',
+      href: '/patients',
+      icon: Users,
+      roles: ['professional', 'secretary', 'admin', 'fisioterapeuta'],
+    },
+    {
+      name: 'Visitas',
+      href: '/visits',
+      icon: Calendar,
+      roles: ['professional', 'fisioterapeuta'],
+    },
+    {
+      name: 'Registros médicos',
+      href: '/records',
+      icon: ClipboardCheck,
+      roles: ['professional', 'fisioterapeuta'],
+    },
+    {
+      name: 'Panel IA',
+      href: '/mcp',
+      icon: Brain,
+      roles: ['professional', 'fisioterapeuta', 'admin'],
+    },
+    {
+      name: 'Configuración',
+      href: '/settings',
+      icon: Settings,
+      roles: ['admin'],
+      hidden: true,
+    },
+  ];
 
-  const menuItems = menuItemsByRole[user.role] || [];
-
-  // Función para obtener las iniciales del nombre
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase();
-  };
+  const filteredItems = menuItems.filter(
+    item => !item.hidden && user?.role && item.roles.includes(user.role)
+  );
 
   return (
-    <aside className="hidden md:flex flex-col w-60 min-h-screen bg-gray-50 border-r border-gray-200">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-800">
-          {user.name || user.email}
-        </h2>
-        <p className="text-sm text-gray-600">
-          {t(`roles.${user.role}`)}
-        </p>
-      </div>
+    <>
+      {/* Overlay para dispositivos móviles */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
 
-      {/* Navigation Items */}
-      <nav className="flex-1 p-4">
-        <ul className="space-y-2">
-          {menuItems.map((item) => (
-            <li key={item.path}>
-              <button
-                onClick={() => navigate(item.path)}
-                className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors
-                  ${location.pathname === item.path
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-              >
-                {item.icon}
-                <span>{t(item.label)}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      {/* User Profile and Logout */}
-      <div className="p-4 border-t border-gray-200">
-        <div className="flex items-center space-x-3 mb-3">
-          <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
-            {user.avatar ? (
-              <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full" />
-            ) : (
-              <span className="text-sm font-medium">
-                {user.name ? getInitials(user.name) : <User size={20} />}
-              </span>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {user.name || t('common.user')}
-            </p>
-            <p className="text-xs text-gray-500 truncate">
-              {user.email}
-            </p>
-          </div>
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-30 w-64 flex flex-col bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out transform",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          "lg:translate-x-0 lg:static lg:z-auto"
+        )}
+      >
+        {/* Logo */}
+        <div className="h-16 flex items-center px-6 border-b border-gray-200">
+          <img 
+            src="/logo.png" 
+            alt="AiDuxCare" 
+            className="h-8" 
+          />
         </div>
 
-        <button
-          onClick={logout}
-          className="w-full flex items-center space-x-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <LogOut size={20} />
-          <span>{t('auth.logout')}</span>
-        </button>
-      </div>
-    </aside>
-  );
-};
+        {/* Menu items */}
+        <nav className="flex-1 overflow-y-auto p-4">
+          <ul className="space-y-1">
+            {filteredItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.href;
+              
+              return (
+                <li key={item.href}>
+                  <Link
+                    to={item.href}
+                    className={cn(
+                      "flex items-center px-4 py-3 text-sm font-medium rounded-lg group",
+                      isActive
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-700 hover:bg-gray-100"
+                    )}
+                  >
+                    <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
+                    <span className="flex-1">{item.name}</span>
+                    {isActive && (
+                      <ChevronRight className="w-5 h-5 text-blue-700" />
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
-export default Sidebar; 
+        {/* User section */}
+        <div className="p-4 border-t border-gray-200">
+          <div className="flex items-center mb-4">
+            <div className="flex-shrink-0">
+              <img
+                className="h-10 w-10 rounded-full bg-gray-300"
+                src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name || 'Usuario'}&background=0D8ABC&color=fff`}
+                alt={user?.name || 'Usuario'}
+              />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-900">
+                {user?.name || 'Usuario'}
+              </p>
+              <p className="text-xs text-gray-500">
+                {getReadableRole(user?.role || '')}
+              </p>
+            </div>
+          </div>
+          
+          <button
+            onClick={logout}
+            className="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg group"
+          >
+            <LogOut className="w-5 h-5 mr-3" />
+            <span>Cerrar sesión</span>
+          </button>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+function getReadableRole(role: string): string {
+  const roleMap: Record<string, string> = {
+    professional: 'Profesional',
+    fisioterapeuta: 'Fisioterapeuta',
+    admin: 'Administrador',
+    secretary: 'Secretario/a',
+    developer: 'Desarrollador'
+  };
+
+  return roleMap[role] || role;
+} 

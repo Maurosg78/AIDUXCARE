@@ -1,7 +1,8 @@
-import { z } from 'zod';
+import { originalZ as z } from '@/types/zod-utils';
 import { trackEvent } from '@/core/lib/langfuse.client';
 import { VisitService } from '@/core/services/visit/VisitService';
 import { ContextEnricher } from './ContextEnricher';
+import { PatientService as IPatientService } from '@/core/types';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type * as PatientTypes from '@/core/services/patient/PatientService';
 
@@ -92,11 +93,9 @@ export class CopilotContextBuilder {
   `.trim();
 
   private enricher: ContextEnricher;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private patientService: any;
+  private patientService: IPatientService;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(patientService: any) {
+  constructor(patientService: IPatientService) {
     this.enricher = new ContextEnricher(patientService);
     this.patientService = patientService;
   }

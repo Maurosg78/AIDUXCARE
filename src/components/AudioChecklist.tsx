@@ -4,7 +4,7 @@ import { trackEvent } from '@/core/lib/langfuse.client';
 import axios from 'axios';
 
 // Mapeo de campos internos a campos clínicos estándar
-const FIELD_MAPPING = {
+const FIELD_MAPPING: Record<string, string> = {
   motivoConsulta: "anamnesis",
   hallazgosExploracion: "exploracion",
   diagnosticoFisioterapeutico: "diagnostico",
@@ -23,7 +23,10 @@ interface AudioChecklistProps {
   onDataValidated: (data: { field: string; value: string }[]) => void;
 }
 
-export default function AudioChecklist({ _patientId, visitId, onDataValidated }: AudioChecklistProps) {
+export default function AudioChecklist(props: AudioChecklistProps) {
+  // Desestructurar props correctamente
+  const { patientId, visitId, onDataValidated } = props;
+  
   const [isListening, setIsListening] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -104,7 +107,7 @@ export default function AudioChecklist({ _patientId, visitId, onDataValidated }:
       // 1. Almacenar cada campo validado en /api/mcp/store
       const storePromises = approvedFields.map(async (item) => {
         // Mapear el campo interno al campo clínico estándar
-        const mappedField = FIELD_MAPPING[item.field as keyof typeof FIELD_MAPPING];
+        const mappedField = FIELD_MAPPING[item.field];
         
         if (!mappedField) {
           console.warn(`Campo no mapeado: ${item.field}`);

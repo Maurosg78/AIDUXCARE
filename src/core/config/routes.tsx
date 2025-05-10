@@ -7,7 +7,8 @@
  * 5. Interfaz adaptativa que se ajusta al flujo de trabajo clínico
  */
 
-import { RouteObject, Navigate } from 'react-router-dom';
+import React from 'react';
+import { RouteObject, Navigate } from '@/core/utils/router';
 import { ProtectedRoute } from '@/core/context/AuthContext';
 import RecordsPage from '@/modules/emr/pages/RecordsPage';
 import HomePage from '@/modules/core/pages/HomePage';

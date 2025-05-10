@@ -3,7 +3,6 @@ import { Box, Typography, Card, CardContent, Stack, Alert, Select, MenuItem, For
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import type { DatePickerProps } from '@mui/x-date-pickers/DatePicker';
 import EvalService, { PatientEval, EvalFilter } from '../services/EvalService';
 import CopilotService, { CopilotFeedback } from '@/modules/ai/CopilotService';
 import LangfuseLink from '@/modules/ai/components/LangfuseLink';
@@ -83,32 +82,22 @@ const EvalTimeline: React.FC<EvalTimelineProps> = ({ patientId }) => {
           <DatePicker
             label="Fecha inicio"
             value={startDate}
-            onChange={(date) => setStartDate(date)}
-            slotProps={{
-              textField: {
-                variant: "outlined",
-                fullWidth: true
-              }
-            }}
+            onChange={(newDate) => setStartDate(newDate)}
+            renderInput={(params) => <TextField {...params} variant="outlined" size="small" fullWidth />}
           />
           <DatePicker
             label="Fecha fin"
             value={endDate}
-            onChange={(date) => setEndDate(date)}
-            slotProps={{
-              textField: {
-                variant: "outlined",
-                fullWidth: true
-              }
-            }}
+            onChange={(newDate) => setEndDate(newDate)}
+            renderInput={(params) => <TextField {...params} variant="outlined" size="small" fullWidth />}
           />
-          <FormControl>
+          <FormControl size="small" fullWidth>
             <InputLabel id="feedback-type-label">Tipo de feedback</InputLabel>
             <Select
               labelId="feedback-type-label"
               value={filters.feedbackType || ''}
               label="Tipo de feedback"
-              onChange={(e) => handleFeedbackTypeChange(e.target.value as any)}
+              onChange={(e) => handleFeedbackTypeChange(e.target.value === '' ? undefined : e.target.value as 'alerta' | 'sugerencia' | 'test')}
             >
               <MenuItem value="">Todos</MenuItem>
               <MenuItem value="alerta">Alertas</MenuItem>
@@ -139,7 +128,7 @@ const EvalTimeline: React.FC<EvalTimelineProps> = ({ patientId }) => {
                   </Typography>
                   
                   {/* Alertas originales */}
-                  {evaluation.alertas.length > 0 && (
+                  {evaluation.alertas && evaluation.alertas.length > 0 && (
                     <Box sx={{ mt: 1 }}>
                       {evaluation.alertas.map((alerta, i) => (
                         <Alert key={i} severity="warning" sx={{ mt: 1 }}>

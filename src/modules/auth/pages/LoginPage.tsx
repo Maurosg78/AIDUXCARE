@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/core/utils/router';
 
 const LoginPage = () => {
   const navigate = useNavigate();

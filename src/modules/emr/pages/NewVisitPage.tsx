@@ -1,5 +1,5 @@
 // import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from '@/core/utils/router';
 import { Container } from "@mui/material";
 import NewVisitForm from '../components/visits/NewVisitForm';
 

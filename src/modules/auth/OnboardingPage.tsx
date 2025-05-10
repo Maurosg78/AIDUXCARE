@@ -1,59 +1,112 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/core/context/AuthContext';
-import { UserRole } from './authService';
+import { Link } from '@/core/utils/router';
+import {
+  Container,
+  Typography,
+  Box,
+  Button,
+  Paper,
+  Grid,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
+import {
+  AccountCircle,
+  EventNote,
+  LocalHospital,
+  NotificationsActive,
+} from '@mui/icons-material';
 
 const OnboardingPage: React.FC = () => {
-  const { user } = useAuth();
-  const userRole = (user as { role?: UserRole })?.role;
-  const showFeedback = userRole === 'fisioterapeuta' || userRole === 'admin';
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Bienvenido a AiDuxCare</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Términos de Uso y Privacidad</h2>
-            <p className="text-gray-600">
-              Al utilizar AiDuxCare, aceptas los siguientes términos y condiciones:
-            </p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Uso de micrófono para captura de voz durante las consultas</li>
-              <li>Procesamiento de datos clínicos con IA</li>
-              <li>Almacenamiento seguro de información médica</li>
-              <li>Compartir datos anonimizados para mejora del sistema</li>
-            </ul>
-            <div className="mt-6">
-              <button
-                className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90"
-                onClick={() => window.location.href = '/dashboard'}
-              >
-                Aceptar y Continuar
-              </button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <Container maxWidth="lg">
+      <Box my={4}>
+        <Typography variant="h3" component="h1" gutterBottom align="center">
+          Bienvenido a AiDuxCare
+        </Typography>
+        <Typography variant="h5" align="center" color="textSecondary" paragraph>
+          La plataforma inteligente para optimizar la atención clínica
+        </Typography>
 
-      {showFeedback && (
-        <Card className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
-          <h2 className="text-lg font-semibold mb-2">📩 ¿Nos das tu opinión?</h2>
-          <p className="text-sm text-gray-700 mb-2">
-            Tu experiencia es clave para que AiDuxCare sea realmente útil para ti.
-          </p>
-          <Link
-            to="/feedback"
-            className="inline-block px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md text-sm font-medium"
-          >
-            Rellenar formulario de feedback
-          </Link>
-        </Card>
-      )}
-    </div>
+        <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="h5" gutterBottom>
+                Primeros pasos
+              </Typography>
+              <List>
+                <ListItem>
+                  <ListItemIcon>
+                    <AccountCircle />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Completa tu perfil"
+                    secondary="Añade tu información profesional para personalizar tu experiencia"
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemIcon>
+                    <EventNote />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Configura tu agenda"
+                    secondary="Establece tus horarios y disponibilidad"
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemIcon>
+                    <LocalHospital />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Explora el módulo clínico"
+                    secondary="Familiarízate con las herramientas de diagnóstico y seguimiento"
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemIcon>
+                    <NotificationsActive />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Configura tus notificaciones"
+                    secondary="Personaliza cómo quieres recibir alertas y recordatorios"
+                  />
+                </ListItem>
+              </List>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Typography variant="h5" gutterBottom>
+                Características principales
+              </Typography>
+              <Typography paragraph>
+                AiDuxCare integra las últimas tecnologías de inteligencia artificial para:
+              </Typography>
+              <Box component="ul" sx={{ pl: 2 }}>
+                <li>Asistencia en tiempo real durante consultas</li>
+                <li>Sugerencias de diagnóstico basadas en evidencia</li>
+                <li>Documentación clínica inteligente</li>
+                <li>Análisis predictivo para mejorar resultados</li>
+                <li>Recordatorios de seguimiento automatizados</li>
+              </Box>
+              
+              <Box mt={4} display="flex" justifyContent="center">
+                <Button
+                  component={Link}
+                  to="/dashboard"
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                >
+                  Ir al Dashboard
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      </Box>
+    </Container>
   );
 };
 

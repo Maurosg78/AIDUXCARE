@@ -1,11 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 // Comentar temporalmente la importación de useLangfuse hasta que esté disponible
 // import { useLangfuse } from '@/core/hooks/useLangfuse';
-// Importamos los componentes individualmente desde sus ubicaciones directas para evitar problemas
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Alert } from '@/components/ui/alert';
+// Importamos los componentes
+import { Button, Card, Checkbox, Alert } from '@/components/ui';
 
 interface DetectedPhrase {
   id: string;

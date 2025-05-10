@@ -10,7 +10,7 @@ import {
 } from '../components/ui/table';
 import { Button } from '../components/ui/button';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/core/utils/router';
 
 export default function PatientListPage() {
   const { t } = useTranslation();

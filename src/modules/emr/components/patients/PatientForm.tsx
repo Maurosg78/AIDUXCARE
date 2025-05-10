@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { TextField, Button, Box, MenuItem, Paper, Typography } from "@mui/material";
-import { Patient } from "../../models";
+import { Patient } from "@/core/types";
 
 interface PatientFormProps {
   initialData?: Patient;
@@ -11,17 +11,17 @@ const genderOptions = [
   { value: "male", label: "Masculino" },
   { value: "female", label: "Femenino" },
   { value: "other", label: "Otro" },
-  { value: "prefer-not-to-say", label: "Prefiere no decir" },
 ];
 
 const PatientForm: React.FC<PatientFormProps> = ({ initialData, onSubmit }) => {
   const [formData, setFormData] = useState<Patient>(
     initialData || {
       id: crypto.randomUUID(),
+      name: "",
       firstName: "",
       lastName: "",
-      dateOfBirth: "",
-      gender: "prefer-not-to-say",
+      birthDate: "",
+      gender: "other",
       email: "",
       phone: "",
       createdAt: new Date().toISOString(),
@@ -37,7 +37,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData, onSubmit }) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev: Patient) => ({
       ...prev,
       [name]: value,
       updatedAt: new Date().toISOString(),
@@ -73,8 +73,8 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData, onSubmit }) => {
           <TextField
             label="Fecha de nacimiento"
             type="date"
-            name="dateOfBirth"
-            value={formData.dateOfBirth}
+            name="birthDate"
+            value={formData.birthDate}
             onChange={handleChange}
             InputLabelProps={{ shrink: true }}
             required

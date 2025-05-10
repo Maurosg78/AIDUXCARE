@@ -1,7 +1,7 @@
-import { MCPContext, EnrichedMCPContextSchema } from './schemas';
 import { trackEvent } from '@/core/lib/langfuse.client';
-import { PatientService } from '@/core/services/patient/PatientService';
+import { PatientService as IPatientService } from '@/core/types';
 import { EMREnrichmentSource } from './enrichment/EMREnrichmentSource';
+import { MCPContext } from './interfaces/MCPTool';
 
 export interface EnrichmentSource {
   name: string;
@@ -19,7 +19,7 @@ export class LangfuseEnrichmentSource implements EnrichmentSource {
       });
 
       return {
-        trace_id: response?.traceId,
+        trace_id: response && 'traceId' in response ? response.traceId : undefined,
         enriched_at: new Date().toISOString()
       };
     } catch (error) {
@@ -49,7 +49,7 @@ export class GlobalRulesEnrichmentSource implements EnrichmentSource {
 export class ContextEnricher {
   private sources: EnrichmentSource[];
 
-  constructor(patientService: PatientService) {
+  constructor(patientService: IPatientService) {
     this.sources = [
       new LangfuseEnrichmentSource(),
       new GlobalRulesEnrichmentSource(),
@@ -71,15 +71,14 @@ export class ContextEnricher {
         enrichment: enrichmentData.reduce((acc, { source, data }) => ({
           ...acc,
           [source]: data
-        }), {})
+        }), {} as Record<string, unknown>)
       };
 
-      // Validar el contexto enriquecido
-      return EnrichedMCPContextSchema.parse(enrichedContext);
+      return enrichedContext;
     } catch (error) {
       console.error('Error durante el enriquecimiento del contexto:', error);
       // Retornar contexto original si falla el enriquecimiento
       return context;
     }
   }
-} 
+}

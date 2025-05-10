@@ -1,5 +1,34 @@
 import { Langfuse } from 'langfuse-node';
-import { EvalResult } from '@/types/Evaluation';
+
+// Modelo para los resultados de la evaluación
+export interface EvalResult {
+  patientId: string;
+  completenessScore: number;
+  missingFields: string[];
+  warnings: string[];
+}
+
+// Interfaces para el trace de Langfuse
+interface LangfuseObservation {
+  name: string;
+  input?: {
+    field?: string;
+    value?: unknown;
+  };
+}
+
+interface LangfuseTrace {
+  id: string;
+  metadata?: {
+    patientId?: string;
+  };
+  observations?: LangfuseObservation[];
+}
+
+// Extendemos la interfaz de Langfuse para incluir el método getTrace
+interface ExtendedLangfuse extends Langfuse {
+  getTrace?: (traceId: string) => Promise<LangfuseTrace>;
+}
 
 // Campos críticos que deben estar presentes
 export const CRITICAL_FIELDS = [
@@ -15,31 +44,72 @@ export const CRITICAL_FIELDS = [
 export const CONSISTENCY_RULES = [
   {
     name: 'diagnosis_without_symptoms',
-    check: (fields: Record<string, any>) => 
+    check: (fields: Record<string, unknown>) => 
       fields.diagnosis && !fields.symptoms,
     message: 'Diagnóstico presente sin síntomas asociados'
   },
   {
     name: 'treatment_without_diagnosis',
-    check: (fields: Record<string, any>) => 
+    check: (fields: Record<string, unknown>) => 
       fields.treatmentPlan && !fields.diagnosis,
     message: 'Plan de tratamiento presente sin diagnóstico previo'
   },
   {
     name: 'prognosis_without_diagnosis',
-    check: (fields: Record<string, any>) => 
+    check: (fields: Record<string, unknown>) => 
       fields.prognosis && !fields.diagnosis,
     message: 'Pronóstico presente sin diagnóstico previo'
   }
 ];
 
+// Función auxiliar para obtener un trace manualmente
+async function fetchTrace(langfuse: ExtendedLangfuse, traceId: string): Promise<LangfuseTrace> {
+  try {
+    // Intentar usar el método getTrace si está disponible
+    if (typeof langfuse.getTrace === 'function') {
+      const trace = await langfuse.getTrace(traceId);
+      if (trace) {
+        return trace;
+      }
+    }
+    
+    // Fallback: usar la API REST
+    const baseUrl = process.env.VITE_LANGFUSE_BASE_URL || 'https://cloud.langfuse.com';
+    const publicKey = process.env.VITE_LANGFUSE_PUBLIC_KEY;
+    const secretKey = process.env.LANGFUSE_SECRET_KEY;
+    
+    if (!publicKey || !secretKey) {
+      throw new Error('Credenciales de Langfuse no configuradas');
+    }
+    
+    const apiUrl = `${baseUrl}/api/public/traces/${traceId}`;
+    
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': `${publicKey}:${secretKey}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al obtener trace: ${response.status} ${response.statusText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`Error al obtener trace ${traceId}:`, error);
+    throw error;
+  }
+}
+
 export async function evaluatePatientVisit(
-  langfuse: Langfuse,
+  langfuse: ExtendedLangfuse,
   traceId: string
 ): Promise<EvalResult> {
   try {
-    // Obtener el trace específico
-    const trace = await langfuse.getTrace(traceId);
+    // Obtener el trace específico usando nuestra función auxiliar
+    const trace = await fetchTrace(langfuse, traceId);
+    
     if (!trace) {
       throw new Error(`Trace no encontrado: ${traceId}`);
     }
@@ -50,8 +120,8 @@ export async function evaluatePatientVisit(
     }
 
     // Recolectar todos los campos del formulario
-    const formFields: Record<string, any> = {};
-    trace.observations?.forEach(obs => {
+    const formFields: Record<string, unknown> = {};
+    (trace.observations || []).forEach((obs: {name: string; input?: {field?: string; value?: unknown}}) => {
       if (obs.name === 'form.update' && obs.input?.field) {
         formFields[obs.input.field] = obs.input.value;
       }
@@ -59,7 +129,7 @@ export async function evaluatePatientVisit(
 
     // Verificar campos críticos
     const missingFields = CRITICAL_FIELDS.filter(field => 
-      !formFields[field] || formFields[field].trim() === ''
+      !formFields[field] || String(formFields[field]).trim() === ''
     );
 
     // Verificar reglas de consistencia
@@ -73,13 +143,19 @@ export async function evaluatePatientVisit(
     );
 
     return {
-      patientId,
+      patientId: String(patientId),
       completenessScore,
       missingFields,
       warnings
     };
   } catch (error) {
     console.error('Error en evaluación:', error);
-    throw error;
+    // En caso de error, devolver un resultado vacío en lugar de propagar el error
+    return {
+      patientId: traceId,
+      completenessScore: 0,
+      missingFields: [],
+      warnings: ['Error al procesar la evaluación']
+    };
   }
 } 

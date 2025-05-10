@@ -172,7 +172,7 @@ declare module '@/core/context/AuthContext' {
 }
 
 declare module '@/core/config/routes' {
-  import { RouteObject } from 'react-router-dom';
+  import { RouteObject } from 'react-router';
   const routes: RouteObject[];
   export default routes;
 }

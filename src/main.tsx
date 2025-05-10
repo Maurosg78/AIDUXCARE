@@ -1,14 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, useRoutes } from "react-router-dom";
+import { RouterProvider } from "react-router";
 import { AuthProvider } from '@/core/context/AuthContext';
-import routes from "@/core/config/routes";
 import { verifyLangfuseConfig } from "@/core/lib/langfuse.client";
-
-function AppRouter() {
-  const element = useRoutes(routes);
-  return element;
-}
+import { router } from "./core/router/routes";
+import "./styles/index.css";
 
 // Verificación del entorno en desarrollo
 if (import.meta.env.DEV) {
@@ -19,10 +15,8 @@ if (import.meta.env.DEV) {
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRouter />
-      </AuthProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </React.StrictMode>
 );

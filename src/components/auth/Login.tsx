@@ -10,7 +10,7 @@ import {
   Alert,
 } from '@mui/material';
 import { useAuth } from '@/core/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/core/utils/router';
 
 export default function Login() {
   const [email, setEmail] = useState('');

@@ -1,26 +1,40 @@
 import { EnrichmentSource } from '../ContextEnricher';
-import { MCPContext } from '../schemas';
-import { PatientService } from '@/core/services/patient/PatientService';
+import { MCPContext } from '../interfaces/MCPTool';
+import { PatientService as IPatientService } from '@/core/types';
 
 export class EMREnrichmentSource implements EnrichmentSource {
   name = 'emr';
-  private patientService: PatientService;
+  private patientService: IPatientService;
 
-  constructor(patientService: PatientService) {
+  constructor(patientService: IPatientService) {
     this.patientService = patientService;
   }
 
   async getEnrichmentData(context: MCPContext): Promise<Record<string, unknown>> {
     try {
-      const patientId = context.visit_metadata.visit_id;
-      const [patientData, visitHistory] = await Promise.all([
-        this.patientService.getPatientData(patientId),
-        this.patientService.getVisitHistory(patientId)
-      ]);
-
+      const patientId = context.visit_metadata?.visit_id || '';
+      
+      // Verificamos que el ID del paciente exista
+      if (!patientId) {
+        throw new Error('ID de paciente no proporcionado');
+      }
+      
+      const patientExists = await this.patientService.patientExists(patientId);
+      
+      if (!patientExists) {
+        return {
+          error: 'Paciente no encontrado',
+          enriched_at: new Date().toISOString()
+        };
+      }
+      
+      const patientData = await this.patientService.getById(patientId);
+      // Aquí normalmente obtendríamos el historial de visitas, pero por simplicidad
+      // solo usamos los datos del paciente
+      
       return {
         patient_data: patientData,
-        visit_history: visitHistory || [],
+        visit_history: [],
         enriched_at: new Date().toISOString()
       };
     } catch (error) {

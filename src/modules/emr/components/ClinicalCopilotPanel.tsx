@@ -1,9 +1,20 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, Typography, Box } from '@mui/material';
-import { PatientVisit } from '@/modules/emr/models/PatientVisit';
+
+// Interfaz específica para este componente
+interface CopilotVisit {
+  id: string;
+  patientId: string;
+  visitDate: string;
+  visitType: string;
+  date: string;
+  reason?: string;
+  notes?: string;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+}
 
 interface ClinicalCopilotPanelProps {
-  visit: PatientVisit;
+  visit: CopilotVisit;
 }
 
 interface Suggestion {
@@ -18,12 +29,12 @@ export default function ClinicalCopilotPanel({ visit }: ClinicalCopilotPanelProp
     const result: Suggestion[] = [];
 
     // Validar campos
-    const hasMotivo = !!visit.motivo?.trim();
-    const hasDiagnostico = !!visit.diagnosticoFisioterapeutico?.trim();
-    const hasTratamiento = !!visit.tratamientoPropuesto?.trim();
+    const hasMotivo = !!visit.reason?.trim();
+    const hasDiagnostico = !!(visit.notes && visit.notes.includes('diagnostico:'));
+    const hasTratamiento = !!(visit.notes && visit.notes.includes('tratamiento:'));
 
     // Regla 1: Dolor sin diagnóstico
-    if (hasMotivo && visit.motivo.toLowerCase().includes('dolor') && !hasDiagnostico) {
+    if (hasMotivo && visit.reason && visit.reason.toLowerCase().includes('dolor') && !hasDiagnostico) {
       result.push({
         id: 'dolor-sin-diagnostico',
         message: 'Sugerencia: Falta especificar diagnóstico para el dolor reportado.',
@@ -53,7 +64,7 @@ export default function ClinicalCopilotPanel({ visit }: ClinicalCopilotPanelProp
     }
 
     // Regla 4: Motivo muy corto
-    if (hasMotivo && visit.motivo.length < 20) {
+    if (hasMotivo && visit.reason && visit.reason.length < 20) {
       result.push({
         id: 'motivo-corto',
         message: 'Sugerencia: Considera agregar más detalles al motivo de consulta.',

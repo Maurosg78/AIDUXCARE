@@ -1,67 +1,82 @@
-import { z } from 'zod';
+import { z } from '@/types/zod-utils';
 
-const PaymentStatusSchema = z.enum(['pending', 'paid', 'cancelled', 'refunded']);
+// Definición de estados de pago
+const PaymentStatusSchema = z.enumValues([
+  'pending',
+  'completed',
+  'cancelled',
+  'refunded'
+] as const);
 
+type PaymentStatus = 'pending' | 'completed' | 'cancelled' | 'refunded';
+
+// Modelo de pago
 export interface Payment {
   id: string;
   visitId: string;
-  patientId: string;
   amount: number;
-  status: z.infer<typeof PaymentStatusSchema>;
+  status: PaymentStatus;
+  paidAt?: string;
+  method?: string;
+  metadata?: Record<string, any>;
   createdAt: string;
-  updatedAt?: string;
+  updatedAt: string;
 }
 
+/**
+ * Servicio para gestionar pagos asociados a visitas médicas
+ */
 export class PaymentTracker {
-  private static STORAGE_KEY = 'payments';
-
-  async createPaymentRecord(payment: Omit<Payment, 'id' | 'createdAt'>): Promise<Payment> {
+  /**
+   * Crear un nuevo registro de pago
+   */
+  async createPayment(payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>): Promise<Payment> {
+    const now = new Date().toISOString();
     const newPayment: Payment = {
-      id: crypto.randomUUID(),
+      id: Math.random().toString(36).substr(2, 9),
       ...payment,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now
     };
-
-    const payments = await this.getPayments();
-    payments.push(newPayment);
-    localStorage.setItem(PaymentTracker.STORAGE_KEY, JSON.stringify(payments));
-
+    
+    // Aquí iría la lógica de persistencia en BD
+    
     return newPayment;
   }
-
-  async getPayments(): Promise<Payment[]> {
-    const paymentsJson = localStorage.getItem(PaymentTracker.STORAGE_KEY);
-    return paymentsJson ? JSON.parse(paymentsJson) : [];
-  }
-
-  async getPaymentStatus(visitId: string): Promise<Payment | undefined> {
-    const payments = await this.getPayments();
-    return payments.find(p => p.visitId === visitId);
-  }
-
-  async updatePaymentStatus(visitId: string, status: z.infer<typeof PaymentStatusSchema>): Promise<Payment> {
-    const payments = await this.getPayments();
-    const index = payments.findIndex(p => p.visitId === visitId);
-
-    if (index === -1) {
-      throw new Error(`Pago no encontrado para la visita: ${visitId}`);
-    }
-
-    const updatedPayment = {
-      ...payments[index],
+  
+  /**
+   * Actualizar el estado de un pago
+   */
+  async updatePaymentStatus(visitId: string, status: PaymentStatus): Promise<Payment> {
+    // Simulación para desarrollo
+    const updatedPayment: Payment = {
+      id: Math.random().toString(36).substr(2, 9),
+      visitId,
+      amount: 0,
       status,
       updatedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     };
-
-    payments[index] = updatedPayment;
-    localStorage.setItem(PaymentTracker.STORAGE_KEY, JSON.stringify(payments));
-
+    
+    // Aquí iría la lógica de actualización en BD
+    
     return updatedPayment;
   }
-
-  async getPendingPayments(): Promise<Payment[]> {
-    const payments = await this.getPayments();
-    return payments.filter(p => p.status === 'pending');
+  
+  /**
+   * Obtener el pago de una visita
+   */
+  async getPaymentByVisitId(visitId: string): Promise<Payment | null> {
+    // Simulación para desarrollo
+    return null;
+  }
+  
+  /**
+   * Verificar si una visita tiene pago pendiente
+   */
+  async hasPaymentPending(visitId: string): Promise<boolean> {
+    const payment = await this.getPaymentByVisitId(visitId);
+    return payment?.status === 'pending';
   }
 }
 

@@ -1,4 +1,5 @@
-import { z } from 'zod';
+import { PatientEval } from '@/core/types';
+import { z } from '@/types/zod-utils';
 import { Evaluation } from '../types/Evaluation';
 
 // Esquema de validación para feedback
@@ -8,20 +9,28 @@ const FeedbackSchema = z.object({
   message: z.string()
 });
 
-// Esquema de validación para evaluación de paciente
-const PatientEvalSchema = z.object({
+// Definir el esquema para PatientEval
+const PatientEvalSchema = z.object<PatientEval>({
   id: z.string(),
+  visitId: z.string(),
   patientId: z.string(),
-  visitDate: z.string(),
-  motivo: z.string(),
-  observaciones: z.string(),
-  diagnostico: z.string(),
-  alertas: z.array(z.string()),
-  feedback: z.array(FeedbackSchema),
-  traceId: z.string().optional()
+  anamnesis: z.optional(z.string()),
+  physicalExam: z.optional(z.string()),
+  diagnosis: z.optional(z.string()),
+  treatment: z.optional(z.string()),
+  observations: z.optional(z.string()),
+  voiceApprovedNotes: z.optional(z.array(z.string())),
+  createdAt: z.optional(z.string()),
+  updatedAt: z.optional(z.string()),
+  diagnosticoFisioterapeutico: z.optional(z.string()),
+  tratamientoPropuesto: z.optional(z.string()),
+  motivo: z.optional(z.string()),
+  alertas: z.optional(z.array(z.string())),
+  traceId: z.optional(z.string())
 });
 
-export type PatientEval = z.infer<typeof PatientEvalSchema>;
+// Exportar tipo usando PatientEval de core/types
+export type { PatientEval };
 
 // Clase personalizada para errores de evaluación
 export class EvalServiceError extends Error {
@@ -88,7 +97,64 @@ export interface EvalFilter {
   endDate?: Date;
 }
 
+/**
+ * Servicio para gestionar evaluaciones de pacientes
+ */
 export class EvalService {
+  /**
+   * Crear una nueva evaluación
+   */
+  async create(evalData: Partial<PatientEval>): Promise<PatientEval> {
+    // Aquí iría la lógica de persistencia
+    return {
+      id: Math.random().toString(36).substring(2, 9),
+      visitId: evalData.visitId || '',
+      patientId: evalData.patientId || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...evalData
+    } as PatientEval;
+  }
+
+  /**
+   * Obtener una evaluación por ID
+   */
+  async getById(evalId: string): Promise<PatientEval | null> {
+    // Aquí iría la lógica de recuperación
+    return null;
+  }
+
+  /**
+   * Actualizar una evaluación existente
+   */
+  async update(evalId: string, evalData: Partial<PatientEval>): Promise<PatientEval> {
+    // Aquí iría la lógica de actualización
+    return {
+      id: evalId,
+      visitId: 'mock-visit-id',
+      patientId: 'mock-patient-id',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...evalData
+    } as PatientEval;
+  }
+
+  /**
+   * Eliminar una evaluación
+   */
+  async delete(evalId: string): Promise<boolean> {
+    // Aquí iría la lógica de eliminación
+    return true;
+  }
+
+  /**
+   * Obtener evaluaciones por visita
+   */
+  async getByVisitId(visitId: string): Promise<PatientEval[]> {
+    // Aquí iría la lógica de recuperación
+    return [];
+  }
+
   static async getPatientEvals(patientId: string): Promise<PatientEval[]> {
     return retry(async () => {
       try {

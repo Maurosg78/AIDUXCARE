@@ -20,7 +20,7 @@ import {
   Check,
   AccessTime
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/core/utils/router';
 
 interface LogbookEntry {
   visitId: string;

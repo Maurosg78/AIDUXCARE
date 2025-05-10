@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Visit as VisitType } from '@/core/types';
 
 /**
  * Schema para validar visitas clínicas
@@ -9,9 +10,9 @@ const PaymentStatusSchema = z.enum(['pending', 'paid', 'cancelled', 'refunded'])
 const ModalidadSchema = z.enum(['presencial', 'telematica']);
 
 export const VisitSchema = z.object({
-  id: z.string().uuid(),
-  patientId: z.string(),
-  professionalId: z.string(),
+  id: z.string().uuid().optional(),
+  patientId: z.string().uuid(),
+  professionalId: z.string().uuid(),
   professionalEmail: z.string().email(),
   scheduledDate: z.string().datetime(),
   duration: z.number().min(15).max(120).optional(),
@@ -29,9 +30,14 @@ export const VisitSchema = z.object({
     duration_minutes: z.number(),
     location: z.string().optional(),
     follow_up_required: z.boolean()
-  }).optional()
+  }).optional(),
+  visitDate: z.string(),
+  reason: z.string(),
+  diagnosticoFisioterapeutico: z.string().optional(),
+  tratamientoPropuesto: z.string().optional(),
 });
 
+// Definimos un tipo de Zod para la visita
 export type Visit = z.infer<typeof VisitSchema>;
 
 /**
@@ -46,4 +52,19 @@ export const VisitSummarySchema = VisitSchema.pick({
   status: true
 });
 
-export type VisitSummary = z.infer<typeof VisitSummarySchema>; 
+export type VisitSummary = z.infer<typeof VisitSummarySchema>;
+
+// Tipo para creación - sin id, createdAt o updatedAt
+export const VisitCreateSchema = VisitSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Tipo para actualización - todas las propiedades opcionales excepto id
+export const VisitUpdateSchema = VisitSchema.partial().required({
+  id: true,
+});
+
+// Re-exportamos el tipo Visit desde el archivo central de tipos para mantener compatibilidad
+export type { VisitType as VisitInterface }; 

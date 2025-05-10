@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from '@/core/utils/router';
 import { Container, Typography, CircularProgress, Alert } from "@mui/material";
 import PatientService from "@/core/services/patient/PatientService";
 import { Patient } from "../../models";

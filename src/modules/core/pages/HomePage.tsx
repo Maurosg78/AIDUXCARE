@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/core/context/AuthContext';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router';
 import { Box, CircularProgress } from '@mui/material';
 
 export default function HomePage() {

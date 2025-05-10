@@ -1,27 +1,33 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import { Container, Typography, CircularProgress, Alert, List, ListItem, ListItemText } from "@mui/material";
 import PatientService from "@/core/services/patient/PatientService";
 import VisitService from "@/core/services/visit/VisitService";
-import { Patient, PatientVisit } from "../models";
+import { Patient, Visit } from "@/core/types";
+
+// Esta función extrae el ID del paciente de la URL actual
+const getPatientIdFromUrl = (): string | null => {
+  // Ejemplo: /patients/123/detail -> extrae 123
+  const match = window.location.pathname.match(/\/patients\/([^\/]+)/);
+  return match ? match[1] : null;
+};
 
 const PatientDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const patientId = getPatientIdFromUrl();
   const [patient, setPatient] = useState<Patient | null>(null);
-  const [visits, setVisits] = useState<PatientVisit[]>([]);
+  const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!id) return;
-      const fetchedPatient = await PatientService.getById(id);
-      const fetchedVisits = await VisitService.getByPatientId(id);
+      if (!patientId) return;
+      const fetchedPatient = await PatientService.getById(patientId);
+      const fetchedVisits = await VisitService.getByPatientId(patientId);
       setPatient(fetchedPatient || null);
       setVisits(fetchedVisits || []);
       setLoading(false);
     };
     fetchData();
-  }, [id]);
+  }, [patientId]);
 
   if (loading) return <CircularProgress />;
   if (!patient) return <Alert severity="error">Paciente no encontrado</Alert>;
@@ -29,7 +35,7 @@ const PatientDetailPage = () => {
   return (
     <Container>
       <Typography variant="h4" gutterBottom>{patient.firstName} {patient.lastName}</Typography>
-      <Typography variant="body1">Fecha de nacimiento: {patient.dateOfBirth}</Typography>
+      <Typography variant="body1">Fecha de nacimiento: {patient.birthDate}</Typography>
       <Typography variant="body1">Sexo: {patient.gender}</Typography>
       <Typography variant="body2" color="textSecondary">ID: {patient.id}</Typography>
       <Typography variant="h6" sx={{ mt: 4 }}>Visitas clínicas</Typography>
@@ -40,7 +46,7 @@ const PatientDetailPage = () => {
           {visits.map(visit => (
             <ListItem key={visit.id} divider>
               <ListItemText
-                primary={`${visit.visitType} — ${visit.visitDate}`}
+                primary={`${visit.type} — ${visit.visitDate}`}
                 secondary={visit.notes || "Sin notas"}
               />
             </ListItem>
