@@ -1,4 +1,4 @@
-import { Evaluation } from '../emr/types/Evaluation';
+import type { Evaluation  } from '../emr/types/Evaluation';
 
 export interface PatientAlert {
   patientId: string;

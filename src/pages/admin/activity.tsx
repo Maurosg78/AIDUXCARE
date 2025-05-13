@@ -48,7 +48,7 @@ interface ActivityMetrics {
 }
 
 export default function ActivityPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user: _user, isAuthenticated } = useAuth();
   const [metrics, setMetrics] = useState<ActivityMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

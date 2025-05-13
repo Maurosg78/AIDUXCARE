@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { trackEvent } from '@/core/lib/langfuse.client';
-import { PatientEval } from '@/types/patient';
+import type { PatientEval  } from '@/types/patient';
 
 interface StructuredSuggestion {
   symptoms?: string[];

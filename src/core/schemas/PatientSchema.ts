@@ -1,37 +1,47 @@
-import { z } from 'zod';
-import { Patient } from '@/core/types';
+import type { z  } from '../../types/schema-utils';
+import type { Patient  } from '@/core/types';
 
 /**
  * Schema para validar datos de pacientes
  * Define la estructura y restricciones de los datos de un paciente
  */
 export const PatientSchema = z.object({
-  id: z.string().uuid().optional(),
-  name: z.string().min(1, { message: 'El nombre es requerido' }),
-  firstName: z.string().min(1, { message: 'El nombre es requerido' }).optional(),
-  lastName: z.string().min(1, { message: 'El apellido es requerido' }).optional(),
+  id: z.optional(z.string()),
+  name: z.string(),
+  firstName: z.optional(z.string()),
+  lastName: z.optional(z.string()),
   dateOfBirth: z.string(),
-  gender: z.string().optional(),
-  sex: z.enum(['M', 'F', 'O']).optional(),
-  email: z.string().email({ message: 'Email inválido' }).optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  history: z.array(z.string()).optional(),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
+  gender: z.optional(z.string()),
+  sex: z.optional(z.enumValues(['M', 'F', 'O'] as const)),
+  email: z.optional(z.string()),
+  phone: z.optional(z.string()),
+  address: z.optional(z.string()),
+  history: z.optional(z.array(z.string())),
+  createdAt: z.optional(z.string()),
+  updatedAt: z.optional(z.string()),
 });
 
-// Tipo para creación - sin id, createdAt o updatedAt
-export const PatientCreateSchema = PatientSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Tipo personalizado para el esquema
+export type PatientSchemaType = {
+  id?: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth: string;
+  gender?: string;
+  sex?: 'M' | 'F' | 'O';
+  email?: string;
+  phone?: string;
+  address?: string;
+  history?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+};
 
-// Tipo para actualización - todas las propiedades opcionales excepto id
-export const PatientUpdateSchema = PatientSchema.partial().required({
-  id: true,
-});
+// Tipos adicionales para casos de uso específicos
+export type PatientCreateType = Omit<PatientSchemaType, 'id' | 'createdAt' | 'updatedAt'>;
+
+export type PatientUpdateType = Partial<PatientSchemaType> & { id: string };
 
 // Re-exportamos el tipo Patient desde el archivo central de tipos
 export type { Patient }; 

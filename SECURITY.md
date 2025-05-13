@@ -331,13 +331,14 @@ Implementados a través de middleware en FastAPI y Express:
 | Mejora | Descripción | Prioridad | Estado |
 |--------|-------------|-----------|--------|
 | Validación completa de tipado TypeScript | Verificación de que todos los componentes, APIs y servicios tienen un tipado estricto sin errores ni bypass de tipo (@ts-ignore) | Alta | ✅ Completado |
+| Exportación PDF de visitas clínicas | Implementación de exportación PDF con datos clínicos estructurados y firma digital del profesional | Alta | ✅ Completado |
 
 ### Mejoras sugeridas para la versión 1.30+
 
 | Mejora | Descripción | Prioridad | Estado |
 |--------|-------------|-----------|--------|
 | MFA para cuentas críticas | Autenticación de dos factores para cuentas administrativas | Alta | En progreso |
-| Firma digital de campos clínicos | Implementación de firma digital (hash + timestamp) para cada campo clínico validado | Alta | En progreso |
+| Firma digital de campos clínicos | Implementación de firma digital (hash + timestamp) para cada campo clínico validado | Alta | ✅ Implementado en PDF |
 | Rotación automática de JWT | Mecanismo para rotación automática de tokens tras eventos críticos | Alta | En progreso |
 | Revisión avanzada de acceso granular por rol | Implementar control más detallado basado en permisos específicos, no solo roles | Media | Pendiente |
 | Auditoría externa del código y seguridad | Revisión por terceros de la arquitectura de seguridad | Media | Pendiente |

@@ -6,7 +6,7 @@ interface User {
 }
 
 // Definir los roles de usuario
-type UserRole = 'admin' | 'professional' | 'patient' | 'guest' | 'fisioterapeuta' | 'secretary';
+type UserRole = 'admin' | 'professional' | 'patient' | 'guest' | 'fisioterapeuta' | 'secretary' | 'developer';
 
 // Definir interfaces para servicios
 interface Patient {
@@ -178,8 +178,19 @@ declare module '@/core/config/routes' {
 }
 
 declare module '@/core/lib/langfuse.client' {
-  export function verifyLangfuseConfig(): void;
-  export function trackEvent(name: string, metadata?: Record<string, unknown>): Promise<void>;
+  export interface EventParams {
+    name: string;
+    payload?: Record<string, unknown>;
+    traceId?: string;
+  }
+  
+  export type EventOptions = string | EventParams;
+  
+  export function verifyLangfuseConfig(): boolean;
+  export function trackEvent(
+    eventOrName: EventOptions, 
+    metadata?: Record<string, unknown>
+  ): Promise<{ id: string } | null>;
 }
 
 declare module '@/hooks/useCopilot' {

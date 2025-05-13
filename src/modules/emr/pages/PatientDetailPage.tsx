@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Container, Typography, CircularProgress, Alert, List, ListItem, ListItemText } from "@mui/material";
 import PatientService from "@/core/services/patient/PatientService";
 import VisitService from "@/core/services/visit/VisitService";
-import { Patient, Visit } from "@/core/types";
+import type { Patient, Visit  } from '@/core/types';
 
 // Esta función extrae el ID del paciente de la URL actual
 const getPatientIdFromUrl = (): string | null => {

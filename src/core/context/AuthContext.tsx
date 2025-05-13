@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode  } from 'react';
 import { Navigate, useLocation } from '@/core/utils/router';
-import { UserSession, UserRole } from '@/core/types';
-import supabase from '@/core/lib/supabase';
+import type { UserSession, UserRole  } from '@/core/types';
+import { supabase } from '@/core/lib/supabase';
 import { CircularProgress, Box } from '@mui/material';
 
 interface AuthContextType {

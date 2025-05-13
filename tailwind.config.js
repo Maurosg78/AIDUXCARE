@@ -7,6 +7,14 @@ export default {
   theme: {
     extend: {
       colors: {
+        aidux: {
+          slate: '#2C3E50',        // Azul pizarra - fondo sidebar, texto principal
+          mint: '#A8E6CF',         // Verde menta suave - ficha clínica, elementos de salud
+          coral: '#FF6F61',        // Coral suave - botones activos, alertas leves
+          gray: '#BDC3C7',         // Gris neutro claro - campos inactivos, bordes
+          bone: '#F7F7F7',         // Blanco hueso - fondo general
+          teal: '#5DA5A3',         // Verde intersección - símbolo de unión, resaltes selectos
+        },
         primary: {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -22,7 +30,7 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Inter', 'Work Sans', 'Lato', 'sans-serif'],
       },
     },
   },

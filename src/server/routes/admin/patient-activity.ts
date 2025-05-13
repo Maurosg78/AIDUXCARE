@@ -1,66 +1,77 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Langfuse, LangfuseTrace } from 'langfuse-node';
-import { evaluatePatientVisit } from '@/utils/evals/structuredVisit';
+import { Langfuse } from 'langfuse-node';
+import type { LangfuseTrace, GetTracesOptions  } from '@/types/langfuse.events';
 
 interface LangfuseResponse {
   data: LangfuseTrace[];
 }
 
+// Extender Langfuse con los métodos necesarios
+interface ExtendedLangfuse extends Langfuse {
+  getTraces(options: GetTracesOptions): Promise<LangfuseResponse>;
+}
+
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
-  secretKey: process.env.LANGFUSE_SECRET_KEY || '',
-  baseUrl: process.env.VITE_LANGFUSE_BASE_URL || ''
-});
+  secretKey: process.env.VITE_LANGFUSE_SECRET_KEY || '',
+  baseUrl: process.env.VITE_LANGFUSE_HOST || 'https://cloud.langfuse.com'
+}) as ExtendedLangfuse;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+interface PatientActivity {
+  patientId: string;
+  lastUpdate: string;
+  totalEvents: number;
+  visitCount: number;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Método no permitido' });
+    return res.status(405).json({ error: 'Método no permitido' });
   }
 
   try {
-    // Obtener traces de los últimos 7 días
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
     const response = await langfuse.getTraces({
-      startTime: sevenDaysAgo.toISOString(),
-      name: 'form.update'
-    }) as LangfuseResponse;
+      startTime: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 días
+      limit: 1000
+    });
 
-    const traces = response.data;
+    const traces = response.data || [];
+    const patientActivityMap = new Map<string, PatientActivity>();
 
-    // Agrupar por paciente y obtener evaluaciones
-    const patientTraces = new Map<string, LangfuseTrace>();
-    for (const trace of traces) {
+    // Agrupar por paciente
+    traces.forEach(trace => {
       const patientId = trace.metadata?.patientId;
-      if (patientId && !patientTraces.has(patientId)) {
-        patientTraces.set(patientId, trace);
-      }
-    }
+      if (!patientId) return;
 
-    // Realizar evaluaciones para cada paciente
-    const patientActivity = await Promise.all(
-      Array.from(patientTraces.entries()).map(async ([patientId, trace]) => {
-        const evaluation = await evaluatePatientVisit(langfuse, trace.id);
-        return {
+      if (!patientActivityMap.has(patientId)) {
+        patientActivityMap.set(patientId, {
           patientId,
-          traceId: trace.id,
           lastUpdate: trace.startTime,
-          completenessScore: evaluation.completenessScore,
-          missingFields: evaluation.missingFields,
-          warnings: evaluation.warnings
-        };
-      })
-    );
+          totalEvents: 1,
+          visitCount: 1
+        });
+      } else {
+        const activity = patientActivityMap.get(patientId)!;
+        activity.totalEvents++;
+        
+        // Actualizar última actualización si es más reciente
+        if (new Date(trace.startTime) > new Date(activity.lastUpdate)) {
+          activity.lastUpdate = trace.startTime;
+        }
+      }
+    });
 
-    return res.status(200).json({
-      patients: patientActivity
+    // Convertir a array y ordenar por fecha descendente
+    const patientActivity = Array.from(patientActivityMap.values())
+      .sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime());
+
+    res.status(200).json({
+      patients: patientActivity,
+      totalPatients: patientActivityMap.size,
+      lastUpdated: new Date().toISOString()
     });
   } catch (error) {
     console.error('Error al obtener actividad de pacientes:', error);
-    return res.status(500).json({ message: 'Error interno del servidor' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 } 

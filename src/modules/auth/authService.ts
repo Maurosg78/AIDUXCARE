@@ -8,7 +8,7 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
-  clinic: string;
+  clinic?: string;
 }
 
 class AuthService {
@@ -26,8 +26,7 @@ class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
-      clinic: user.clinic
+      role: user.role as UserRole,
     };
 
     sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(sessionUser));

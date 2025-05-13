@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect  } from 'react';
 import { 
   Box, 
   Card, 
@@ -22,9 +22,42 @@ import EditIcon from '@mui/icons-material/Edit';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import WarningIcon from '@mui/icons-material/Warning';
-import type { ImpactStats } from '@/mock/impactStats';
 import mockImpactStats from '@/mock/impactStats';
 import { useAuth } from '@/core/context/AuthContext';
+
+// Definir la interfaz localmente
+interface MonthlyMetric {
+  month: string;
+  value: number;
+}
+
+interface ActivityItem {
+  timestamp: string;
+  action: string;
+  field: string;
+  visitId: string;
+  patientId: string;
+}
+
+interface ImpactStats {
+  professionalId: string;
+  totalVisits: number;
+  totalSuggestions: number;
+  acceptedSuggestions: number;
+  modifiedSuggestions: number;
+  rejectedSuggestions: number;
+  estimatedTimeSaved: number;
+  preventedAlerts: number;
+  suggestionsByType: {
+    diagnostico: number;
+    evaluacion: number;
+    tratamiento: number;
+    seguimiento: number;
+  };
+  monthlySuggestions: MonthlyMetric[];
+  monthlyAcceptanceRate: MonthlyMetric[];
+  recentActivity: ActivityItem[];
+}
 
 interface ImpactDashboardProps {
   professionalId?: string;
@@ -61,7 +94,7 @@ const ImpactDashboard: React.FC<ImpactDashboardProps> = ({ professionalId }) => 
           return;
         }
         
-        setStats(data);
+        setStats(data as ImpactStats);
         setLoading(false);
       } catch {
         setError('Error al cargar las estadísticas de impacto');
@@ -256,43 +289,48 @@ const ImpactDashboard: React.FC<ImpactDashboardProps> = ({ professionalId }) => 
           </Card>
         </Grid>
         
-        <Grid item xs={12} md={6}>
+        {/* Actividad reciente */}
+        <Grid item xs={12}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Actividad Reciente
               </Typography>
               <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
+                <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Fecha/Hora</TableCell>
+                      <TableCell>Fecha</TableCell>
                       <TableCell>Acción</TableCell>
                       <TableCell>Campo</TableCell>
+                      <TableCell>ID Visita</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {stats.recentActivity.map((activity, index) => (
+                    {stats.recentActivity.map((activity: ActivityItem, index: number) => (
                       <TableRow key={index}>
-                        <TableCell>{new Date(activity.timestamp).toLocaleString()}</TableCell>
+                        <TableCell>
+                          {new Date(activity.timestamp).toLocaleDateString()} {new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </TableCell>
                         <TableCell>
                           <Chip 
-                            size="small"
                             label={ACTION_LABELS[activity.action] || activity.action}
                             icon={
-                              activity.action === 'ai_suggestion_accepted' ? <CheckCircleIcon fontSize="small" /> :
-                              activity.action === 'ai_suggestion_modified' ? <EditIcon fontSize="small" /> :
-                              <CancelIcon fontSize="small" />
+                              activity.action === 'ai_suggestion_accepted' ? <CheckCircleIcon /> :
+                              activity.action === 'ai_suggestion_modified' ? <EditIcon /> :
+                              <CancelIcon />
                             }
                             color={
                               activity.action === 'ai_suggestion_accepted' ? 'success' :
-                              activity.action === 'ai_suggestion_modified' ? 'primary' :
+                              activity.action === 'ai_suggestion_modified' ? 'info' :
                               'error'
                             }
+                            size="small"
                             variant="outlined"
                           />
                         </TableCell>
                         <TableCell>{activity.field}</TableCell>
+                        <TableCell>{activity.visitId}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

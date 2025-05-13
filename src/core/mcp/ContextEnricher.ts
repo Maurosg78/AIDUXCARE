@@ -1,5 +1,5 @@
 import { trackEvent } from '@/core/lib/langfuse.client';
-import { PatientService as IPatientService } from '@/core/types';
+import type { PatientService as IPatientService  } from '@/core/types';
 import { EMREnrichmentSource } from './enrichment/EMREnrichmentSource';
 import { MCPContext } from './interfaces/MCPTool';
 

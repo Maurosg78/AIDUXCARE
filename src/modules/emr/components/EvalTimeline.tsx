@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState  } from 'react';
 import { Box, Typography, Card, CardContent, Stack, Alert, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -114,7 +114,7 @@ const EvalTimeline: React.FC<EvalTimelineProps> = ({ patientId }) => {
               <Card key={index} variant="outlined">
                 <CardContent>
                   <Typography variant="subtitle1" color="primary">
-                    {new Date(evaluation.visitDate).toLocaleDateString('es-ES', {
+                    {new Date(evaluation.createdAt || new Date().toISOString()).toLocaleDateString('es-ES', {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric'
@@ -124,7 +124,7 @@ const EvalTimeline: React.FC<EvalTimelineProps> = ({ patientId }) => {
                     {evaluation.motivo}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {evaluation.observaciones}
+                    {evaluation.observations}
                   </Typography>
                   
                   {/* Alertas originales */}

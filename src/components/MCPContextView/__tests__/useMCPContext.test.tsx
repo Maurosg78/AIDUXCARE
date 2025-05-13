@@ -1,3 +1,6 @@
+import type { ReactNode } from 'react';
+import type { MCPContext } from '../../../../core/mcp/CopilotContextBuilder';
+import type { TestWrapperProps } from '@/types/testing';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import axios from 'axios';
@@ -26,13 +29,13 @@ describe('useMCPContext', () => {
     jest.clearAllMocks();
   });
 
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
+  const wrapper = ({ children }: TestWrapperProps) => (
     <QueryClientProvider client={queryClient}>
       {children}
     </QueryClientProvider>
   );
 
-  const mockContext = {
+  const mockContext: MCPContext = {
     patient_state: {
       age: 45,
       sex: 'M',

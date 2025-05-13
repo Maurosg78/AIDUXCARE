@@ -1,22 +1,48 @@
 import { Langfuse } from 'langfuse';
-import { LangfuseConfig } from '@/core/types';
+import type { LangfuseConfig  } from '@/core/types';
 
 // Declaración de tipo para entorno Vite 
 declare global {
   interface ImportMetaEnv {
-    VITE_LANGFUSE_PUBLIC_KEY: string;
-    VITE_LANGFUSE_SECRET_KEY?: string;
-    VITE_ENV?: string;
+    readonly VITE_LANGFUSE_PUBLIC_KEY?: string;
+    readonly VITE_LANGFUSE_SECRET_KEY?: string;
+    readonly VITE_ENV?: 'development' | 'production' | 'test';
+    readonly VITE_LANGFUSE_BASE_URL?: string;
   }
 }
 
-// Configuración desde variables de entorno
-export const langfuseConfig: LangfuseConfig = {
-  publicKey: import.meta.env.VITE_LANGFUSE_PUBLIC_KEY || '',
-  secretKey: import.meta.env.VITE_LANGFUSE_SECRET_KEY || '',
-  development: import.meta.env.VITE_ENV === 'development',
-  project: 'aiduxcare',
+/**
+ * Configuración para la integración con Langfuse
+ */
+
+// Configuración básica para Langfuse
+export const langfuseConfig = {
+  publicKey: import.meta.env.VITE_LANGFUSE_PUBLIC_KEY as string | undefined,
+  secretKey: import.meta.env.VITE_LANGFUSE_SECRET_KEY as string | undefined,
+  baseUrl: import.meta.env.VITE_LANGFUSE_BASE_URL as string | undefined,
+  environment: import.meta.env.VITE_ENV as 'development' | 'production' | 'test' | undefined || 'development'
 };
+
+// Detección de ambiente de desarrollo
+export const isDevelopment = import.meta.env.DEV;
+
+// Verificar que tenemos las credenciales necesarias
+export const hasCredentials = Boolean(langfuseConfig.publicKey) && Boolean(langfuseConfig.secretKey);
+
+// Funciones de utilidad
+export function isConfigured(): boolean {
+  return hasCredentials;
+}
+
+// Obtenemos el proyecto actual
+export function getProject(): string {
+  return 'aiduxcare-client';
+}
+
+// Obtenemos el ambiente actual
+export function getEnvironment(): string {
+  return langfuseConfig.environment;
+}
 
 // Cliente de Langfuse para el frontend
 export const langfuseClient: Langfuse | null = (() => {

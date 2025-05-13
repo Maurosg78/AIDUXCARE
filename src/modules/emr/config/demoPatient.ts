@@ -1,4 +1,4 @@
-import { PatientEval } from '@/types/Evaluation';
+import type { PatientEval  } from '@/types/Evaluation';
 
 export const DEMO_PATIENT_ID = 'demo-onboarding';
 

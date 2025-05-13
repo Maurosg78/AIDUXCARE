@@ -3,7 +3,8 @@ import axios from "axios";
 const API_URL = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium";
 
 const headers = {
-  Authorization: `Bearer ${import.meta.env.VITE_HUGGINGFACE_API_KEY}`,
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${import.meta.env.VITE_HUGGINGFACE_API_KEY as string | undefined}`,
 };
 
 export async function getAIResponse(prompt: string): Promise<string> {

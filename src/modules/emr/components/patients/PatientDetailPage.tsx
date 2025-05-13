@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState  } from 'react';
 import { useParams } from '@/core/utils/router';
 import { Container, Typography, CircularProgress, Alert } from "@mui/material";
 import PatientService from "@/core/services/patient/PatientService";

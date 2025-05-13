@@ -1,70 +1,49 @@
-import { z } from 'zod';
-import { Visit as VisitType } from '@/core/types';
+import type { Visit as VisitType  } from '@/core/types';
 
 /**
- * Schema para validar visitas clínicas
- * Define la estructura y restricciones de los datos de una visita
+ * Interfaz para definir visitas clínicas
  */
-const VisitStatusSchema = z.enum(['scheduled', 'in_progress', 'completed', 'cancelled']);
-const PaymentStatusSchema = z.enum(['pending', 'paid', 'cancelled', 'refunded']);
-const ModalidadSchema = z.enum(['presencial', 'telematica']);
-
-export const VisitSchema = z.object({
-  id: z.string().uuid().optional(),
-  patientId: z.string().uuid(),
-  professionalId: z.string().uuid(),
-  professionalEmail: z.string().email(),
-  scheduledDate: z.string().datetime(),
-  duration: z.number().min(15).max(120).optional(),
-  status: VisitStatusSchema,
-  paymentStatus: PaymentStatusSchema,
-  motivo: z.string(),
-  modalidad: ModalidadSchema.optional(),
-  precio: z.number().optional(),
-  previousHistory: z.boolean().optional(),
-  createdAt: z.string().datetime().optional(),
-  updatedAt: z.string().datetime().optional(),
-  notes: z.string().optional(),
-  metadata: z.object({
-    visit_type: z.string(),
-    duration_minutes: z.number(),
-    location: z.string().optional(),
-    follow_up_required: z.boolean()
-  }).optional(),
-  visitDate: z.string(),
-  reason: z.string(),
-  diagnosticoFisioterapeutico: z.string().optional(),
-  tratamientoPropuesto: z.string().optional(),
-});
-
-// Definimos un tipo de Zod para la visita
-export type Visit = z.infer<typeof VisitSchema>;
+export interface Visit {
+  id: string;
+  patientId: string;
+  professionalId?: string;
+  professionalEmail: string;
+  scheduledDate: string;
+  duration?: number;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  paymentStatus: 'pending' | 'paid' | 'cancelled' | 'refunded';
+  motivo: string;
+  modalidad?: 'presencial' | 'telematica';
+  precio?: number;
+  previousHistory?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  notes?: string;
+  metadata?: {
+    visit_type: string;
+    duration_minutes: number;
+    location?: string;
+    follow_up_required: boolean;
+  };
+  visitDate: string;
+  reason?: string;
+  diagnosticoFisioterapeutico?: string;
+  tratamientoPropuesto?: string;
+}
 
 /**
- * Schema para validar el resumen de una visita
- * Versión simplificada para listados y previews
+ * Interfaz para resumen de visita (versión simplificada)
  */
-export const VisitSummarySchema = VisitSchema.pick({
-  id: true,
-  scheduledDate: true,
-  professionalEmail: true,
-  motivo: true,
-  status: true
-});
-
-export type VisitSummary = z.infer<typeof VisitSummarySchema>;
-
-// Tipo para creación - sin id, createdAt o updatedAt
-export const VisitCreateSchema = VisitSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-// Tipo para actualización - todas las propiedades opcionales excepto id
-export const VisitUpdateSchema = VisitSchema.partial().required({
-  id: true,
-});
+export interface VisitSummary {
+  id: string;
+  patientId: string;
+  patientName: string;
+  visitDate: string;
+  visitType: string;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  professionalId?: string;
+  professionalName?: string;
+}
 
 // Re-exportamos el tipo Visit desde el archivo central de tipos para mantener compatibilidad
 export type { VisitType as VisitInterface }; 

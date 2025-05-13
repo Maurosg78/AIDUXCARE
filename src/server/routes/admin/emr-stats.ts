@@ -1,15 +1,21 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Langfuse, LangfuseTrace } from 'langfuse-node';
+import { Langfuse } from 'langfuse-node';
+import type { LangfuseTrace, GetTracesOptions, LangfuseObservation  } from '@/types/langfuse.events';
 
 interface LangfuseResponse {
   data: LangfuseTrace[];
+}
+
+// Extender Langfuse con los métodos necesarios
+interface ExtendedLangfuse extends Langfuse {
+  getTraces(options: GetTracesOptions): Promise<LangfuseResponse>;
 }
 
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
   secretKey: process.env.VITE_LANGFUSE_SECRET_KEY || '',
   baseUrl: process.env.VITE_LANGFUSE_HOST || 'https://cloud.langfuse.com'
-});
+}) as ExtendedLangfuse;
 
 interface DailyStats {
   date: string;
@@ -40,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const response = await langfuse.getTraces({
       startTime: sevenDaysAgo.toISOString()
-    }) as LangfuseResponse;
+    });
 
     const traces = response.data;
 
@@ -69,7 +75,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         uniquePatients.add(patientId);
       }
 
-      trace.observations?.forEach(obs => {
+      // Si observations es undefined o no es un array, lo tratamos como un array vacío
+      const observations = Array.isArray(trace.observations) ? trace.observations : [];
+      
+      observations.forEach((obs: LangfuseObservation) => {
         const date = new Date(obs.startTime).toISOString().split('T')[0];
         const dailyStats = dailyStatsMap.get(date);
         

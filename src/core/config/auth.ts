@@ -1,5 +1,5 @@
-import type { Session } from '@auth/core/types';
-import type { AuthOptions } from '@auth/core';
+import type { Session } from 'next-auth';
+import type { NextAuthOptions } from 'next-auth';
 
 export interface CustomUser {
   id: string;
@@ -12,7 +12,7 @@ export interface CustomSession extends Session {
   user: CustomUser;
 }
 
-export const authConfig: AuthOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [],
   callbacks: {
     async session({ session, token }): Promise<CustomSession> {

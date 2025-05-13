@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState  } from 'react';
 import { 
   Typography, 
   List, 
@@ -25,7 +25,7 @@ import {
 import { ArrowBack as ArrowBackIcon, Visibility as VisibilityIcon, Add as AddIcon } from '@mui/icons-material';
 import PatientService from '@/core/services/patient/PatientService';
 import VisitService from '@/core/services/visit/VisitService';
-import { Patient, Visit } from "@/core/types";
+import type { Patient, Visit  } from '@/core/types';
 
 // Función para extraer ID del paciente de la URL
 const getPatientIdFromUrl = (): string | null => {
@@ -127,7 +127,8 @@ const PatientVisitListPage: React.FC = () => {
     navigateTo(`/visits/${visitId}`);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Fecha no disponible';
     return new Date(dateString).toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'long',
@@ -191,7 +192,7 @@ const PatientVisitListPage: React.FC = () => {
                     secondary={
                       <>
                         <Typography component="span" variant="body2" color="text.primary">
-                          {formatDate(visit.visitDate)}
+                          {formatDate(visit.visitDate || visit.date)}
                         </Typography>
                         {visit.notes && (
                           <Typography component="p" variant="body2">
@@ -229,12 +230,12 @@ const PatientVisitListPage: React.FC = () => {
                 <InputLabel>Paciente</InputLabel>
                 <Select
                   value={selectedPatientId}
-                  onChange={(e) => setSelectedPatientId(e.target.value)}
+                  onChange={(e) => setSelectedPatientId(e.target.value as string)}
                   label="Paciente"
                 >
                   {patients.map((patient) => (
                     <MenuItem key={patient.id} value={patient.id}>
-                      {patient.firstName} {patient.lastName}
+                      {patient.firstName} {patient.lastName || patient.name}
                     </MenuItem>
                   ))}
                 </Select>
@@ -253,68 +254,72 @@ const PatientVisitListPage: React.FC = () => {
             <Button onClick={() => setIsNewVisitDialogOpen(false)}>Cancelar</Button>
             <Button 
               onClick={handleNewVisitConfirm} 
-              variant="contained" 
               disabled={!selectedPatientId}
+              variant="contained"
             >
               Continuar
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Diálogo de nuevo paciente */}
+        {/* Diálogo de creación de paciente */}
         <Dialog open={isNewPatientDialogOpen} onClose={() => setIsNewPatientDialogOpen(false)}>
-          <DialogTitle>Nuevo Paciente</DialogTitle>
+          <DialogTitle>Crear Nuevo Paciente</DialogTitle>
           <DialogContent>
-            <Box sx={{ minWidth: 300, mt: 2 }}>
-              <Stack spacing={2}>
-                <TextField
-                  label="Nombre"
-                  fullWidth
-                  value={newPatient.firstName}
-                  onChange={(e) => setNewPatient({...newPatient, firstName: e.target.value})}
-                />
-                <TextField
-                  label="Apellido"
-                  fullWidth
-                  value={newPatient.lastName}
-                  onChange={(e) => setNewPatient({...newPatient, lastName: e.target.value})}
-                />
-                <TextField
-                  label="Fecha de nacimiento"
-                  type="date"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  value={newPatient.birthDate}
-                  onChange={(e) => setNewPatient({...newPatient, birthDate: e.target.value})}
-                />
-                <TextField
-                  label="Email"
-                  type="email"
-                  fullWidth
-                  value={newPatient.email}
-                  onChange={(e) => setNewPatient({
-                    ...newPatient, 
-                    email: e.target.value
-                  })}
-                />
-                <TextField
-                  label="Teléfono"
-                  fullWidth
-                  value={newPatient.phone}
-                  onChange={(e) => setNewPatient({
-                    ...newPatient,
-                    phone: e.target.value
-                  })}
-                />
-              </Stack>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2, minWidth: 400 }}>
+              <TextField 
+                label="Nombre" 
+                value={newPatient.firstName || ''}
+                onChange={(e) => setNewPatient({...newPatient, firstName: e.target.value})}
+                fullWidth
+              />
+              <TextField 
+                label="Apellidos" 
+                value={newPatient.lastName || ''}
+                onChange={(e) => setNewPatient({...newPatient, lastName: e.target.value})}
+                fullWidth
+              />
+              <TextField 
+                label="Email" 
+                type="email"
+                value={newPatient.email || ''}
+                onChange={(e) => setNewPatient({...newPatient, email: e.target.value})}
+                fullWidth
+              />
+              <TextField 
+                label="Teléfono" 
+                value={newPatient.phone || ''}
+                onChange={(e) => setNewPatient({...newPatient, phone: e.target.value})}
+                fullWidth
+              />
+              <TextField 
+                label="Fecha de Nacimiento"
+                type="date"
+                value={newPatient.birthDate || ''}
+                onChange={(e) => setNewPatient({...newPatient, birthDate: e.target.value})}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+              />
+              <FormControl fullWidth>
+                <InputLabel>Género</InputLabel>
+                <Select
+                  value={newPatient.gender || 'other'}
+                  onChange={(e) => setNewPatient({...newPatient, gender: e.target.value})}
+                  label="Género"
+                >
+                  <MenuItem value="male">Masculino</MenuItem>
+                  <MenuItem value="female">Femenino</MenuItem>
+                  <MenuItem value="other">Otro</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setIsNewPatientDialogOpen(false)}>Cancelar</Button>
             <Button 
-              onClick={handleNewPatientSubmit} 
+              onClick={handleNewPatientSubmit}
+              disabled={!newPatient.firstName || !newPatient.lastName} 
               variant="contained"
-              disabled={!newPatient.firstName || !newPatient.lastName}
             >
               Crear Paciente
             </Button>

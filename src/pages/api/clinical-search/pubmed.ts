@@ -1,13 +1,14 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/core/config/auth';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
+import type { Session } from 'next-auth';
 
 interface PubMedResult {
   title: string;
   year: number;
   source: string;
   url: string;
-  abstract?: string;
+  abstract: string | undefined;
 }
 
 export default async function handler(
@@ -19,7 +20,7 @@ export default async function handler(
   }
 
   try {
-    const session = await getServerSession(req, res, authOptions);
+    const session = await getServerSession(req, res, authOptions) as Session | null;
     if (!session?.user) {
       return res.status(401).json({ message: 'No autorizado' });
     }
@@ -67,19 +68,19 @@ export default async function handler(
     let match;
     while ((match = articleRegex.exec(xmlText)) !== null) {
       const article = match[1];
-      const titleMatch = titleRegex.exec(article);
-      const yearMatch = yearRegex.exec(article);
-      const journalMatch = journalRegex.exec(article);
-      const abstractMatch = abstractRegex.exec(article);
+      const titleMatch = titleRegex.exec(article || '');
+      const yearMatch = yearRegex.exec(article || '');
+      const journalMatch = journalRegex.exec(article || '');
+      const abstractMatch = abstractRegex.exec(article || '');
 
-      if (titleMatch && yearMatch && journalMatch) {
+      if (titleMatch?.[1] && yearMatch?.[1] && journalMatch?.[1]) {
         const pmid = pmids[results.length];
         results.push({
           title: titleMatch[1].replace(/<[^>]*>/g, ''),
           year: parseInt(yearMatch[1]),
           source: journalMatch[1].replace(/<[^>]*>/g, ''),
           url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
-          abstract: abstractMatch ? abstractMatch[1].replace(/<[^>]*>/g, '') : undefined
+          abstract: abstractMatch?.[1]?.replace(/<[^>]*>/g, '') || undefined
         });
       }
     }

@@ -1,10 +1,45 @@
 import { Router } from 'express';
-import { z } from 'zod';
-import { PatientSchema } from '../../../core/services/patient/PatientService';
+import * as zod from '@/types/zod-utils';
+
+// Definimos los esquemas directamente en este archivo
+const PatientDataSchema = zod.z.object({
+  id: zod.z.string(),
+  name: zod.z.string(),
+  birthDate: zod.z.string(),
+  allergies: zod.z.array(zod.z.string()),
+  chronicConditions: zod.z.array(zod.z.string()),
+  medications: zod.z.array(zod.z.string())
+});
+
+const VisitSchema = zod.z.object({
+  id: zod.z.string(),
+  date: zod.z.string(),
+  type: zod.z.string(),
+  summary: zod.z.string(),
+  professional: zod.z.string()
+});
+
+// Tipo inferido del esquema para uso en TypeScript
+type Patient = {
+  id: string;
+  name: string;
+  birthDate: string;
+  allergies: string[];
+  chronicConditions: string[];
+  medications: string[];
+};
+
+type Visit = {
+  id: string;
+  date: string;
+  type: string;
+  summary: string;
+  professional: string;
+};
 
 // Simulación de base de datos local
 const mockDatabase = {
-  patients: new Map([
+  patients: new Map<string, Patient>([
     ['p1', {
       id: 'p1',
       name: 'Juan García López',
@@ -22,7 +57,7 @@ const mockDatabase = {
       medications: ['Salbutamol inhalador']
     }]
   ]),
-  visits: new Map([
+  visits: new Map<string, Visit[]>([
     ['p1', [
       {
         id: 'v1',
@@ -58,6 +93,25 @@ class PatientNotFoundError extends Error {
   }
 }
 
+// Tipo para ZodError para cuando no tenemos acceso directo a la clase
+interface ZodErrorType {
+  errors: Array<{
+    path: string[];
+    message: string;
+    code: string;
+  }>;
+}
+
+// Función para verificar si un error es de tipo ZodError
+function isZodError(error: unknown): error is ZodErrorType {
+  return (
+    typeof error === 'object' && 
+    error !== null && 
+    'errors' in error && 
+    Array.isArray((error as any).errors)
+  );
+}
+
 const router = Router();
 
 router.get('/:id', async (req, res) => {
@@ -74,7 +128,7 @@ router.get('/:id', async (req, res) => {
     
     // Obtener y validar visitas
     const visits = mockDatabase.visits.get(patientId) || [];
-    const validatedVisits = z.array(VisitSchema).parse(visits);
+    const validatedVisits = zod.z.array(VisitSchema).parse(visits);
 
     res.json({
       patient: validatedPatient,
@@ -83,8 +137,11 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     if (error instanceof PatientNotFoundError) {
       res.status(404).json({ error: error.message });
-    } else if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Datos inválidos en el EMR', details: error.errors });
+    } else if (isZodError(error)) {
+      res.status(400).json({ 
+        error: 'Datos inválidos en el EMR', 
+        details: error.errors 
+      });
     } else {
       console.error('Error al obtener datos del paciente:', error);
       res.status(500).json({ error: 'Error interno del servidor' });

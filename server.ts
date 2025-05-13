@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { resolve } from 'path';
 import { createRequire } from 'module';
 import { langfuseServer, mockLangfuseEvent, isServerEnvValid } from './src/core/lib/langfuse.config';
+import { applySecurityMiddleware } from './src/core/middleware/security';
 
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
@@ -17,8 +18,28 @@ if (!isValid && process.env.NODE_ENV !== 'development') {
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+// Configuración de CORS restrictiva
+const allowedOrigins = ['http://localhost:3000', 'https://aiduxcare.vercel.app'];
+app.use(cors({
+  origin: function(origin, callback) {
+    // Permitir solicitudes sin origen (como las llamadas desde Postman o curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `El origen ${origin} no está permitido por la política CORS`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
+
+// Aplicar middleware de seguridad
+applySecurityMiddleware(app);
 
 // Middleware de registro para depuración
 app.use((req, res, next) => {

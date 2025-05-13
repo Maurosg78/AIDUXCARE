@@ -1,142 +1,135 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Langfuse, LangfuseTrace } from 'langfuse-node';
-import { evaluatePatientVisit } from '@/utils/evals/structuredVisit';
+import { Langfuse } from 'langfuse-node';
+import type { LangfuseTrace, GetTracesOptions  } from '@/types/langfuse.events';
 import Papa from 'papaparse';
 
-interface LangfuseResponse {
-  data: LangfuseTrace[];
+// Extender la interfaz de Langfuse con métodos adicionales
+interface ExtendedLangfuse extends Langfuse {
+  getTraces(options: GetTracesOptions): Promise<{ data: LangfuseTrace[] }>;
 }
 
+// Extender Langfuse con los métodos necesarios
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
-  secretKey: process.env.VITE_LANGFUSE_SECRET_KEY || '',
-  baseUrl: process.env.VITE_LANGFUSE_HOST || 'https://cloud.langfuse.com'
-});
+  secretKey: process.env.LANGFUSE_SECRET_KEY || '',
+  baseUrl: process.env.VITE_LANGFUSE_BASE_URL || 'https://cloud.langfuse.com'
+}) as ExtendedLangfuse;
 
-interface WeeklyStats {
-  period: {
-    start: string;
-    end: string;
-  };
-  metrics: {
-    totalFormUpdates: number;
-    totalFeedback: number;
-    avgCompletenessScore: number;
-    topMissingFields: Array<{ field: string; count: number }>;
-    topWarnings: Array<{ warning: string; count: number }>;
-  };
+interface WeeklyReport {
+  startDate: string;
+  endDate: string;
+  totalPatients: number;
+  newPatients: number;
+  totalVisits: number;
+  totalFormUpdates: number;
+  totalFeedback: number;
+  mostActivePatients: Array<{ patientId: string; eventCount: number }>;
 }
 
-async function generateWeeklyReport(): Promise<WeeklyStats> {
-  // Obtener datos de los últimos 7 días
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  const response = await langfuse.getTraces({
-    startTime: sevenDaysAgo.toISOString(),
-    name: 'form.update'
-  }) as LangfuseResponse;
-
-  const traces = response.data;
-
-  // Agrupar por paciente (último trace por paciente)
-  const patientTraces = new Map<string, LangfuseTrace>();
-  for (const trace of traces) {
-    const patientId = trace.metadata?.patientId;
-    if (patientId) {
-      const existingTrace = patientTraces.get(patientId);
-      if (!existingTrace || new Date(trace.startTime) > new Date(existingTrace.startTime)) {
-        patientTraces.set(patientId, trace);
-      }
-    }
-  }
-
-  // Realizar evaluaciones
-  const evaluations = await Promise.all(
-    Array.from(patientTraces.values()).map(trace => 
-      evaluatePatientVisit(langfuse, trace.id)
-    )
-  );
-
-  // Calcular estadísticas
-  const totalEvals = evaluations.length;
-  const avgScore = totalEvals > 0
-    ? Math.round(evaluations.reduce((sum, evaluation) => sum + evaluation.completenessScore, 0) / totalEvals)
-    : 0;
-
-  // Contar campos faltantes
-  const missingFieldsCount = new Map<string, number>();
-  evaluations.forEach(evaluation => {
-    evaluation.missingFields.forEach(field => {
-      missingFieldsCount.set(field, (missingFieldsCount.get(field) || 0) + 1);
-    });
-  });
-
-  const topMissingFields = Array.from(missingFieldsCount.entries())
-    .map(([field, count]) => ({ field, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
-
-  // Contar advertencias
-  const warningsCount = new Map<string, number>();
-  evaluations.forEach(evaluation => {
-    evaluation.warnings.forEach(warning => {
-      warningsCount.set(warning, (warningsCount.get(warning) || 0) + 1);
-    });
-  });
-
-  const topWarnings = Array.from(warningsCount.entries())
-    .map(([warning, count]) => ({ warning, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
-
-  // Contar eventos por tipo
-  const totalFormUpdates = traces.filter(t => t.name === 'form.update').length;
-  const totalFeedback = traces.filter(t => t.name === 'copilot.feedback').length;
-
-  return {
-    period: {
-      start: sevenDaysAgo.toISOString(),
-      end: new Date().toISOString()
-    },
-    metrics: {
-      totalFormUpdates,
-      totalFeedback,
-      avgCompletenessScore: avgScore,
-      topMissingFields,
-      topWarnings
-    }
-  };
-}
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Método no permitido' });
+    return res.status(405).json({ error: 'Método no permitido' });
   }
 
   try {
-    const report = await generateWeeklyReport();
+    // Calcular rango de fechas para la semana pasada
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 7);
+
+    const response = await langfuse.getTraces({
+      startTime: startDate.toISOString(),
+      endTime: endDate.toISOString()
+    });
+
+    const traces = response.data || [];
+    const patientTraces = new Map<string, LangfuseTrace[]>();
+    const patientEvents = new Map<string, number>();
+    
+    // Agrupar trazas por paciente
+    traces.forEach(trace => {
+      const patientId = trace.metadata?.patientId;
+      if (!patientId) return;
+      
+      if (!patientTraces.has(patientId)) {
+        patientTraces.set(patientId, [trace]);
+        patientEvents.set(patientId, 1);
+      } else {
+        const existingTraces = patientTraces.get(patientId)!;
+        
+        // Verificar si es una traza más reciente
+        if (!existingTraces.some(t => t.id === trace.id)) {
+          existingTraces.push(trace);
+          patientEvents.set(patientId, (patientEvents.get(patientId) || 0) + 1);
+        }
+      }
+    });
+
+    // Encontrar nuevos pacientes (primera traza dentro del período)
+    const allPatientsResponse = await langfuse.getTraces({
+      endTime: startDate.toISOString()
+    });
+    
+    const existingPatientIds = new Set<string>();
+    allPatientsResponse.data?.forEach(trace => {
+      const patientId = trace.metadata?.patientId;
+      if (patientId) {
+        existingPatientIds.add(patientId);
+      }
+    });
+
+    // Contar nuevos pacientes
+    const newPatients = Array.from(patientTraces.keys()).filter(
+      patientId => !existingPatientIds.has(patientId)
+    ).length;
+
+    // Obtener pacientes más activos
+    const mostActivePatients = Array.from(patientEvents.entries())
+      .map(([patientId, eventCount]) => ({ patientId, eventCount }))
+      .sort((a, b) => b.eventCount - a.eventCount)
+      .slice(0, 5);
+
+    // Contar eventos específicos por nombre
+    const totalFormUpdates = traces.filter(t => {
+      return typeof t.name === 'string' && t.name === 'form.update';
+    }).length;
+    
+    const totalFeedback = traces.filter(t => {
+      return typeof t.name === 'string' && t.name === 'copilot.feedback';
+    }).length;
+
+    const totalVisits = traces.filter(t => {
+      return typeof t.name === 'string' && t.name.includes('visit');
+    }).length;
+
+    const report: WeeklyReport = {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      totalPatients: patientTraces.size,
+      newPatients,
+      totalVisits,
+      totalFormUpdates,
+      totalFeedback,
+      mostActivePatients
+    };
+
     const format = req.query.format || 'json';
 
     if (format === 'csv') {
       // Preparar datos para CSV
       const csvData = [
         ['Período', 'Inicio', 'Fin'],
-        ['', report.period.start, report.period.end],
+        ['', report.startDate, report.endDate],
         [],
         ['Métricas', 'Valor'],
-        ['Total Actualizaciones de Formulario', report.metrics.totalFormUpdates],
-        ['Total Feedbacks', report.metrics.totalFeedback],
-        ['Score Promedio de Completitud', `${report.metrics.avgCompletenessScore}%`],
+        ['Total Actualizaciones de Formulario', report.totalFormUpdates],
+        ['Total Feedbacks', report.totalFeedback],
+        ['Total Visitas', report.totalVisits],
         [],
-        ['Top 5 Campos Faltantes', 'Cantidad'],
-        ...report.metrics.topMissingFields.map(({ field, count }) => [field, count]),
+        ['Pacientes Activos', 'Cantidad'],
+        ...report.mostActivePatients.map(({ patientId, eventCount }) => [patientId, eventCount]),
         [],
-        ['Top 5 Advertencias', 'Cantidad'],
-        ...report.metrics.topWarnings.map(({ warning, count }) => [warning, count])
+        ['Nuevos Pacientes', report.newPatients]
       ];
 
       const csv = Papa.unparse(csvData);
@@ -146,9 +139,9 @@ export default async function handler(
       return res.status(200).send(csv);
     }
 
-    return res.status(200).json(report);
+    res.status(200).json(report);
   } catch (error) {
     console.error('Error al generar reporte semanal:', error);
-    return res.status(500).json({ message: 'Error interno del servidor' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 } 

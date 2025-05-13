@@ -1,4 +1,4 @@
-import { Patient, PatientService as IPatientService } from '@/core/types';
+import type { Patient, PatientService as IPatientService  } from '@/core/types';
 import { supabase } from '@/core/lib/supabase';
 import { trackEvent } from '@/core/lib/langfuse.client';
 import { PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js';

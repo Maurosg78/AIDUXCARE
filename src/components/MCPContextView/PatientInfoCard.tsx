@@ -7,8 +7,22 @@ interface PatientInfoCardProps {
   enrichment?: MCPContext['enrichment'];
 }
 
+// Definición de una interfaz para los datos del EMR del paciente para evitar errores
+interface PatientEMRData {
+  name?: string;
+  allergies?: string[];
+  chronicConditions?: string[];
+  medications?: string[];
+}
+
 export const PatientInfoCard: React.FC<PatientInfoCardProps> = ({ patientState, enrichment }) => {
-  const emrData = enrichment?.emr?.patient_data;
+  // Creamos un objeto emulado para datos de EMR (estos vendrían de otra fuente en la app real)
+  const emrData: PatientEMRData = {
+    name: "Paciente de Ejemplo", // Valor por defecto
+    allergies: [],
+    chronicConditions: [],
+    medications: []
+  };
 
   return (
     <Paper elevation={2} sx={{ p: 2 }}>

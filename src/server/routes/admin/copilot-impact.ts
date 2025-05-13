@@ -1,21 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/core/config/auth';
 import { Langfuse } from 'langfuse-node';
 import { UserRole } from '@/modules/auth/authService';
-
-interface LangfuseObservation {
-  id: string;
-  name: string;
-  startTime: string;
-  input?: {
-    field?: string;
-    feedback?: FeedbackType;
-  };
-  metadata?: {
-    patientId?: string;
-  };
-}
+import type { LangfuseObservation, 
+  LangfuseObservationResponse, 
+  GetObservationsOptions 
+ } from '@/types/langfuse.events';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
 interface LangfuseResponse {
   data: LangfuseObservation[];
@@ -25,7 +16,9 @@ const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY ?? '',
   secretKey: process.env.LANGFUSE_SECRET_KEY ?? '',
   baseUrl: process.env.VITE_LANGFUSE_BASE_URL ?? ''
-});
+}) as Langfuse & {
+  getObservations(options: GetObservationsOptions): Promise<LangfuseResponse>;
+};
 
 interface CopilotImpactMetrics {
   totalSuggestions: number;
@@ -97,7 +90,7 @@ const processSuggestion = (metrics: CopilotImpactMetrics, event: LangfuseObserva
 const processFeedback = (metrics: CopilotImpactMetrics, event: LangfuseObservation) => {
   const feedbackType = event.input?.feedback;
   if (feedbackType && feedbackType in metrics.feedbackByType) {
-    metrics.feedbackByType[feedbackType]++;
+    metrics.feedbackByType[feedbackType as FeedbackType]++;
     if (feedbackType === 'positive') {
       metrics.acceptedSuggestions++;
       const field = event.input?.field;

@@ -6,8 +6,8 @@ import { verifyLangfuseConfig } from "@/core/lib/langfuse.client";
 import { router } from "./core/router/routes";
 import "./styles/index.css";
 
-// Verificación del entorno en desarrollo
-if (import.meta.env.DEV) {
+// Comprobar si estamos en desarrollo usando MODE
+if (import.meta.env.MODE === 'development') {
   // Verificar configuración de Langfuse
   verifyLangfuseConfig();
 }

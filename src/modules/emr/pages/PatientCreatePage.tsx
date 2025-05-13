@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import { useState  } from 'react';
 import { useNavigate } from "react-router";
 import { Box, Typography, Paper, Container } from '@mui/material';
 import PatientForm from "@/modules/emr/components/patients/PatientForm";
 import PatientService from "@/core/services/patient/PatientService";
-import { Patient } from "@/core/types";
+import type { Patient  } from '@/core/types';
 
 export default function PatientCreatePage() {
   const navigate = useNavigate();

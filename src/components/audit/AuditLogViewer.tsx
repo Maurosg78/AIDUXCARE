@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo  } from 'react';
 import { AuditLogService } from '@/core/services/AuditLogService';
 import {
   Box,
@@ -16,8 +16,8 @@ import {
   Alert,
   Grid,
   Divider,
-  SelectChangeEvent
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import {
   ArrowBack as ArrowBackIcon,
   FilterList as FilterListIcon,
@@ -141,11 +141,11 @@ const AuditLogViewer: React.FC<AuditLogViewerProps> = ({ visitId, onBack }) => {
     }
   };
 
-  const handleActionFilterChange = (event: SelectChangeEvent<string>) => {
+  const handleActionFilterChange = (event: SelectChangeEvent) => {
     setActionFilter(event.target.value);
   };
 
-  const handleSourceFilterChange = (event: SelectChangeEvent<string>) => {
+  const handleSourceFilterChange = (event: SelectChangeEvent) => {
     setSourceFilter(event.target.value);
   };
 

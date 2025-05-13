@@ -11,6 +11,11 @@ import logging
 import uuid
 from datetime import datetime
 
+# Importar middleware de autenticación
+from core.middleware import require_auth
+# Importar protección CSRF
+from core.csrf import require_csrf
+
 # Router para almacenamiento
 router = APIRouter(prefix="/api/mcp", tags=["almacenamiento"])
 
@@ -83,18 +88,24 @@ class StoreEMRRequest:
 
 @router.post("/store", summary="Almacenar campo de registro clínico")
 async def store_emr_field(
-    request: Dict[str, Any] = Body(...)
+    request: Dict[str, Any] = Body(...),
+    user_data: Dict[str, Any] = Depends(require_auth),  # Añadir dependencia de autenticación
+    _: None = Depends(require_csrf)  # Añadir dependencia de CSRF
 ) -> Dict[str, Any]:
     """
     Almacena un campo de registro clínico validado.
     
     Args:
         request: Datos del campo a almacenar
+        user_data: Datos del usuario autenticado (inyectado por el middleware)
     
     Returns:
         Dict con confirmación y detalles del almacenamiento
     """
     try:
+        # Registrar quién realiza la acción (para auditoría)
+        logging.info(f"Usuario {user_data.get('email')} almacenando campo para visita {request.get('visit_id', 'desconocida')}")
+        
         # Validar campos obligatorios
         required_fields = ["visit_id", "field", "role", "content"]
         for field in required_fields:

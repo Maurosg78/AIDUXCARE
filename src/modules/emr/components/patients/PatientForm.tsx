@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect  } from 'react';
 import { TextField, Button, Box, MenuItem, Paper, Typography } from "@mui/material";
-import { Patient } from "@/core/types";
+import type { Patient } from '@/types/Patient';
+import type { ChangeEvent, FormEvent } from 'react';
+import type { PatientService  } from '@/types/services/PatientService';
 
 interface PatientFormProps {
-  initialData?: Patient;
-  onSubmit: (data: Patient) => void;
+  patient?: Patient;
+  onSubmit: (patient: Omit<Patient, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
 }
 
 const genderOptions = [
@@ -13,46 +15,41 @@ const genderOptions = [
   { value: "other", label: "Otro" },
 ];
 
-const PatientForm: React.FC<PatientFormProps> = ({ initialData, onSubmit }) => {
-  const [formData, setFormData] = useState<Patient>(
-    initialData || {
-      id: crypto.randomUUID(),
-      name: "",
-      firstName: "",
-      lastName: "",
-      birthDate: "",
-      gender: "other",
-      email: "",
-      phone: "",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-  );
+export const PatientForm = ({ patient, onSubmit }: PatientFormProps) => {
+  const [formData, setFormData] = useState<Omit<Patient, 'id' | 'createdAt' | 'updatedAt'>>({
+    firstName: patient?.firstName || '',
+    lastName: patient?.lastName || '',
+    email: patient?.email || '',
+    phone: patient?.phone || '',
+    birthDate: patient?.birthDate || '',
+    gender: patient?.gender || 'O',
+    address: patient?.address || {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: ''
+    },
+    medicalHistory: patient?.medicalHistory || [],
+    allergies: patient?.allergies || []
+  });
 
-  useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
-    }
-  }, [initialData]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev: Patient) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
-      updatedAt: new Date().toISOString(),
+      [name]: value
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    await onSubmit(formData);
   };
 
   return (
     <Paper elevation={3} sx={{ p: 4 }}>
       <Typography variant="h6" sx={{ mb: 3 }}>
-        {initialData ? "Editar paciente" : "Nuevo paciente"}
+        {patient ? "Editar paciente" : "Nuevo paciente"}
       </Typography>
       <form onSubmit={handleSubmit}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -71,13 +68,27 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData, onSubmit }) => {
             required
           />
           <TextField
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+          />
+          <TextField
+            label="Teléfono"
+            name="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handleChange}
+          />
+          <TextField
             label="Fecha de nacimiento"
-            type="date"
             name="birthDate"
+            type="date"
             value={formData.birthDate}
             onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
             required
+            InputLabelProps={{ shrink: true }}
           />
           <TextField
             select
@@ -87,26 +98,12 @@ const PatientForm: React.FC<PatientFormProps> = ({ initialData, onSubmit }) => {
             onChange={handleChange}
             required
           >
-            {genderOptions.map(option => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
+            <MenuItem value="M">Masculino</MenuItem>
+            <MenuItem value="F">Femenino</MenuItem>
+            <MenuItem value="O">Otro</MenuItem>
           </TextField>
-          <TextField
-            label="Email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-          <TextField
-            label="Teléfono"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-          />
           <Button type="submit" variant="contained" color="primary">
-            {initialData ? "Guardar cambios" : "Crear paciente"}
+            {patient ? "Guardar cambios" : "Crear paciente"}
           </Button>
         </Box>
       </form>

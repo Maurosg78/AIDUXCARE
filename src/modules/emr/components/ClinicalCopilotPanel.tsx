@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo  } from 'react';
 import { Card, CardContent, Typography, Box } from '@mui/material';
 
 // Interfaz específica para este componente

@@ -1,4 +1,4 @@
-import { Patient as CorePatient } from '@/core/types';
+import type { Patient as CorePatient  } from '@/core/types';
 
 export interface Patient {
   id: string;
@@ -18,7 +18,7 @@ export interface Patient {
   rut?: string;
   createdAt: string;
   updatedAt: string;
-  get name(): string;
+  name: string;
 }
 
 export interface PatientCreate {
@@ -50,10 +50,10 @@ export class PatientModel implements Patient {
   createdAt: string;
   updatedAt: string;
 
-  constructor(data: Partial<Patient> & { id: string; createdAt: string; updatedAt: string }) {
+  constructor(data: Partial<Patient> & { id: string; firstName: string; lastName: string; createdAt: string; updatedAt: string }) {
     this.id = data.id;
-    this.firstName = data.firstName || '';
-    this.lastName = data.lastName || '';
+    this.firstName = data.firstName;
+    this.lastName = data.lastName;
     this.email = data.email;
     this.phone = data.phone;
     this.birthDate = data.birthDate;
@@ -77,12 +77,19 @@ export class PatientModel implements Patient {
   toCorePatient(): CorePatient {
     return {
       id: this.id,
+      firstName: this.firstName,
+      lastName: this.lastName,
       name: this.name,
       email: this.email,
       phone: this.phone,
       birthDate: this.birthDate,
       gender: this.gender,
+      sex: this.sex,
       address: this.address,
+      city: this.city,
+      state: this.state,
+      postalCode: this.postalCode,
+      country: this.country,
       age: this.age,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
@@ -92,13 +99,18 @@ export class PatientModel implements Patient {
   static fromCorePatient(patient: CorePatient): PatientModel {
     return new PatientModel({
       id: patient.id,
-      firstName: patient.name?.split(' ')[0] || '',
-      lastName: patient.name?.split(' ').slice(1).join(' ') || '',
+      firstName: patient.firstName || patient.name?.split(' ')[0] || '',
+      lastName: patient.lastName || patient.name?.split(' ').slice(1).join(' ') || '',
       email: patient.email,
       phone: patient.phone,
       birthDate: patient.birthDate,
       gender: patient.gender,
+      sex: patient.sex,
       address: patient.address,
+      city: patient.city,
+      state: patient.state,
+      postalCode: patient.postalCode,
+      country: patient.country,
       age: patient.age,
       createdAt: patient.createdAt || new Date().toISOString(),
       updatedAt: patient.updatedAt || new Date().toISOString()

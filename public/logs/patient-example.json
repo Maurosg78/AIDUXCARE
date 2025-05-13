@@ -1,0 +1,12 @@
+{
+  "id": "patient123",
+  "name": "María López García",
+  "birthDate": "1975-03-12",
+  "email": "maria.lopez@ejemplo.com",
+  "gender": "F",
+  "medicalHistory": {
+    "conditions": ["Hipertensión", "Diabetes tipo 2"],
+    "medications": ["Enalapril 10mg", "Metformina 850mg"],
+    "allergies": ["Penicilina"]
+  }
+} 

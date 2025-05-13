@@ -1,17 +1,10 @@
 {
+  "extends": "./typescript/config/tsconfig.base.json",
   "compilerOptions": {
-    "strict": true,
     "composite": true,
-    "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "types": ["node"],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "types": ["node"]
   },
   "include": [
     "vite.config.ts",

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Patient } from '@/core/types';
+import type { Patient  } from '@/core/types';
 import PatientService from '@/modules/emr/services/PatientServiceNew';
 
 export function usePatients() {

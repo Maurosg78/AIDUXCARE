@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState  } from 'react';
 import { Paper, Typography, Box } from "@mui/material";
 import { getAssistantResponse } from "../services/assistantEngine";
 import type { AssistantContext } from "../models/AssistantContext";

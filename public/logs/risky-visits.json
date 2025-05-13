@@ -1,0 +1,82 @@
+[
+  {
+    "id": "visit-risk-1",
+    "date": "2023-12-01T09:30:00Z",
+    "patientId": "patient-001",
+    "patientName": "Juan Pérez",
+    "professionalId": "prof-001",
+    "professionalName": "Dr. García",
+    "validations": {
+      "checklist": { "checked": true, "passed": false },
+      "export": { "checked": true, "passed": true },
+      "signature": { "checked": true, "passed": false },
+      "mcp": { "checked": true, "passed": true }
+    },
+    "riskLevel": "medium",
+    "omissionCount": 2
+  },
+  {
+    "id": "visit-risk-2",
+    "date": "2023-12-02T10:15:00Z",
+    "patientId": "patient-002",
+    "patientName": "María López",
+    "professionalId": "prof-002",
+    "professionalName": "Dra. Rodríguez",
+    "validations": {
+      "checklist": { "checked": true, "passed": false },
+      "export": { "checked": true, "passed": false },
+      "signature": { "checked": true, "passed": false },
+      "mcp": { "checked": true, "passed": false }
+    },
+    "riskLevel": "high",
+    "omissionCount": 4
+  },
+  {
+    "id": "visit-risk-3",
+    "date": "2023-12-03T15:00:00Z",
+    "patientId": "patient-003",
+    "patientName": "Carlos Sánchez",
+    "professionalId": "prof-001",
+    "professionalName": "Dr. García",
+    "validations": {
+      "checklist": { "checked": true, "passed": true },
+      "export": { "checked": true, "passed": true },
+      "signature": { "checked": true, "passed": false },
+      "mcp": { "checked": true, "passed": false }
+    },
+    "riskLevel": "medium",
+    "omissionCount": 2
+  },
+  {
+    "id": "visit-risk-4",
+    "date": "2023-11-25T11:30:00Z",
+    "patientId": "patient-004",
+    "patientName": "Ana Martínez",
+    "professionalId": "prof-003",
+    "professionalName": "Dr. Fernández",
+    "validations": {
+      "checklist": { "checked": true, "passed": true },
+      "export": { "checked": true, "passed": false },
+      "signature": { "checked": true, "passed": false },
+      "mcp": { "checked": true, "passed": true }
+    },
+    "riskLevel": "medium",
+    "omissionCount": 2
+  },
+  {
+    "id": "visit-risk-5",
+    "date": "2023-11-28T14:45:00Z",
+    "patientId": "patient-005",
+    "patientName": "Roberto Díaz",
+    "professionalId": "prof-002",
+    "professionalName": "Dra. Rodríguez",
+    "validations": {
+      "checklist": { "checked": true, "passed": false },
+      "export": { "checked": true, "passed": true },
+      "signature": { "checked": true, "passed": true },
+      "mcp": { "checked": true, "passed": false }
+    },
+    "riskLevel": "medium",
+    "omissionCount": 2
+  }
+] 

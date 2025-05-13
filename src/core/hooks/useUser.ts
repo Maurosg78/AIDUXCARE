@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, UserRole } from '../types/UserRoles';
+import type { User, UserRole  } from '../types/UserRoles';
 
 /**
  * Hook temporal que simula la autenticación de usuario

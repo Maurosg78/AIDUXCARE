@@ -17,14 +17,25 @@ try {
   console.warn('Error al inicializar Langfuse:', error);
 }
 
-export const trackEvent = async (event: Record<string, unknown>) => {
+// Definimos la estructura de los eventos que vamos a trackear
+export interface TrackEventParams {
+  name: string;
+  payload?: Record<string, unknown>;
+  traceId?: string;
+}
+
+export const trackEvent = async (event: TrackEventParams) => {
   if (!langfuseClient) {
     console.log('Langfuse no está configurado, ignorando evento:', event);
     return null;
   }
 
   try {
-    return await langfuseClient.trace(event);
+    // Usamos la API de Langfuse con nombre y metadatos
+    return await langfuseClient.trace(event.name, {
+      metadata: event.payload,
+      id: event.traceId
+    });
   } catch (error) {
     console.error('Error al trackear evento en Langfuse:', error);
     return null;

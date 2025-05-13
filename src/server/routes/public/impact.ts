@@ -9,6 +9,13 @@ interface LangfuseTrace {
   };
 }
 
+// Define un tipo correcto para Response
+interface ApiResponse {
+  status: (code: number) => {
+    json: (data: any) => void;
+  };
+}
+
 // Inicializar cliente de Langfuse con la configuración correcta
 const langfuse = new Langfuse({
   publicKey: process.env.VITE_LANGFUSE_PUBLIC_KEY || '',
@@ -56,7 +63,7 @@ async function fetchTraces(startTime: string, name: string): Promise<LangfuseTra
 
 export default async function handler(
   req: Request,
-  res: Response
+  res: ApiResponse
 ) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Método no permitido' });

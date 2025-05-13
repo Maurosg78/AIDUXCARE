@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect  } from 'react';
 // Comentar temporalmente la importación de useLangfuse hasta que esté disponible
 // import { useLangfuse } from '@/core/hooks/useLangfuse';
 // Importamos los componentes

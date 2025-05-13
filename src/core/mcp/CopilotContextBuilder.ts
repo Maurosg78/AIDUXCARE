@@ -1,42 +1,37 @@
-import { originalZ as z } from '@/types/zod-utils';
+import type { z  } from '@/types/zod-utils';
 import { trackEvent } from '@/core/lib/langfuse.client';
 import { VisitService } from '@/core/services/visit/VisitService';
 import { ContextEnricher } from './ContextEnricher';
-import { PatientService as IPatientService } from '@/core/types';
+import type { PatientService as IPatientService  } from '@/core/types';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type * as PatientTypes from '@/core/services/patient/PatientService';
 
 /**
  * Schema para validar el estado del paciente
  */
-export const PatientStateSchema = z.object({
+const PatientStateSchema = z.object({
   age: z.number(),
-  sex: z.enum(['M', 'F', 'O']),
+  sex: z.enumValues(['M', 'F', 'O'] as const),
   history: z.array(z.string())
 });
 
 /**
  * Schema para validar los metadatos de la visita
  */
-export const VisitMetadataSchema = z.object({
-  visit_id: z.string().uuid(),
-  date: z.string().datetime(),
-  professional: z.string().email()
+const VisitMetadataSchema = z.object({
+  visit_id: z.string(),
+  date: z.string(),
+  professional: z.string()
 });
 
 /**
  * Schema para validar el enriquecimiento de datos
  */
-export const EnrichmentSchema = z.object({
-  emr: z.object({
-    patient_data: z.object({
-      name: z.string(),
-      allergies: z.array(z.string()),
-      chronicConditions: z.array(z.string()),
-      medications: z.array(z.string())
-    }),
-    visit_history: z.array(z.any())
-  })
+const EnrichmentSchema = z.object({
+  similar_patients: z.array(z.string()),
+  clinical_guidelines: z.array(z.string()),
+  suggested_treatments: z.array(z.string()),
+  risk_factors: z.array(z.string())
 });
 
 /**
@@ -53,10 +48,32 @@ export const MCPContextSchema = z.object({
 /**
  * Tipos inferidos de los schemas
  */
-export type PatientState = z.infer<typeof PatientStateSchema>;
-export type VisitMetadata = z.infer<typeof VisitMetadataSchema>;
-export type Enrichment = z.infer<typeof EnrichmentSchema>;
-export type MCPContext = z.infer<typeof MCPContextSchema>;
+export type PatientState = {
+  age: number;
+  sex: 'M' | 'F' | 'O';
+  history: string[];
+};
+
+export type VisitMetadata = {
+  visit_id: string;
+  date: string;
+  professional: string;
+};
+
+export type Enrichment = {
+  similar_patients: string[];
+  clinical_guidelines: string[];
+  suggested_treatments: string[];
+  risk_factors: string[];
+};
+
+export type MCPContext = {
+  patient_state: PatientState;
+  visit_metadata: VisitMetadata;
+  rules_and_constraints: string[];
+  system_instructions: string;
+  enrichment: Enrichment;
+};
 
 interface BuilderInput {
   patientData: {
@@ -145,15 +162,10 @@ export class CopilotContextBuilder {
         rules_and_constraints: CopilotContextBuilder.DEFAULT_RULES,
         system_instructions: CopilotContextBuilder.DEFAULT_INSTRUCTIONS,
         enrichment: {
-          emr: {
-            patient_data: {
-              name: `Paciente ${input.visit.id.substring(0, 6)}`,
-              allergies: [],
-              chronicConditions: [],
-              medications: []
-            },
-            visit_history: []
-          }
+          similar_patients: [],
+          clinical_guidelines: [],
+          suggested_treatments: [],
+          risk_factors: []
         }
       };
 
@@ -175,5 +187,59 @@ export class CopilotContextBuilder {
       });
       throw error;
     }
+  }
+}
+
+/**
+ * Construye el contexto para el MCP basado en los datos del paciente y la visita
+ */
+export async function buildMCPContext(patientId: string, visitId: string): Promise<MCPContext> {
+  try {
+    console.log('Construyendo contexto MCP para:', { patientId, visitId });
+    
+    // Obtener datos necesarios
+    const visit = await getVisitData(visitId);
+    
+    // Crear contexto conforme al esquema
+    const context: MCPContext = {
+      patient_state: {
+        age: 45, // TODO: Calcular desde fecha de nacimiento
+        sex: 'M',
+        history: ['Hipertensión', 'Diabetes tipo 2']
+      },
+      visit_metadata: {
+        visit_id: visitId,
+        date: visit?.date || new Date().toISOString(),
+        professional: visit?.professionalId || 'unknown'
+      },
+      rules_and_constraints: [
+        'No recomendar medicamentos con interacciones conocidas',
+        'Verificar alergias antes de sugerir tratamientos',
+        'Priorizar tratamientos basados en evidencia'
+      ],
+      system_instructions: 'Proporcionar asistencia clínica respetando las directrices médicas y considerando el historial completo del paciente.',
+      enrichment: {
+        similar_patients: [],
+        clinical_guidelines: [],
+        suggested_treatments: [],
+        risk_factors: []
+      }
+    };
+    
+    return context;
+  } catch (error) {
+    console.error('Error al construir contexto MCP:', error);
+    throw new Error('No se pudo construir el contexto para el MCP');
+  }
+}
+
+/**
+ * Función auxiliar para obtener datos de visita
+ */
+async function getVisitData(visitId: string) {
+  try {
+    return await VisitService.getVisitById(visitId);
+  } catch {
+    return null;
   }
 } 

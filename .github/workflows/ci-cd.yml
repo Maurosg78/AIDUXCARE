@@ -1,0 +1,97 @@
+name: AiDuxCare CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CI: true
+  NODE_VERSION: 18
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  validate:
+    name: Validación y Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit --strict
+
+      - name: Run frontend tests
+        run: npm run test
+        continue-on-error: false
+
+      - name: Check if MCP directory exists
+        id: check_mcp
+        run: |
+          if [ -d "src/mcp_server" ]; then
+            echo "::set-output name=exists::true"
+          else
+            echo "::set-output name=exists::false"
+          fi
+
+      - name: Setup Python
+        if: steps.check_mcp.outputs.exists == 'true'
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        if: steps.check_mcp.outputs.exists == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f src/mcp_server/requirements.txt ]; then
+            pip install -r src/mcp_server/requirements.txt
+          else
+            pip install pytest
+          fi
+
+      - name: Run Python tests
+        if: steps.check_mcp.outputs.exists == 'true'
+        run: |
+          cd src/mcp_server
+          python -m pytest
+
+  deploy:
+    name: Deploy to Vercel
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to Vercel
+        uses: vercel/action@v20
+        with:
+          token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod' 

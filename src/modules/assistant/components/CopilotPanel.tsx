@@ -25,8 +25,8 @@ const CopilotPanel: React.FC<CopilotPanelProps> = ({ formData, onApplySuggestion
         feedback: JSON.stringify(result),
         formData: JSON.stringify({
           motivo: formData.motivo,
-          observaciones: formData.observaciones,
-          diagnostico: formData.diagnostico
+          observations: formData.observations,
+          diagnosis: formData.diagnosis
         })
       };
       if (formData.traceId) {

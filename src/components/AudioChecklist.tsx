@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState  } from 'react';
 import { Box, Button, List, ListItem, ListItemIcon, ListItemText, Checkbox, Typography, Alert, CircularProgress, Stack, Chip } from '@mui/material';
 import { trackEvent } from '@/core/lib/langfuse.client';
 import axios from 'axios';
+import { mcpApiClient } from '@/core/lib/csrf';
 
 // Mapeo de campos internos a campos clínicos estándar
 const FIELD_MAPPING: Record<string, string> = {
@@ -122,7 +123,8 @@ export default function AudioChecklist(props: AudioChecklistProps) {
           overwrite: true
         };
         
-        const response = await axios.post('/api/mcp/store', storePayload);
+        // Usar cliente protegido con CSRF
+        const response = await mcpApiClient.post('/api/mcp/store', storePayload);
         return response.data;
       });
       
@@ -139,7 +141,8 @@ export default function AudioChecklist(props: AudioChecklistProps) {
       setIsSaving(false);
       setIsValidating(true);
       
-      const validateResponse = await axios.get('/api/mcp/validate', {
+      // Usar cliente protegido con CSRF
+      const validateResponse = await mcpApiClient.get('/api/mcp/validate', {
         params: { visit_id: visitId }
       });
       

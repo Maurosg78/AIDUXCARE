@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import { Suspense  } from 'react';
 import { useParams } from '@/core/utils/router';
 import { CircularProgress, Alert, Grid, Skeleton } from '@mui/material';
 import { useTranslation } from 'react-i18next';
@@ -86,7 +86,12 @@ export const MCPContextView: React.FC<MCPContextViewProps> = React.memo(({ visit
     visit_metadata = { professional: '', date: '', visit_id: '' }, 
     rules_and_constraints = [], 
     system_instructions = '', 
-    enrichment = { emr: { patient_data: { name: '', allergies: [], chronicConditions: [], medications: [] }, visit_history: [] } } 
+    enrichment = { 
+      similar_patients: [], 
+      clinical_guidelines: [], 
+      suggested_treatments: [], 
+      risk_factors: [] 
+    }
   } = typedContext;
 
   return (

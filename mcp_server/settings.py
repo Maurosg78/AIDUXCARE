@@ -91,6 +91,27 @@ def setup_logging():
     """Configura el sistema de logging con Loguru."""
     log_level = settings.LOG_LEVEL
     
+    # Función para filtrar información sensible en los logs
+    def filter_sensitive_data(record):
+        """Filtra información sensible de los logs."""
+        # Lista de patrones a filtrar (correos, tokens, datos de pacientes)
+        sensitive_patterns = [
+            (r'([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', '[EMAIL-REDACTADO]'),
+            (r'(eyJ[a-zA-Z0-9_-]{5,}\.eyJ[a-zA-Z0-9_-]{5,})', '[TOKEN-REDACTADO]'),
+            (r'(patient_id|visit_id)["\']\s*:\s*["\']([a-zA-Z0-9-]{5,})["\']', r'\1": "[ID-REDACTADO]"'),
+            (r'(password|secret|key)["\']\s*:\s*["\']([^"\']{3,})["\']', r'\1": "[SECRETO-REDACTADO]"')
+        ]
+        
+        # Aplicar filtros al mensaje del log
+        message = record["message"]
+        for pattern, replacement in sensitive_patterns:
+            import re
+            message = re.sub(pattern, replacement, message)
+        
+        # Actualizar el mensaje filtrado
+        record["message"] = message
+        return record
+    
     # Configuración para entorno de producción
     config = {
         "handlers": [
@@ -98,17 +119,19 @@ def setup_logging():
                 "sink": sys.stdout,
                 "format": "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
                 "level": log_level,
+                "filter": filter_sensitive_data,  # Aplicar filtro de datos sensibles
             }
         ],
     }
     
-    # En modo debug, añadir más información
+    # En modo debug, añadir más información pero manteniendo la seguridad
     if settings.DEBUG:
         config["handlers"].append({
             "sink": "logs/mcp_server.log",
             "rotation": "10 MB",
             "format": "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}",
             "level": "DEBUG",
+            "filter": filter_sensitive_data,  # Aplicar filtro también en logs de depuración
         })
     
     # Aplicar configuración

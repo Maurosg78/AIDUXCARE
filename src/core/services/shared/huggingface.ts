@@ -1,20 +1,54 @@
-const HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1";
-const HF_API_KEY = import.meta.env.VITE_HUGGINGFACE_API_KEY;
+// Cliente simple para Hugging Face
+const HF_API_KEY = import.meta.env.VITE_HUGGINGFACE_API_KEY as string | undefined;
 
-export const sendMessageToHF = async (prompt: string): Promise<string> => {
-  const response = await fetch(HF_API_URL, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${HF_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ inputs: prompt })
-  });
+// Función para verificar las credenciales
+const hasCredentials = (): boolean => {
+  return !!HF_API_KEY;
+};
 
-  if (!response.ok) {
-    throw new Error("Error al conectar con HuggingFace");
+// Headers básicos para peticiones a Hugging Face
+const getHeaders = (): Record<string, string> => {
+  return {
+    'Content-Type': 'application/json',
+    ...(HF_API_KEY ? { 'Authorization': `Bearer ${HF_API_KEY}` } : {})
+  };
+};
+
+// Función simple para inferencia de modelos
+async function query(model: string, inputs: any, options = {}): Promise<any> {
+  if (!hasCredentials()) {
+    console.error('No se encontró API_KEY para Hugging Face');
+    return Promise.reject(new Error('No HF API key available'));
   }
 
-  const result = await response.json();
-  return result?.[0]?.generated_text || "Sin respuesta.";
+  try {
+    const response = await fetch(
+      `https://api-inference.huggingface.co/models/${model}`,
+      {
+        headers: getHeaders(),
+        method: 'POST',
+        body: JSON.stringify({
+          inputs,
+          options
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error en petición a Hugging Face: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error en inferencia de Hugging Face:', error);
+    throw error;
+  }
+}
+
+// Exportar cliente con funciones principales
+export const huggingFaceClient = {
+  query,
+  hasCredentials
 };
+
+export default huggingFaceClient;

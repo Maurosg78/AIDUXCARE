@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/core/config/auth';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
 type NextApiHandler = (req: NextApiRequest, res: NextApiResponse) => Promise<void>;
 

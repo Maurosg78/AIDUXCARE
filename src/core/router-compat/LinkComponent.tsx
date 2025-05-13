@@ -1,30 +1,40 @@
-import React from 'react';
+import { ReactNode, CSSProperties  } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 export interface LinkProps {
+  children: ReactNode;
   to: string;
-  children?: React.ReactNode;
-  className?: string;
   onClick?: () => void;
-  style?: React.CSSProperties;
-  [key: string]: any; // Para otras props como target, rel, etc.
+  style?: CSSProperties;
+  className?: string;
 }
 
 /**
- * Componente Link compatible que funciona con React Router v6
- * y proporciona compatibilidad con props adicionales como className
+ * Componente Link compatible con React Router
+ * Proporciona una interfaz consistente para enlaces en la aplicación
  */
-export const Link: React.FC<LinkProps> = ({ to, children, className, onClick, style, ...rest }) => {
+export const Link: React.FC<LinkProps> = ({ 
+  children, 
+  to, 
+  onClick, 
+  style, 
+  className 
+}) => {
+  // Manejamos el onClick en una función de wrapper en lugar
+  // de pasarlo directamente a RouterLink
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
+
+  // Construir un elemento anchor personalizado
   return (
-    <RouterLink 
-      to={to} 
-      onClick={onClick}
-      style={style}
-      className={className}
-      {...rest}
-    >
-      {children}
-    </RouterLink>
+    <span onClick={handleClick} style={{ cursor: 'pointer', ...style }} className={className}>
+      <RouterLink to={to}>
+        {children}
+      </RouterLink>
+    </span>
   );
 };
 

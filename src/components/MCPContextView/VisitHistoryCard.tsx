@@ -8,8 +8,18 @@ interface VisitHistoryCardProps {
   enrichment?: MCPContext['enrichment'];
 }
 
+// Interfaz para representar una visita médica
+interface Visit {
+  id: string;
+  date: string;
+  type: string;
+  summary: string;
+  professional: string;
+}
+
 export const VisitHistoryCard: React.FC<VisitHistoryCardProps> = ({ enrichment }) => {
-  const visits = enrichment?.emr?.visit_history || [];
+  // Datos de ejemplo de visitas (en una app real vendrían de otra fuente)
+  const visits: Visit[] = [];
   const recentVisits = visits.slice(0, 3); // Mostrar solo las últimas 3 visitas
 
   return (

@@ -1,4 +1,4 @@
-import { Visit, VisitService as IVisitService } from '@/core/types';
+import type { Visit, VisitService as IVisitService  } from '@/core/types';
 import { supabase } from '@/core/lib/supabase';
 import { trackEvent } from '@/core/lib/langfuse.client';
 import { PostgrestSingleResponse } from '@supabase/supabase-js';

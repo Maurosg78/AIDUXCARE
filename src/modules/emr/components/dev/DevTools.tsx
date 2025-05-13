@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Button, Typography } from '@mui/material';
 
 const DevTools: React.FC = () => {
-  const isDev = import.meta.env.DEV || false;
+  const isDev = import.meta.env.MODE === 'development' || false;
   
   if (!isDev) {
     return null;

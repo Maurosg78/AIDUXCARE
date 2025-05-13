@@ -1,18 +1,9 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./typescript/config/tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
     "allowJs": true,
-    "checkJs": false,
-    "skipLibCheck": true,
-    "noImplicitAny": false,
-    "strict": false
+    "checkJs": false
   },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.spec.ts",
-    "**/*.test.ts",
-    "evals/**/*"
-  ]
+  "include": ["src"]
 } 

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect  } from 'react';
 import { useNavigate, useParams } from "react-router";
 import { Box, Typography, Paper, Container } from '@mui/material';
 import PatientService from "@/core/services/patient/PatientService";
 import PatientForm from "@/modules/emr/components/patients/PatientForm";
-import { Patient } from "@/core/types";
+import type { Patient  } from '@/core/types';
 import LoadingOverlay from "@/core/components/LoadingOverlay";
 
 export default function PatientEditPage() {

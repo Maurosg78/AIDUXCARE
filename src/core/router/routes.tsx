@@ -20,7 +20,9 @@ export const routes: RouteObject[] = [
     children: [
       {
         path: '',
-        element: <RoleBasedRedirect />
+        element: <RoleBasedRedirect allowedRoles={['admin', 'professional', 'secretary', 'developer', 'fisioterapeuta', 'guest', 'patient']}>
+          <DashboardRedirect />
+        </RoleBasedRedirect>
       },
       {
         path: 'login',

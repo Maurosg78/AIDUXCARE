@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { trackEvent } from '@/core/lib/langfuse.client';
 
 export default async function handler(

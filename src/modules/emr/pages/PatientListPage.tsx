@@ -1,7 +1,7 @@
 import React from 'react';
 import { usePatients } from '@/hooks/usePatients';
 import { Box, Typography, Paper, List, ListItem, ListItemText, CircularProgress, Button } from '@mui/material';
-import { Patient } from '@/core/types';
+import type { Patient  } from '@/core/types';
 
 const PatientListPage = () => {
   const { patients, isLoading, error } = usePatients();

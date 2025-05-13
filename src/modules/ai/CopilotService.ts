@@ -11,7 +11,7 @@ class CopilotService {
     const feedback: CopilotFeedback[] = [];
 
     // Verificar campos obligatorios
-    if (!evaluation.motivo || !evaluation.observaciones || !evaluation.diagnostico) {
+    if (!evaluation.motivo || !evaluation.observations || !evaluation.diagnosis) {
       feedback.push({
         type: 'omission',
         severity: 'warning',
@@ -20,7 +20,7 @@ class CopilotService {
     }
 
     // Analizar alertas existentes
-    if (evaluation.alertas.length > 0) {
+    if (evaluation.alertas && evaluation.alertas.length > 0) {
       feedback.push({
         type: 'risk',
         severity: 'warning',
@@ -29,7 +29,7 @@ class CopilotService {
     }
 
     // Sugerencias basadas en el diagnóstico
-    if (evaluation.diagnostico.toLowerCase().includes('lumbalgia')) {
+    if (evaluation.diagnosis && evaluation.diagnosis.toLowerCase().includes('lumbalgia')) {
       feedback.push({
         type: 'suggestion',
         severity: 'info',
@@ -38,7 +38,7 @@ class CopilotService {
     }
 
     // Diagnósticos alternativos
-    if (evaluation.diagnostico.toLowerCase().includes('cervicalgia')) {
+    if (evaluation.diagnosis && evaluation.diagnosis.toLowerCase().includes('cervicalgia')) {
       feedback.push({
         type: 'diagnostic',
         severity: 'info',

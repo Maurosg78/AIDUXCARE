@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState  } from 'react';
 import { Box, Typography, LinearProgress, Grid, Paper, Tooltip } from '@mui/material';
-import { PatientVisit, PatientEval } from '@/core/types';
+import type { PatientVisit, PatientEval  } from '@/core/types';
 
 interface VisitQualityPanelProps {
   visit: PatientVisit;

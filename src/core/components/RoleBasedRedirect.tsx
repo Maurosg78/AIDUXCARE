@@ -1,46 +1,53 @@
-import React, { useEffect } from 'react';
-import { Navigate } from '@/core/utils/router';
+import React from 'react';
 import { useAuth } from '@/core/context/AuthContext';
-import { z } from 'zod';
+import { Navigate } from '@/core/utils/router';
 
-// Esquema de validación para roles
-const RoleSchema = z.enum(['admin', 'professional', 'secretary', 'developer', 'fisioterapeuta']);
-type Role = z.infer<typeof RoleSchema>;
+/**
+ * Roles permitidos en la aplicación
+ */
+export type Role = 
+  | 'admin' 
+  | 'professional' 
+  | 'fisioterapeuta' 
+  | 'secretary' 
+  | 'guest' 
+  | 'patient'
+  | 'developer';
 
-// Componente de redirección basado en rol
-const RoleBasedRedirect: React.FC = () => {
-  const { user } = useAuth();
+interface Props {
+  children: React.ReactNode;
+  allowedRoles: Role[];
+  redirectRoute?: string;
+}
 
-  if (!user) {
-    return <Navigate to="/login" />;
+/**
+ * Componente que redirige basado en roles
+ * Si el usuario no tiene un rol autorizado, lo redirige a una ruta específica
+ */
+export const RoleBasedRedirect: React.FC<Props> = ({
+  children,
+  allowedRoles,
+  redirectRoute = '/unauthorized'
+}) => {
+  const { user, loading } = useAuth();
+  
+  // Si está cargando, mostramos un indicador o nada
+  if (loading) {
+    return null;
   }
-
-  try {
-    const role = RoleSchema.parse(user.role);
-    console.log('Redirigiendo usuario con rol:', role);
-    
-    switch (role) {
-      case 'professional':
-      case 'fisioterapeuta':
-        return <Navigate to="/professional/dashboard" replace />;
-      case 'admin':
-        return <Navigate to="/admin/dashboard" replace />;
-      case 'secretary':
-        return <Navigate to="/secretary/dashboard" replace />;
-      case 'developer':
-        return <Navigate to="/developer/dashboard" replace />;
-      default:
-        console.error('Rol no reconocido:', role);
-        return <Navigate to="/login" replace />;
-    }
-  } catch (error) {
-    console.error('Error de validación de rol:', error);
-    return <Navigate to="/login" replace />;
+  
+  // Estado para verificar si el usuario está autorizado
+  const isAuthorized = user && 
+    user.role && 
+    allowedRoles.includes(user.role as Role);
+  
+  // Si no está autorizado, redirigir
+  if (!isAuthorized) {
+    return <Navigate to={redirectRoute} />;
   }
+  
+  // Si está autorizado, mostrar los hijos
+  return <>{children}</>;
 };
 
-export default RoleBasedRedirect;
-
-// Exportar tipos y utilidades para facilitar extensibilidad
-export type { Role };
-export { RoleSchema }; 
+export default RoleBasedRedirect; 

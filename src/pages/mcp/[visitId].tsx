@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import { useEffect  } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { Alert, Container, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { MCPContextView } from '../../components/MCPContextView/MCPContextView';
 import { MCPErrorBoundary } from '../../components/MCPContextView/MCPErrorBoundary';
 import { trackEvent } from '../../core/lib/langfuse.client';
-import { UserRole } from '../../core/types/UserRoles';
+import type { UserRole  } from '../../core/types/UserRoles';
 import AccessControl from '../../components/auth/AccessControl';
 
 /**

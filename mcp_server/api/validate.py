@@ -13,6 +13,10 @@ from datetime import datetime
 from core.validators import validate_emr_record
 from core.langfuse_tracing import create_trace
 from services import store_validation_alerts
+# Importar middleware de autenticación
+from core.middleware import require_auth
+# Importar protección CSRF
+from core.csrf import require_csrf
 
 # Importación de servicios en modo simulado
 try:
@@ -66,7 +70,9 @@ router = APIRouter(prefix="/api/mcp", tags=["validación"])
 
 @router.get("/validate", summary="Validar registro clínico")
 async def validate_visit(
-    visit_id: str = Query(..., description="ID de la visita a validar")
+    visit_id: str = Query(..., description="ID de la visita a validar"),
+    user_data: Dict[str, Any] = Depends(require_auth),  # Añadir dependencia de autenticación
+    _: None = Depends(require_csrf)  # Añadir dependencia de CSRF
 ) -> Dict[str, Any]:
     """
     Valida la calidad y completitud de un registro clínico.
@@ -79,9 +85,16 @@ async def validate_visit(
     Las alertas generadas se almacenan en la tabla validation_alerts
     como parte del historial clínico legal de la visita.
     
+    Args:
+        visit_id: ID de la visita a validar
+        user_data: Datos del usuario autenticado (inyectado por el middleware)
+    
     Returns:
         Dict con resultado de la validación y posibles alertas
     """
+    # Registrar quién realiza la acción (para auditoría)
+    logging.info(f"Usuario {user_data.get('email')} solicitando validación para visita {visit_id}")
+    
     # Crear traza en Langfuse para seguimiento
     trace = create_trace(
         name="clinical_validation", 

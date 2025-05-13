@@ -1,0 +1,1337 @@
+{
+  "timestamp": "2025-05-12T12:05:10.439Z",
+  "totalUsages": 221,
+  "byCategory": {
+    "temporal": 0,
+    "necesario": 0,
+    "evitable": 221
+  },
+  "usages": [
+    {
+      "type": "as any",
+      "file": "node_modules/zod/lib/types.d.ts",
+      "line": "export { anyType as any, arrayType as array, bigIntType as bigint, booleanType as boolean, dateType as date, discriminatedUnionType as discriminatedUnion, effectsType as effect, enumType as enum, functionType as function, instanceOfType as instanceof, intersectionType as intersection, lazyType as lazy, literalType as literal, mapType as map, nanType as nan, nativeEnumType as nativeEnum, neverType as never, nullType as null, nullableType as nullable, numberType as number, objectType as object, oboolean, onumber, optionalType as optional, ostring, pipelineType as pipeline, preprocessType as preprocess, promiseType as promise, recordType as record, setType as set, strictObjectType as strictObject, stringType as string, symbolType as symbol, effectsType as transformer, tupleType as tuple, undefinedType as undefined, unionType as union, unknownType as unknown, voidType as void, };",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@types/webpack-sources/node_modules/source-map/source-map.d.ts",
+      "line": "* closest line that has any mappings. Otherwise, returns all mappings",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@types/webpack-sources/node_modules/source-map/source-map.d.ts",
+      "line": "* or the next closest column that has any offsets.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@types/webpack/index.d.ts",
+      "line": "import * as anymatch from \"anymatch\";",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@types/babel__generator/index.d.ts",
+      "line": "* any alphabetical hexadecimal digits in escape sequences as well as any hexadecimal integer literals (see the",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@types/history/index.d.ts",
+      "line": "// var createHistory = ((window as any).History as HistoryModule.Module).createHistory;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@types/babel__traverse/index.d.ts",
+      "line": "* if the array has any items, otherwise we just check if it's falsy.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@types/node/events.d.ts",
+      "line": "* '`error'` event itself, then it is treated as any other kind of event without",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/eventsource/src/errors.ts",
+      "line": "const DomException = (globalThis as any).DOMException",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/eventsource/src/EventSource.ts",
+      "line": "const doc = 'document' in globalThis ? (globalThis as any).document : undefined",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/tailwind-merge/src/lib/create-tailwind-merge.ts",
+      "line": "return functionToCall(twJoin.apply(null, arguments as any))",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/react-query/src/useSuspenseQuery.ts",
+      "line": "if ((options.queryFn as any) === skipToken) {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/react-query/src/useBaseQuery.ts",
+      "line": ";(client.getDefaultOptions().queries as any)?._experimental_beforeQuery?.(",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/react-query/src/useBaseQuery.ts",
+      "line": ";(client.getDefaultOptions().queries as any)?._experimental_afterQuery?.(",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/react-query/src/useSuspenseInfiniteQuery.ts",
+      "line": "if ((options.queryFn as any) === skipToken) {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/infiniteQueryBehavior.ts",
+      "line": "fetchFn as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/queryObserver.ts",
+      "line": "this.#lastQueryWithDefinedData as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/queryObserver.ts",
+      "line": "data = options.select(data as any)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/queryObserver.ts",
+      "line": "error = this.#selectError as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/utils.ts",
+      "line": "}, {} as any)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/queryClient.ts",
+      "line": "return this.fetchQuery(options as any)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/queryClient.ts",
+      "line": "return this.ensureQueryData(options as any)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/mutation.ts",
+      "line": "error as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/mutation.ts",
+      "line": "error as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/query.ts",
+      "line": "error as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/query.ts",
+      "line": "error as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/query.ts",
+      "line": "onError(new Error(`${this.queryHash} data is undefined`) as any)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/query.ts",
+      "line": "this.state.error as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@tanstack/query-core/src/queriesObserver.ts",
+      "line": "return input as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "if (typeof (window as any).location === 'object' && obj === (window as any).location) {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "if (typeof (window as any).document === 'object' && obj === (window as any).document) {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "if (typeof (window as any).navigator === 'object') {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "if (typeof (window as any).navigator.mimeTypes === 'object' &&",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "obj === (window as any).navigator.mimeTypes) {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "if (typeof (window as any).navigator.plugins === 'object' &&",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "obj === (window as any).navigator.plugins) {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "if ((typeof (window as any).HTMLElement === 'function' ||",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "typeof (window as any).HTMLElement === 'object') &&",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "obj instanceof (window as any).HTMLElement) {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "if ((obj as any).tagName === 'BLOCKQUOTE') {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "if ((obj as any).tagName === 'TD') {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "if ((obj as any).tagName === 'TH') {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "const stringTag = (symbolToStringTagExists && (obj as any)[Symbol.toStringTag]);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/tldts-core/src/lookup/fast-path.ts",
+      "line": "// completely as well as any extra allocation or string manipulation.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/ts-jest/node_modules/type-fest/source/tuple-to-union.d.ts",
+      "line": "return destinations.includes(destination as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/ts-jest/node_modules/type-fest/source/tuple-to-union.d.ts",
+      "line": "const deliverTo = (body as any).deliverTo;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/ts-jest/node_modules/type-fest/source/literal-to-primitive.d.ts",
+      "line": "return x + (y as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/ts-jest/node_modules/type-fest/source/has-required-keys.d.ts",
+      "line": "Creates a type that represents `true` or `false` depending on whether the given type has any required fields.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/ts-jest/node_modules/type-fest/source/internal/object.d.ts",
+      "line": "For an object T, if it has any properties that are a union with `undefined`, make those into optional properties instead.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/ts-jest/node_modules/type-fest/source/has-writable-keys.d.ts",
+      "line": "Creates a type that represents `true` or `false` depending on whether the given type has any writable fields.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/ts-jest/node_modules/type-fest/source/has-readonly-keys.d.ts",
+      "line": "Creates a type that represents `true` or `false` depending on whether the given type has any readonly fields.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/ts-jest/node_modules/type-fest/source/has-optional-keys.d.ts",
+      "line": "Creates a type that represents `true` or `false` depending on whether the given type has any optional fields.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/typescript/lib/typescript.d.ts",
+      "line": "* True if tuple has any rest or variadic elements",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@typescript-eslint/utils/dist/ast-utils/eslint-utils/astUtilities.d.ts",
+      "line": "* Check whether a given node has any side effect or not.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@remix-run/router/router.ts",
+      "line": "[pendingActionResult[0]]: pendingActionResult[1].data as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@remix-run/router/utils.ts",
+      "line": "} = {} as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@auth/core/src/errors.ts",
+      "line": "cause: { err: message, ...(message.cause as any), ...errorOptions },",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@auth/core/src/errors.ts",
+      "line": "errorOptions = { err: errorOptions, ...(errorOptions.cause as any) }",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@auth/core/src/lib/utils/providers.ts",
+      "line": "const result = {} as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@auth/core/src/lib/actions/signin/authorization-url.ts",
+      "line": "if (provider.type === \"oidc\") provider.checks = [\"nonce\"] as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/next/index.ts",
+      "line": "if ((res as any)?.params) {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/next/index.ts",
+      "line": "if ((args[1] as any)?.params) {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/next/index.ts",
+      "line": "throw new Error((body as any).message)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/errors.ts",
+      "line": "this.code = (error as any).code",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/lib/oauth/authorization-url.ts",
+      "line": "const tokens = (await client.getOAuthRequestToken(params)) as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/lib/oauth/client-legacy.ts",
+      "line": "resolve({ oauth_token, oauth_token_secret } as any)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/lib/oauth/client-legacy.ts",
+      "line": "resolve({ oauth_token, oauth_token_secret, params } as any)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/lib/oauth/checks.ts",
+      "line": "})) as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/lib/oauth/checks.ts",
+      "line": "})) as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/lib/oauth/checks.ts",
+      "line": "})) as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/lib/oauth/callback.ts",
+      "line": "const tokens = (await (client as any).getOAuthAccessToken(",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/lib/oauth/callback.ts",
+      "line": "let profile: Profile = await (client as any).get(",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/lib/providers.ts",
+      "line": "{} as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/index.ts",
+      "line": "body: { message } as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/index.ts",
+      "line": "return (await routes.providers(options.providers)) as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/index.ts",
+      "line": "return { ...session, cookies } as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/index.ts",
+      "line": "body: { csrfToken: options.csrfToken } as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/index.ts",
+      "line": "return { ...session, cookies } as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/index.ts",
+      "line": "return { status: 400, body: {} as any, cookies }",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/core/index.ts",
+      "line": "body: `Error: This action with HTTP ${method} is not supported by NextAuth.js` as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/providers/credentials.ts",
+      "line": "credentials: {} as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/utils/logger.ts",
+      "line": "return !!(x as any)?.error",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/utils/logger.ts",
+      "line": ";(metadata as any).client = true",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/utils/logger.ts",
+      "line": "const body = new URLSearchParams({ level, code, ...(metadata as any) })",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/next-auth/src/react/index.tsx",
+      "line": "} as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@babel/core/src/config/resolve-targets.ts",
+      "line": "({}) as any as browserType as nodeType;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@babel/core/src/config/files/index.ts",
+      "line": "({}) as any as indexBrowserType as indexType;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@babel/core/src/transform-file.ts",
+      "line": "({}) as any as transformFileBrowserType as transformFileType;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@radix-ui/react-use-effect-event/src/use-effect-event.tsx",
+      "line": "const useReactEffectEvent = (React as any)[' useEffectEvent '.trim().toString()];",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@radix-ui/react-use-effect-event/src/use-effect-event.tsx",
+      "line": "const useReactInsertionEffect = (React as any)[' useInsertionEffect '.trim().toString()];",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@supabase/functions-js/src/helper.ts",
+      "line": "import('@supabase/node-fetch' as any).then(({ default: fetch }) => fetch(...args))",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@supabase/auth-js/src/lib/helpers.ts",
+      "line": "import('@supabase/node-fetch' as any).then(({ default: fetch }) => fetch(...args))",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@supabase/auth-js/src/lib/helpers.ts",
+      "line": "typeof (maybeResponse as any).json === 'function'",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@supabase/auth-js/src/lib/helpers.ts",
+      "line": ";(this as any).promise = new Deferred.promiseConstructor((res, rej) => {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@supabase/auth-js/src/lib/helpers.ts",
+      "line": ";(this as any).resolve = res",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@supabase/auth-js/src/lib/helpers.ts",
+      "line": ";(this as any).reject = rej",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@supabase/supabase-js/src/SupabaseClient.ts",
+      "line": "this.auth = new Proxy<SupabaseAuthClient>({} as any, {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@supabase/supabase-js/src/lib/helpers.ts",
+      "line": "delete (result as any).accessToken",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@supabase/realtime-js/src/RealtimeClient.ts",
+      "line": "import('@supabase/node-fetch' as any).then(({ default: fetch }) =>",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@supabase/storage-js/src/lib/helpers.ts",
+      "line": "import('@supabase/node-fetch' as any).then(({ default: fetch }) => fetch(...args))",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@supabase/storage-js/src/lib/helpers.ts",
+      "line": "return (await import('@supabase/node-fetch' as any)).Response",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/operators/groupBy.ts",
+      "line": "group as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/operators/joinAllInternals.ts",
+      "line": "project ? mapOneOrManyArgs(project) : (identity as any)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/operators/mergeInternals.ts",
+      "line": "expand && subscriber.next(value as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/operators/mergeInternals.ts",
+      "line": "outerNext(innerValue as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/operators/refCount.ts",
+      "line": "(source as any)._refCount++;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/operators/refCount.ts",
+      "line": "if (!source || (source as any)._refCount <= 0 || 0 < --(source as any)._refCount) {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/operators/refCount.ts",
+      "line": "const sharedConnection = (source as any)._connection;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/util/pipe.ts",
+      "line": "return fns.reduce((prev: any, fn: UnaryFunction<T, R>) => fn(prev), input as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/util/isDate.ts",
+      "line": "return value instanceof Date && !isNaN(value as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/util/createObject.ts",
+      "line": "return keys.reduce((result, key, i) => ((result[key] = values[i]), result), {} as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/scheduler/timeoutProvider.ts",
+      "line": "return (delegate?.clearTimeout || clearTimeout)(handle as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/scheduler/VirtualTimeScheduler.ts",
+      "line": "constructor(schedulerActionCtor: typeof AsyncAction = VirtualAction as any, public maxFrames: number = Infinity) {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/scheduler/intervalProvider.ts",
+      "line": "return (delegate?.clearInterval || clearInterval)(handle as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/scheduler/immediateProvider.ts",
+      "line": "return (delegate?.clearImmediate || clearImmediate)(handle as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/symbol/iterator.ts",
+      "line": "return '@@iterator' as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/testing/ColdObservable.ts",
+      "line": "const observable: ColdObservable<T> = this as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/Notification.ts",
+      "line": "return isFunction((nextOrObserver as any)?.next)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/Notification.ts",
+      "line": ": this.do(nextOrObserver as (value: T) => void, error as any, complete as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/Notification.ts",
+      "line": "const { kind, value, error } = notification as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/Subject.ts",
+      "line": "subject.operator = operator as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/Subject.ts",
+      "line": "return subject as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/NotificationFactories.ts",
+      "line": "return createNotification('E', undefined, error) as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/throwError.ts",
+      "line": "return new Observable(scheduler ? (subscriber) => scheduler.schedule(init as any, 0, subscriber) : init);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/bindCallback.ts",
+      "line": "* `bindCallback` will treat such functions the same as any other and error parameters",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/combineLatest.ts",
+      "line": "return from([], scheduler as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/combineLatest.ts",
+      "line": "const source = from(observables[i], scheduler as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/ConnectableObservable.ts",
+      "line": "subject as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/pairs.ts",
+      "line": "return from(Object.entries(obj), scheduler as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/dom/WebSocketSubject.ts",
+      "line": "(config as any)[key] = (urlConfigOrSource as any)[key];",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/dom/WebSocketSubject.ts",
+      "line": "const sock = new WebSocketSubject<R>(this._config as WebSocketSubjectConfig<any>, this.destination as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/bindCallbackInternals.ts",
+      "line": "return (bindCallbackInternals(isNodeStyle, callbackFunc, scheduler) as any)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/bindCallbackInternals.ts",
+      "line": ".pipe(mapOneOrManyArgs(resultSelector as any));",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/bindCallbackInternals.ts",
+      "line": "return (bindCallbackInternals(isNodeStyle, callbackFunc) as any)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/observable/onErrorResumeNext.ts",
+      "line": "const nextSources: ObservableInputTuple<A> = argsOrArgArray(sources) as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/scheduled/scheduleIterable.ts",
+      "line": "iterator = (input as any)[Symbol_iterator]();",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/ajax/ajax.ts",
+      "line": "new URLSearchParams(queryParams as any).forEach((value, key) => searchParams.set(key, value));",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/ajax/ajax.ts",
+      "line": "searchParams = new URLSearchParams(queryParams as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/rxjs/src/internal/ajax/errors.ts",
+      "line": "})() as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@emotion/styled/src/base.tsx",
+      "line": "let args = arguments as any as Array<",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@emotion/styled/src/base.tsx",
+      "line": ";(Styled as any).withComponent = (",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@emotion/styled/src/base.tsx",
+      "line": "return (newStyled as any)(...styles)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@emotion/styled/src/index.ts",
+      "line": ";(newStyled as any)[tagName] = newStyled(tagName as keyof typeof newStyled)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@emotion/sheet/src/index.ts",
+      "line": "return undefined as any",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/@emotion/react/src/emotion-element.tsx",
+      "line": "!!(globalThis as any).EMOTION_RUNTIME_AUTO_LABEL &&",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/es/api/form/PDFDropdown.d.ts",
+      "line": "* dropdown has any available options, users will still be allowed to select",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/es/api/PDFDocument.d.ts",
+      "line": "* @returns A string containing the keywords of this document, if it has any.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/ts3.4/es/api/form/PDFDropdown.d.ts",
+      "line": "* dropdown has any available options, users will still be allowed to select",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/ts3.4/es/api/PDFDocument.d.ts",
+      "line": "* @returns A string containing the keywords of this document, if it has any.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/ts3.4/cjs/api/form/PDFDropdown.d.ts",
+      "line": "* dropdown has any available options, users will still be allowed to select",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/ts3.4/cjs/api/PDFDocument.d.ts",
+      "line": "* @returns A string containing the keywords of this document, if it has any.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/src/core/PDFContext.ts",
+      "line": "const value = (literal as LiteralObject)[key] as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/src/core/objects/PDFArray.ts",
+      "line": ") as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/src/core/objects/PDFArray.ts",
+      "line": ") as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/src/core/objects/PDFDict.ts",
+      "line": ") as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/src/core/objects/PDFDict.ts",
+      "line": ") as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/src/core/embedders/CustomFontSubsetEmbedder.ts",
+      "line": "return (this.subset as any).cff;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/src/core/embedders/CustomFontSubsetEmbedder.ts",
+      "line": ".on('error' as any, (err) => reject(err));",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/src/api/form/PDFDropdown.ts",
+      "line": "* dropdown has any available options, users will still be allowed to select",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/src/api/PDFDocument.ts",
+      "line": "* @returns A string containing the keywords of this document, if it has any.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/cjs/api/form/PDFDropdown.d.ts",
+      "line": "* dropdown has any available options, users will still be allowed to select",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "node_modules/pdf-lib/cjs/api/PDFDocument.d.ts",
+      "line": "* @returns A string containing the keywords of this document, if it has any.",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/types/schema-utils.ts",
+      "line": "_type: null as any,",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/types/schema-utils.ts",
+      "line": "infer: null as any // Solo para compatibilidad de tipo",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/types/zod-adapter.ts",
+      "line": "return z.union(...(options as any));",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/types/zod-adapter.ts",
+      "line": "return z.union(...(types as any));",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/core/mcp/__tests__/CopilotContextBuilder.test.ts",
+      "line": "sex: 'X' as any, // Sexo inválido",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/core/router-compat/NavigateComponent.tsx",
+      "line": "return <RouterNavigate {...(props as any)} />;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/core/lib/supabase.ts",
+      "line": ": createSupabaseMock() as any;",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/server/middleware/auth.ts",
+      "line": "if (!session?.user || (session.user as any).role !== 'admin') {",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/server/routes/api/patient.ts",
+      "line": "Array.isArray((error as any).errors)",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/components/MCPContextView/__tests__/MCPContextView.test.tsx",
+      "line": "} as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/components/MCPContextView/__tests__/MCPContextView.test.tsx",
+      "line": "} as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/components/MCPContextView/__tests__/MCPContextView.test.tsx",
+      "line": "} as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/components/MCPContextView/__tests__/MCPContextView.test.tsx",
+      "line": "} as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/components/MCPContextView/__tests__/MCPContextView.test.tsx",
+      "line": "} as any);",
+      "category": "evitable"
+    },
+    {
+      "type": "as any",
+      "file": "src/i18n/config.ts",
+      "line": ".use(initReactI18next as any)",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/chai/node_modules/type-detect/index.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@mui/x-date-pickers/internals/models/muiPickersAdapter.d.ts",
+      "line": "// @ts-ignore TDate in our codebase does not have the `ExtendableDateType` constraint.",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@supabase/supabase-js/src/lib/constants.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@supabase/supabase-js/src/lib/fetch.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@supabase/storage-js/src/lib/helpers.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@supabase/postgrest-js/src/PostgrestBuilder.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@date-io/date-fns/src/date-fns-utils.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/rxjs/src/internal/scheduler/AsyncAction.ts",
+      "line": "// @ts-ignore: Property has no initializer and is not definitely assigned",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/rxjs/src/internal/testing/SubscriptionLoggable.ts",
+      "line": "// @ts-ignore: Property has no initializer and is not definitely assigned",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/rxjs/src/internal/testing/ColdObservable.ts",
+      "line": "// @ts-ignore: Property has no initializer and is not definitely assigned",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/rxjs/src/internal/testing/ColdObservable.ts",
+      "line": "// @ts-ignore: Property has no initializer and is not definitely assigned",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/rxjs/src/internal/testing/HotObservable.ts",
+      "line": "// @ts-ignore: Property has no initializer and is not definitely assigned",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/rxjs/src/internal/testing/HotObservable.ts",
+      "line": "// @ts-ignore: Property has no initializer and is not definitely assigned",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/rxjs/src/internal/observable/dom/WebSocketSubject.ts",
+      "line": "// @ts-ignore: Property has no initializer and is not definitely assigned",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/rxjs/src/internal/observable/dom/WebSocketSubject.ts",
+      "line": "// @ts-ignore: Property has no initializer and is not definitely assigned",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@testing-library/react/types/index.d.ts",
+      "line": "//@ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/styled/dist/declarations/src/jsx-namespace.d.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/styled/src/jsx-namespace.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/dist/declarations/src/jsx-namespace.d.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/dist/declarations/src/jsx-namespace.d.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/dist/declarations/src/jsx-namespace.d.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/dist/declarations/src/jsx-namespace.d.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/dist/declarations/src/jsx-namespace.d.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/dist/declarations/src/jsx-namespace.d.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/dist/declarations/src/jsx-namespace.d.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/dist/declarations/src/jsx-namespace.d.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/dist/declarations/src/jsx-namespace.d.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/src/jsx-namespace.ts",
+      "line": "// the IsPreReact19 and @ts-ignore comments are to allow @emotion/react to support three different cases of types",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/src/jsx-namespace.ts",
+      "line": "// to make this work, we need @ts-ignore comments to ignore references that are invalid",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/src/jsx-namespace.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/src/jsx-namespace.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/src/jsx-namespace.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/src/jsx-namespace.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/src/jsx-namespace.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/src/jsx-namespace.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/src/jsx-namespace.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/src/jsx-namespace.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/@emotion/react/src/jsx-namespace.ts",
+      "line": "/** @ts-ignore */",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/openid-client/types/index.d.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/pdf-lib/src/core/objects/PDFArray.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/pdf-lib/src/core/objects/PDFArray.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/pdf-lib/src/core/objects/PDFDict.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    },
+    {
+      "type": "@ts-ignore",
+      "file": "node_modules/pdf-lib/src/core/objects/PDFDict.ts",
+      "line": "// @ts-ignore",
+      "category": "evitable"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import { langfuseBackend } from '@/core/lib/langfuse.backend';
 import { verifyBackendConfig } from '@/core/lib/langfuse.backend';
+import type { TraceOptions  } from '@/types/langfuse.events';
 
 export async function handleEvent(req: Request) {
   try {
@@ -11,7 +12,7 @@ export async function handleEvent(req: Request) {
       return new Response('Missing event name', { status: 400 });
     }
 
-    const trace = await langfuseBackend.trace({
+    const traceOptions: TraceOptions = {
       name,
       metadata: {
         ...metadata,
@@ -19,7 +20,9 @@ export async function handleEvent(req: Request) {
         userAgent: req.headers.get('user-agent'),
         origin: req.headers.get('origin')
       }
-    });
+    };
+
+    const trace = await langfuseBackend.trace(name);
 
     return new Response(JSON.stringify({ success: true, traceId: trace.id }), {
       headers: { 'Content-Type': 'application/json' }

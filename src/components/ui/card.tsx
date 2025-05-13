@@ -4,11 +4,18 @@ import { cn } from '@/lib/utils';
 interface CardProps {
   className?: string;
   children: React.ReactNode;
+  variant?: 'default' | 'highlight' | 'outline';
 }
 
-export function Card({ className, children }: CardProps) {
+export function Card({ className, children, variant = 'default' }: CardProps) {
+  const variantStyles = {
+    default: 'bg-white border border-aidux-gray/20 shadow-sm',
+    highlight: 'bg-white border border-aidux-teal/30 shadow-sm',
+    outline: 'bg-transparent border border-aidux-gray/30 shadow-none'
+  };
+
   return (
-    <div className={cn("bg-white rounded-lg border border-gray-200 shadow-sm", className)}>
+    <div className={cn("rounded-lg", variantStyles[variant], className)}>
       {children}
     </div>
   );
@@ -21,7 +28,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ className, children }: CardHeaderProps) {
   return (
-    <div className={cn("px-6 py-4 border-b border-gray-200", className)}>
+    <div className={cn("px-6 py-4 border-b border-aidux-gray/20", className)}>
       {children}
     </div>
   );
@@ -34,7 +41,7 @@ interface CardTitleProps {
 
 export function CardTitle({ className, children }: CardTitleProps) {
   return (
-    <h3 className={cn("text-lg font-medium text-gray-900", className)}>
+    <h3 className={cn("text-lg font-medium text-aidux-slate", className)}>
       {children}
     </h3>
   );
@@ -47,7 +54,7 @@ interface CardDescriptionProps {
 
 export function CardDescription({ className, children }: CardDescriptionProps) {
   return (
-    <p className={cn("text-sm text-gray-500 mt-1", className)}>
+    <p className={cn("text-sm text-aidux-gray mt-1", className)}>
       {children}
     </p>
   );
@@ -73,7 +80,7 @@ interface CardFooterProps {
 
 export function CardFooter({ className, children }: CardFooterProps) {
   return (
-    <div className={cn("px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg", className)}>
+    <div className={cn("px-6 py-4 bg-aidux-bone border-t border-aidux-gray/20 rounded-b-lg", className)}>
       {children}
     </div>
   );

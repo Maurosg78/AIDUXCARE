@@ -24,8 +24,8 @@ export function verifyBackendConfig() {
 export const trackServerEvent = async (name: string, metadata: Record<string, unknown> = {}) => {
   try {
     verifyBackendConfig();
-    return langfuseBackend.trace({
-      name,
+    // Llamamos al método trace con el nombre como parámetro
+    return langfuseBackend.trace(name, {
       metadata: {
         ...metadata,
         timestamp: new Date().toISOString()

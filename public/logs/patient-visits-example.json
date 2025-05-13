@@ -1,0 +1,150 @@
+[
+  {
+    "id": "visit123",
+    "date": "2023-12-10T10:00:00Z",
+    "hasAudioReview": true,
+    "isAudioApproved": true,
+    "hasPdfExport": true,
+    "isPdfSigned": true,
+    "hasMcpContext": true,
+    "events": [
+      {
+        "id": "evt1",
+        "type": "form.update",
+        "timestamp": "2023-12-10T10:05:00Z",
+        "details": {
+          "fields": {
+            "motivo": "Control de hipertensión",
+            "diagnóstico": "Hipertensión esencial"
+          }
+        }
+      },
+      {
+        "id": "evt2",
+        "type": "audio.review",
+        "timestamp": "2023-12-10T10:15:00Z",
+        "details": {
+          "approved": true,
+          "reviewedBy": "Dr. García"
+        }
+      },
+      {
+        "id": "evt3",
+        "type": "pdf.export",
+        "timestamp": "2023-12-10T10:20:00Z",
+        "details": {
+          "signed": true,
+          "filename": "resumen-visita-123.pdf"
+        }
+      },
+      {
+        "id": "evt4",
+        "type": "mcp.context.build",
+        "timestamp": "2023-12-10T10:25:00Z",
+        "details": {
+          "contextSize": 8,
+          "elements": [
+            "patientHistory", 
+            "allergies", 
+            "medications", 
+            "lastVisit"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "visit456",
+    "date": "2023-10-05T15:30:00Z",
+    "hasAudioReview": true,
+    "isAudioApproved": false,
+    "hasPdfExport": true,
+    "isPdfSigned": false,
+    "hasMcpContext": false,
+    "events": [
+      {
+        "id": "evt5",
+        "type": "form.update",
+        "timestamp": "2023-10-05T15:35:00Z",
+        "details": {
+          "fields": {
+            "motivo": "Dolor abdominal",
+            "diagnóstico": "Gastritis aguda"
+          }
+        }
+      },
+      {
+        "id": "evt6",
+        "type": "audio.review",
+        "timestamp": "2023-10-05T15:45:00Z",
+        "details": {
+          "approved": false,
+          "reviewedBy": "Dr. Martínez",
+          "comments": "Falta incluir indicaciones de medicación"
+        }
+      },
+      {
+        "id": "evt7",
+        "type": "pdf.export",
+        "timestamp": "2023-10-05T15:50:00Z",
+        "details": {
+          "signed": false,
+          "filename": "resumen-visita-456.pdf"
+        }
+      }
+    ]
+  },
+  {
+    "id": "visit789",
+    "date": "2022-08-15T09:00:00Z",
+    "hasAudioReview": true,
+    "isAudioApproved": true,
+    "hasPdfExport": true,
+    "isPdfSigned": true,
+    "hasMcpContext": true,
+    "events": [
+      {
+        "id": "evt8",
+        "type": "form.update",
+        "timestamp": "2022-08-15T09:05:00Z",
+        "details": {
+          "fields": {
+            "motivo": "Chequeo anual",
+            "diagnóstico": "Paciente sano"
+          }
+        }
+      },
+      {
+        "id": "evt9",
+        "type": "audio.review",
+        "timestamp": "2022-08-15T09:15:00Z",
+        "details": {
+          "approved": true,
+          "reviewedBy": "Dra. López"
+        }
+      },
+      {
+        "id": "evt10",
+        "type": "pdf.export",
+        "timestamp": "2022-08-15T09:20:00Z",
+        "details": {
+          "signed": true,
+          "filename": "resumen-visita-789.pdf"
+        }
+      },
+      {
+        "id": "evt11",
+        "type": "mcp.context.build",
+        "timestamp": "2022-08-15T09:25:00Z",
+        "details": {
+          "contextSize": 6,
+          "elements": [
+            "patientHistory", 
+            "allergies", 
+            "medications"
+          ]
+        }
+      }
+    ]
+  }
+] 

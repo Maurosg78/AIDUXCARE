@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect  } from 'react';
 import { TextField, Button, Stack, Typography, Drawer, Box, TextareaAutosize } from "@mui/material";
 import { trackEvent } from '@/core/lib/langfuse.client';
-import { PatientEval } from '@/modules/emr/types/Evaluation';
+import type { PatientEval  } from '@/modules/emr/types/Evaluation';
 import { CopilotFeedback } from '@/modules/ai/CopilotService';
 import VisitAlert from '@/modules/emr/components/alerts/VisitAlert';
 import CopilotPanel from '@/modules/assistant/components/CopilotPanel';
@@ -88,6 +88,12 @@ const StructuredVisitForm = () => {
         alert("Error al guardar la visita. Por favor, inténtelo de nuevo.");
       }
     }
+  };
+
+  // Asegurarnos de que formData incluya la propiedad visitId
+  const updatedFormData = {
+    ...formData,
+    visitId: formData.id || ''
   };
 
   return (
@@ -226,7 +232,7 @@ const StructuredVisitForm = () => {
         <Typography variant="h6" gutterBottom>
           Copiloto Clínico
         </Typography>
-        <CopilotPanel formData={formData} onApplySuggestion={handleSuggestionApply} />
+        <CopilotPanel formData={updatedFormData} onApplySuggestion={handleSuggestionApply} />
       </Drawer>
     </Box>
   );

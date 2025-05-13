@@ -1,4 +1,4 @@
-import supabase from '@/core/lib/supabase';
+import { supabase } from '@/core/lib/supabase';
 import { getCurrentUserId } from '@/core/utils/auth';
 import type { AuditLogEvent as AuditLogEventType } from '@/core/types';
 

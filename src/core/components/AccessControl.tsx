@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect  } from 'react';
 import { useAuth } from '@/core/context/AuthContext';
 import { Navigate } from '@/core/utils/router';
 

@@ -13,6 +13,7 @@ import os
 import sys
 import argparse
 from datetime import datetime
+from core.security import add_security_headers
 
 # Configurar logging
 logging.basicConfig(
@@ -31,13 +32,20 @@ app = FastAPI(
 )
 
 # Configurar CORS
+cors_origins = os.environ.get(
+    "CORS_ORIGINS", 
+    "http://localhost:3000,https://aiduxcare.vercel.app"
+).split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, especificar los orígenes permitidos
+    allow_origins=cors_origins,  # Usar variable con orígenes permitidos
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],  # Limitar métodos permitidos
+    allow_headers=["Content-Type", "Authorization"],  # Limitar headers permitidos
 )
+
+# Añadir middleware de encabezados de seguridad
+add_security_headers(app)
 
 # Importar routers - Con manejo de errores para asegurar que la app inicie
 try:
@@ -45,12 +53,18 @@ try:
     from api.validate import router as validate_router
     from api.store import router as store_router
     from api.entries import router as entries_router
+    from api.test_security import router as security_router
+    from core.csrf import get_csrf_endpoint
+    
+    # Endpoint CSRF para obtener token
+    app.add_api_route("/api/csrf-token", get_csrf_endpoint, methods=["GET"], tags=["seguridad"])
     
     # Registrar routers
     app.include_router(respond_router)
     app.include_router(validate_router)
     app.include_router(store_router)
     app.include_router(entries_router)
+    app.include_router(security_router)
     logger.info("Routers cargados correctamente")
 except ImportError as e:
     logger.error(f"Error al importar routers: {str(e)}")
@@ -106,10 +120,6 @@ async def startup_event():
     logger.info(f"Proveedor LLM: {os.environ.get('MODEL_PROVIDER', 'anthropic')}")
     logger.info(f"Modelo LLM: {os.environ.get('DEFAULT_MODEL', 'claude-3-sonnet-20240229')}")
     
-    cors_origins = os.environ.get(
-        "CORS_ORIGINS", 
-        "http://localhost:3000,https://aiduxcare.vercel.app"
-    ).split(",")
     logger.info(f"CORS habilitado para: {cors_origins}")
     
     # Verificar conexión con servicios externos

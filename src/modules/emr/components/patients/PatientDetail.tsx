@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState  } from 'react';
 import { Paper, Typography, CircularProgress, Alert, List, ListItem, ListItemText } from "@mui/material";
 import PatientService from "@/core/services/patient/PatientService";
 import VisitService from "@/core/services/visit/VisitService";
-import { Patient, Visit } from "@/core/types";
+import type { Patient, Visit  } from '@/core/types';
 
 interface PatientDetailProps {
   patientId: string;

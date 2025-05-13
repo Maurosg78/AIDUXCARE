@@ -1,4 +1,4 @@
-import { UserRole } from '@/core/types';
+import type { UserRole  } from '@/core/types';
 
 export interface AuthOptions {
   providers: Array<{

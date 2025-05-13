@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState  } from 'react';
 import { Box, TextField, Button, Typography, Container } from "@mui/material";
 import { getAIResponse } from "../services/aiService";
 
