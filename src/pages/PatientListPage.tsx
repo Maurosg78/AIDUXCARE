@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { usePatients } from '../hooks/usePatients';
 import {
   Table,
@@ -10,11 +11,16 @@ import {
 } from '../components/ui/table';
 import { Button } from '../components/ui/button';
 import { PlusIcon } from '@heroicons/react/24/outline';
+import { adaptPatient } from '@/types/component-adapters';
+import type { AdaptedPatient } from '@/types/component-adapters';
 
 export default function PatientListPage() {
   const { t } = useTranslation();
-  const { patients, isLoading, error } = usePatients();
+  const { patients: rawPatients, isLoading, error } = usePatients();
   const navigate = useNavigate();
+  
+  // Adaptamos los pacientes al tipo AdaptedPatient
+  const patients = rawPatients.map(patient => adaptPatient(patient));
 
   if (isLoading) return <div>{t('common.loading')}</div>;
   if (error) return <div>{t('common.error')}</div>;
@@ -39,11 +45,11 @@ export default function PatientListPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {patients?.map((patient) => (
+          {patients.map((patient: AdaptedPatient) => (
             <TableRow key={patient.id}>
-              <TableCell>{patient.name}</TableCell>
-              <TableCell>{patient.age}</TableCell>
-              <TableCell>{patient.gender}</TableCell>
+              <TableCell>{patient.name || `${patient.firstName || ''} ${patient.lastName || ''}`}</TableCell>
+              <TableCell>{patient.age || '-'}</TableCell>
+              <TableCell>{patient.gender || '-'}</TableCell>
               <TableCell>
                 <Button
                   variant="ghost"

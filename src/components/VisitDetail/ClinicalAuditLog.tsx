@@ -1,7 +1,9 @@
 import { useEffect, useState  } from 'react';
 import { AuditLogService } from '@/core/services/AuditLogService';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Box } from '@mui/material';
+import type { AuditLogEvent } from '@/core/types';
 
+// Mapeo de tipos de acciones a etiquetas legibles
 const ACTION_LABELS: Record<string, string> = {
   manual_edit: 'Edición manual',
   field_updated: 'Edición manual',
@@ -18,12 +20,12 @@ interface ClinicalAuditLogProps {
   visitId: string;
 }
 
-// Definir el tipo localmente para evitar problemas de namespace
-interface AuditLogItem {
-  id?: string;
-  visitId: string;
+// Tipo específico para las entradas de auditoría clínica con tipos estrictos
+interface ClinicalAuditLogEntry {
+  id: string;
   timestamp: string;
   action: string;
+  visitId: string;
   field: string;
   oldValue?: string;
   newValue?: string;
@@ -31,8 +33,19 @@ interface AuditLogItem {
   source: 'user' | 'copilot';
 }
 
+// Definimos la interfaz AuditLogEvent aquí, similar a la de @/core/types
+interface AuditLogEvent {
+  id: string;
+  userId: string;
+  action: string;
+  resource: string;
+  resourceId: string;
+  details?: Record<string, unknown>;
+  timestamp: string;
+}
+
 export const ClinicalAuditLog: React.FC<ClinicalAuditLogProps> = ({ visitId }) => {
-  const [logs, setLogs] = useState<AuditLogItem[]>([]);
+  const [logs, setLogs] = useState<ClinicalAuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,11 +53,37 @@ export const ClinicalAuditLog: React.FC<ClinicalAuditLogProps> = ({ visitId }) =
     let mounted = true;
     setLoading(true);
     setError(null);
-    AuditLogService.getLogsByVisitId(visitId)
-      .then((data) => {
-        if (mounted) setLogs(data.sort((a, b) => b.timestamp.localeCompare(a.timestamp)));
+    
+    AuditLogService.getAuditLogs({
+      resourceType: 'visit',
+      resourceId: visitId,
+    })
+      .then((data: AuditLogEvent[]) => {
+        if (!mounted) return;
+        
+        // Adaptar los datos del servicio al formato específico de este componente
+        const adaptedLogs: ClinicalAuditLogEntry[] = data.map((item) => {
+          // Extraer valores con tipado seguro
+          const details = item.details || {};
+          
+          return {
+            id: item.id,
+            timestamp: item.timestamp,
+            action: item.action,
+            visitId: item.resourceId,
+            field: typeof details.field === 'string' ? details.field : 'general',
+            oldValue: typeof details.oldValue === 'string' ? details.oldValue : undefined,
+            newValue: typeof details.newValue === 'string' ? details.newValue : undefined,
+            modifiedBy: typeof details.modifiedBy === 'string' ? 
+              details.modifiedBy : item.userId,
+            source: details.source === 'copilot' ? 'copilot' : 'user'
+          };
+        });
+        
+        // Ordenar por fecha descendente
+        setLogs(adaptedLogs.sort((a, b) => b.timestamp.localeCompare(a.timestamp)));
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         console.error('Error al cargar logs de auditoría:', err);
         if (mounted) setError('Error al cargar los eventos clínicos.');
       })
@@ -57,9 +96,11 @@ export const ClinicalAuditLog: React.FC<ClinicalAuditLogProps> = ({ visitId }) =
   if (loading) {
     return <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}><CircularProgress /></Box>;
   }
+  
   if (error) {
     return <Typography color="error" align="center">{error}</Typography>;
   }
+  
   if (!logs.length) {
     return <Typography align="center" color="text.secondary" sx={{ mt: 2 }}>No hay eventos registrados para esta visita.</Typography>;
   }
