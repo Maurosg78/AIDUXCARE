@@ -5,50 +5,43 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { createApiError } from '../middleware/errorHandler';
 import logger from '../utils/logger';
+import { z, validateBody, validateQuery, ExportPayload } from '../utils/zod-utils';
 
-// Interfaces para tipado de parámetros y respuestas
-interface ExportPatientParams {
-  startDate?: string;
-  endDate?: string;
-  includeInactive?: boolean;
-}
+// Esquemas de validación Zod
+const ExportPatientParamsSchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  includeInactive: z.boolean().optional(),
+});
 
-interface ExportVisitParams {
-  startDate?: string;
-  endDate?: string;
-  patientId?: string;
-  status?: string;
-}
+const ExportVisitParamsSchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  patientId: z.string().optional(),
+  status: z.string().optional(),
+});
 
-interface ExportCsvPayload {
-  entity: string;
-  filters?: {
-    startDate?: string;
-    endDate?: string;
-    patientId?: string;
-    status?: string;
-  };
-  options?: {
-    includeDeleted?: boolean;
-    format?: 'json' | 'csv' | 'pdf' | 'xlsx';
-  };
-}
+const ExportPdfParamsSchema = z.object({
+  type: z.string(),
+  id: z.string().optional(),
+});
 
-// Definir interfaz para un payload de exportación
-interface ExportPayload {
-  entity: string;
-  format: 'json' | 'csv' | 'pdf' | 'xlsx';
-  filters?: Record<string, unknown>;
-  options?: {
-    includeDeleted?: boolean;
-    limit?: number;
-    page?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-    [key: string]: unknown;
-  };
-  metadata?: Record<string, unknown>;
-}
+const ExportCsvPayloadSchema = z.object({
+  entity: z.string(),
+  filters: z.object({
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    patientId: z.string().optional(),
+    status: z.string().optional(),
+  }).optional(),
+  options: z.object({
+    includeDeleted: z.boolean().optional(),
+    format: z.string().optional(),
+  }).optional(),
+});
+
+// Estos tipos se infieren directamente en el código
+// a través de las funciones de validación
 
 // Tipo para respuesta de exportación estándar
 interface ExportResponse<T> {
@@ -59,6 +52,23 @@ interface ExportResponse<T> {
   data: T[];
 }
 
+// Tipo para paciente
+interface Patient {
+  id: string;
+  nombre: string;
+  edad: number;
+  email: string;
+}
+
+// Tipo para visita
+interface Visit {
+  id: string;
+  paciente_id: string;
+  fecha: string;
+  motivo: string;
+  doctor: string;
+}
+
 // Crear el router para las rutas de exportación
 export const exportRoutes = (): Router => {
   const router = Router();
@@ -66,8 +76,8 @@ export const exportRoutes = (): Router => {
   // Exportar datos de pacientes (en formato JSON)
   router.get('/patients', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Validar parámetros
-      const params = req.query as unknown as ExportPatientParams;
+      // Validar parámetros con Zod
+      const params = validateQuery(ExportPatientParamsSchema, req);
       
       // Extraer contexto de la solicitud
       const requestContext = {
@@ -81,7 +91,7 @@ export const exportRoutes = (): Router => {
       });
       
       // Mock de datos tipados para demostración
-      const patients = [
+      const patients: Patient[] = [
         { id: 'pat-001', nombre: 'Juan Pérez', edad: 45, email: 'juan@example.com' },
         { id: 'pat-002', nombre: 'María López', edad: 38, email: 'maria@example.com' },
         { id: 'pat-003', nombre: 'Carlos Rodríguez', edad: 52, email: 'carlos@example.com' }
@@ -91,7 +101,7 @@ export const exportRoutes = (): Router => {
       res.setHeader('Content-Disposition', 'attachment; filename=patients-export.json');
       res.setHeader('Content-Type', 'application/json');
       
-      const responseBody: ExportResponse<typeof patients[0]> = {
+      const responseBody: ExportResponse<Patient> = {
         success: true,
         generated_at: new Date().toISOString(),
         count: patients.length,
@@ -108,8 +118,8 @@ export const exportRoutes = (): Router => {
   // Exportar datos de visitas (en formato JSON)
   router.get('/visits', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Validar parámetros
-      const params = req.query as unknown as ExportVisitParams;
+      // Validar parámetros con Zod
+      const params = validateQuery(ExportVisitParamsSchema, req);
       
       // Extraer contexto de la solicitud
       const requestContext = {
@@ -123,14 +133,6 @@ export const exportRoutes = (): Router => {
       });
       
       // Mock de datos tipados para demostración
-      type Visit = {
-        id: string;
-        paciente_id: string;
-        fecha: string;
-        motivo: string;
-        doctor: string;
-      };
-      
       const visits: Visit[] = [
         { 
           id: 'visit-001', 
@@ -182,19 +184,17 @@ export const exportRoutes = (): Router => {
   // Exportar datos en formato CSV (general)
   router.post('/csv', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Validar el payload
-      const validatedPayload = req.body as ExportCsvPayload;
-      
-      if (!validatedPayload.entity) {
-        throw createApiError('Se requiere especificar la entidad a exportar', 400, null, 'MISSING_ENTITY');
-      }
+      // Validar el payload con Zod
+      const validatedPayload = validateBody(ExportCsvPayloadSchema, req);
       
       // Convertir a nuestro tipo adaptado
       const exportPayload: ExportPayload = {
         entity: validatedPayload.entity,
         format: 'csv',
         filters: validatedPayload.filters,
-        options: validatedPayload.options
+        options: {
+          includeDeleted: validatedPayload.options?.includeDeleted
+        }
       };
       
       // Extraer contexto de la solicitud
@@ -238,9 +238,8 @@ export const exportRoutes = (): Router => {
   // Exportar reporte en formato PDF
   router.get('/pdf', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Validar tipo y id
-      const type = req.query.type as string | undefined;
-      const id = req.query.id as string | undefined;
+      // Validar tipo y id con Zod
+      const params = validateQuery(ExportPdfParamsSchema, req);
       
       // Extraer contexto de la solicitud
       const requestContext = {
@@ -248,19 +247,10 @@ export const exportRoutes = (): Router => {
         timestamp: new Date().toISOString()
       };
       
-      logger.info(`Exportación: Generando PDF de tipo ${type}`, { 
-        id,
+      logger.info(`Exportación: Generando PDF de tipo ${params.type}`, { 
+        id: params.id,
         requestContext
       });
-      
-      if (!type) {
-        throw createApiError(
-          'Se requiere especificar el tipo de reporte PDF', 
-          400, 
-          null, 
-          'MISSING_PARAM'
-        );
-      }
       
       // En un entorno real, aquí se generaría un PDF real
       // Para esta demostración, enviaremos un PDF simulado
@@ -270,11 +260,11 @@ export const exportRoutes = (): Router => {
       
       // Determinar el nombre del archivo basado en el tipo de reporte
       let filename = 'reporte.pdf';
-      if (type === 'patient' && id) {
-        filename = `paciente-${id}.pdf`;
-      } else if (type === 'visit' && id) {
-        filename = `visita-${id}.pdf`;
-      } else if (type === 'summary') {
+      if (params.type === 'patient' && params.id) {
+        filename = `paciente-${params.id}.pdf`;
+      } else if (params.type === 'visit' && params.id) {
+        filename = `visita-${params.id}.pdf`;
+      } else if (params.type === 'summary') {
         filename = 'resumen-clinico.pdf';
       }
       

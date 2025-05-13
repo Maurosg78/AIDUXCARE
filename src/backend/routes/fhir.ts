@@ -3,30 +3,33 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { createApiError } from '../middleware/errorHandler';
+import { createApiError, createNotFoundError } from '../middleware/errorHandler';
 import logger from '../utils/logger';
+import { z, validateParams, validateBody, FHIRPatientSchema } from '../utils/zod-utils';
+import { AdaptedFHIRPatient } from '@/types/backend-adapters';
 
 // Definir tipos para los recursos FHIR
-type FHIRResourceType = 'Patient' | 'Observation' | 'Encounter';
+export type FHIRResourceType = 'Patient' | 'Observation' | 'Encounter';
+
+// Esquema para validar tipo de recurso
+const ResourceTypeSchema = z.object({
+  resourceType: z.enum(['Patient', 'Observation', 'Encounter'])
+});
+
+// Esquema para validar parámetros de recursos
+const ResourceParamsSchema = z.object({
+  resourceType: z.enum(['Patient', 'Observation', 'Encounter']),
+  id: z.string().optional()
+});
 
 // Interfaces para los recursos FHIR
-interface FHIRResource {
+export interface FHIRResource {
   id: string;
   resourceType: FHIRResourceType;
   [key: string]: unknown;
 }
 
-interface FHIRPatient extends FHIRResource {
-  resourceType: 'Patient';
-  name?: Array<{
-    family?: string;
-    given?: string[];
-  }>;
-  gender?: string;
-  birthDate?: string;
-}
-
-interface FHIRObservation extends FHIRResource {
+export interface FHIRObservation extends FHIRResource {
   resourceType: 'Observation';
   status: string;
   code: {
@@ -37,7 +40,7 @@ interface FHIRObservation extends FHIRResource {
   };
 }
 
-interface FHIREncounter extends FHIRResource {
+export interface FHIREncounter extends FHIRResource {
   resourceType: 'Encounter';
   status: string;
   class: {
@@ -48,6 +51,16 @@ interface FHIREncounter extends FHIRResource {
   };
 }
 
+// Tipo para respuesta de búsqueda FHIR
+export interface FHIRBundle<T extends FHIRResource> {
+  resourceType: 'Bundle';
+  type: 'searchset';
+  total: number;
+  entry: Array<{
+    resource: T;
+  }>;
+}
+
 // Crear el router para las rutas FHIR
 export const fhirRoutes = (): Router => {
   const router = Router();
@@ -55,37 +68,59 @@ export const fhirRoutes = (): Router => {
   // Obtener recursos FHIR por tipo
   router.get('/:resourceType', (req: Request, res: Response, next: NextFunction) => {
     try {
-      const resourceType = req.params.resourceType as FHIRResourceType;
+      const { resourceType } = validateParams(ResourceParamsSchema, req);
       
       // Mock de datos para demostración
       const mockResources: Record<FHIRResourceType, FHIRResource[]> = {
         Patient: [
-          { id: 'patient-001', resourceType: 'Patient', name: [{ family: 'López', given: ['Ana'] }], gender: 'female' },
-          { id: 'patient-002', resourceType: 'Patient', name: [{ family: 'Rodríguez', given: ['Carlos'] }], gender: 'male' }
+          { 
+            id: 'patient-001', 
+            resourceType: 'Patient', 
+            name: [{ family: 'López', given: ['Ana'] }], 
+            gender: 'female' 
+          } as AdaptedFHIRPatient,
+          { 
+            id: 'patient-002', 
+            resourceType: 'Patient', 
+            name: [{ family: 'Rodríguez', given: ['Carlos'] }], 
+            gender: 'male' 
+          } as AdaptedFHIRPatient
         ],
         Observation: [
-          { id: 'obs-001', resourceType: 'Observation', status: 'final', code: { text: 'Presión arterial' }, subject: { reference: 'Patient/patient-001' } }
+          { 
+            id: 'obs-001', 
+            resourceType: 'Observation', 
+            status: 'final', 
+            code: { text: 'Presión arterial' }, 
+            subject: { reference: 'Patient/patient-001' } 
+          } as FHIRObservation
         ],
         Encounter: [
-          { id: 'enc-001', resourceType: 'Encounter', status: 'finished', class: { code: 'AMB' }, subject: { reference: 'Patient/patient-001' } }
+          { 
+            id: 'enc-001', 
+            resourceType: 'Encounter', 
+            status: 'finished', 
+            class: { code: 'AMB' }, 
+            subject: { reference: 'Patient/patient-001' } 
+          } as FHIREncounter
         ]
       };
       
       // Verificar si el tipo de recurso solicitado es válido
-      if (Object.keys(mockResources).includes(resourceType)) {
-        logger.info(`FHIR: Obteniendo recursos de tipo ${resourceType}`);
-        res.json({
-          resourceType: 'Bundle',
-          type: 'searchset',
-          total: mockResources[resourceType].length,
-          entry: mockResources[resourceType].map(resource => ({
-            resource
-          }))
-        });
-      } else {
-        // Tipo de recurso no admitido
-        throw createApiError(`Tipo de recurso FHIR no soportado: ${resourceType}`, 400);
-      }
+      logger.info(`FHIR: Obteniendo recursos de tipo ${resourceType}`);
+      
+      const resources = mockResources[resourceType as FHIRResourceType];
+      
+      const bundle: FHIRBundle<FHIRResource> = {
+        resourceType: 'Bundle',
+        type: 'searchset',
+        total: resources.length,
+        entry: resources.map(resource => ({
+          resource
+        }))
+      };
+      
+      res.json(bundle);
     } catch (error) {
       next(error);
     }
@@ -94,12 +129,12 @@ export const fhirRoutes = (): Router => {
   // Obtener un recurso FHIR específico por tipo y ID
   router.get('/:resourceType/:id', (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { resourceType, id } = req.params;
+      const { resourceType, id } = validateParams(ResourceParamsSchema, req);
       logger.info(`FHIR: Buscando recurso ${resourceType}/${id}`);
       
       // Simulación de recurso encontrado (para demostración)
       if (resourceType === 'Patient' && id === 'patient-001') {
-        const patient: FHIRPatient = {
+        const patient: AdaptedFHIRPatient = {
           resourceType: 'Patient',
           id: 'patient-001',
           name: [{ family: 'López', given: ['Ana'] }],
@@ -109,7 +144,7 @@ export const fhirRoutes = (): Router => {
         res.json(patient);
       } else {
         // Recurso no encontrado
-        throw createApiError(`Recurso FHIR ${resourceType}/${id} no encontrado`, 404);
+        throw createNotFoundError(`Recurso FHIR ${resourceType}/${id} no encontrado`, id);
       }
     } catch (error) {
       next(error);
@@ -117,19 +152,35 @@ export const fhirRoutes = (): Router => {
   });
 
   // Crear un nuevo recurso FHIR
-  router.post('/:resourceType', (req: Request, res: Response, next: NextFunction) => {
+  router.post('/:resourceType', async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const resourceType = req.params.resourceType as FHIRResourceType;
+      const { resourceType } = validateParams(ResourceParamsSchema, req);
+      
+      // Validar que el cuerpo sea un recurso FHIR válido
+      // En un caso real, validaríamos con esquemas específicos dependiendo del tipo
+      if (resourceType === 'Patient') {
+        validateBody(FHIRPatientSchema, req);
+      } else {
+        // Validación genérica para otros tipos
+        validateBody(ResourceTypeSchema, req);
+      }
+      
       const resource = req.body as FHIRResource;
       
       // Verificar el tipo de recurso
-      if (!resource || resource.resourceType !== resourceType) {
-        throw createApiError(`El tipo de recurso en la URL y en el cuerpo deben coincidir`, 400);
+      if (resource.resourceType !== resourceType) {
+        throw createApiError(
+          `El tipo de recurso en la URL (${resourceType}) y en el cuerpo (${resource.resourceType}) deben coincidir`, 
+          400,
+          undefined,
+          'RESOURCE_TYPE_MISMATCH',
+          'ValidationError'
+        );
       }
       
       // Generar un ID para el nuevo recurso (en un sistema real, esto lo haría la base de datos)
       const id = `${resourceType.toLowerCase()}-${Date.now()}`;
-      const createdResource = {
+      const createdResource: FHIRResource = {
         ...resource,
         id
       };

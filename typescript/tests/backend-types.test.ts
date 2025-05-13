@@ -6,9 +6,18 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { z } from '@/types/schema-utils';
-import { createApiError, ApiError, notFoundHandler, errorHandler } from '@/backend/middleware/errorHandler';
-import { requestLogger } from '@/backend/middleware/requestLogger';
+import { z } from 'zod';
+import { 
+  createApiError, 
+  createValidationError, 
+  createAuthError, 
+  createNotFoundError, 
+  ApiError, 
+  notFoundHandler, 
+  errorHandler,
+  BackendErrorType
+} from '@/backend/middleware/errorHandler';
+import { requestLogger, createRequestLogger, RequestLoggerOptions } from '@/backend/middleware/requestLogger';
 import { 
   AdaptedRequestContext, 
   AdaptedExportPayload,
@@ -25,15 +34,54 @@ import {
   AuthenticatedRequest
 } from '@/server/middleware/auth';
 
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+  FHIRPatientSchema,
+  ExportPayloadSchema,
+  PatientSchema,
+  VisitSchema,
+  ContextSchema,
+  type FHIRPatient,
+  type ExportPayload,
+  type Patient,
+  type Visit,
+  type Context
+} from '@/backend/utils/zod-utils';
+
+import {
+  FHIRResourceType,
+  FHIRResource,
+  FHIRObservation,
+  FHIREncounter,
+  FHIRBundle
+} from '@/backend/routes/fhir';
+
 // Test para verificar que los tipos de error estén bien definidos
 function testErrorTypes() {
-  const error: ApiError = createApiError('Test error', 400, { details: 'error details' }, 'TEST_ERROR');
+  const errorTypes: BackendErrorType[] = [
+    'ValidationError',
+    'AuthError',
+    'NotFoundError',
+    'ConflictError',
+    'InternalError',
+    'ExternalServiceError',
+    'BusinessLogicError'
+  ];
+  
+  // Verificar que se pueden crear errores con los diferentes tipos
+  const validationError = createValidationError('Datos inválidos', [{ field: 'nombre', message: 'Requerido' }]);
+  const authError = createAuthError('No autorizado');
+  const notFoundError = createNotFoundError('Recurso no encontrado');
+  const apiError = createApiError('Error genérico', 500, { details: 'error details' }, 'TEST_ERROR', 'InternalError');
   
   // Verificar que los campos estén correctamente tipados
-  const statusCode: number | undefined = error.statusCode;
-  const details: unknown = error.details;
-  const message: string = error.message;
-  const code: string | undefined = error.code;
+  const statusCode: number | undefined = apiError.statusCode;
+  const details: unknown = apiError.details;
+  const message: string = apiError.message;
+  const code: string | undefined = apiError.code;
+  const type: BackendErrorType | undefined = apiError.type;
   
   // Verificar que el middleware pueda ser llamado correctamente
   const mockReq = {} as Request;
@@ -43,7 +91,7 @@ function testErrorTypes() {
   } as unknown as Response;
   const mockNext = jest.fn() as NextFunction;
   
-  errorHandler(error, mockReq, mockRes, mockNext);
+  errorHandler(apiError, mockReq, mockRes, mockNext);
   notFoundHandler(mockReq, mockRes, mockNext);
 }
 
@@ -52,7 +100,9 @@ function testRequestLoggerTypes() {
   const mockReq = {
     method: 'GET',
     originalUrl: '/api/test',
-    url: '/test'
+    url: '/test',
+    headers: {},
+    ip: '127.0.0.1'
   } as Request;
   
   const mockRes = {
@@ -62,7 +112,20 @@ function testRequestLoggerTypes() {
   
   const mockNext = jest.fn() as NextFunction;
   
+  // Probar opciones personalizadas
+  const options: RequestLoggerOptions = {
+    logBody: true,
+    logHeaders: true,
+    excludePaths: ['/health', '/metrics'],
+    sensitiveHeaders: ['authorization', 'x-api-key']
+  };
+  
+  // Crear logger personalizado
+  const customLogger = createRequestLogger(options);
+  
+  // Usar loggers
   requestLogger(mockReq, mockRes, mockNext);
+  customLogger(mockReq, mockRes, mockNext);
 }
 
 // Test para verificar los tipos de adaptadores backend
@@ -148,26 +211,83 @@ function testAuthMiddlewares() {
 
 // Test para verificar la integración con Zod
 function testZodIntegration() {
-  // Definir un esquema con Zod
-  const UserSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string().email(),
-    age: z.number().optional()
-  });
+  // Verificar esquemas FHIR
+  const fhirPatientData = {
+    resourceType: 'Patient',
+    id: 'patient-123',
+    name: [{ family: 'Smith', given: ['John'] }],
+    gender: 'male'
+  };
   
-  // Verificar que se pueda inferir el tipo
-  type User = z.infer<typeof UserSchema>;
+  // Verificar parseo
+  const validatedFhirPatient = FHIRPatientSchema.parse(fhirPatientData);
+  const extractedPatient: FHIRPatient = validatedFhirPatient;
   
-  // Crear una instancia válida
-  const user: User = {
-    id: 'user-123',
-    name: 'Juan García',
+  // Verificar esquemas MCP
+  const patientData = {
+    id: 'pat-123',
+    nombre: 'Juan García',
+    edad: 45,
     email: 'juan@example.com'
   };
   
-  // Validar contra el esquema
-  const validatedUser = UserSchema.parse(user);
+  const validatedPatient = PatientSchema.parse(patientData);
+  const extractedPatientMCP: Patient = validatedPatient;
+  
+  // Verificar funciones de validación
+  const mockReq = {
+    body: { id: 'test', name: 'Test' },
+    params: { id: '123' },
+    query: { page: '1', limit: '10' }
+  } as unknown as Request;
+  
+  const bodySchema = z.object({ id: z.string(), name: z.string() });
+  const paramsSchema = z.object({ id: z.string() });
+  const querySchema = z.object({ page: z.string(), limit: z.string() });
+  
+  try {
+    const body = validateBody(bodySchema, mockReq);
+    const params = validateParams(paramsSchema, mockReq);
+    const query = validateQuery(querySchema, mockReq);
+  } catch (error) {
+    // En una aplicación real, se manejaría el error
+  }
+}
+
+// Test para verificar los tipos de rutas FHIR
+function testFHIRRouteTypes() {
+  // Verificar tipos de recursos
+  const resourceTypes: FHIRResourceType[] = ['Patient', 'Observation', 'Encounter'];
+  
+  // Verificar recursos específicos
+  const patientResource: FHIRResource = {
+    id: 'patient-123',
+    resourceType: 'Patient'
+  };
+  
+  const observationResource: FHIRObservation = {
+    id: 'obs-123',
+    resourceType: 'Observation',
+    status: 'final',
+    code: { text: 'Pulso' },
+    subject: { reference: 'Patient/patient-123' }
+  };
+  
+  const encounterResource: FHIREncounter = {
+    id: 'enc-123',
+    resourceType: 'Encounter',
+    status: 'finished',
+    class: { code: 'AMB' },
+    subject: { reference: 'Patient/patient-123' }
+  };
+  
+  // Verificar tipo de bundle
+  const bundle: FHIRBundle<FHIRResource> = {
+    resourceType: 'Bundle',
+    type: 'searchset',
+    total: 1,
+    entry: [{ resource: patientResource }]
+  };
 }
 
 // No se ejecuta ninguna función real, solo verificamos los tipos
@@ -176,5 +296,6 @@ export default {
   testRequestLoggerTypes,
   testBackendAdapters,
   testAuthMiddlewares,
-  testZodIntegration
+  testZodIntegration,
+  testFHIRRouteTypes
 }; 
