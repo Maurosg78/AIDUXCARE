@@ -4,10 +4,9 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import EvalService, { PatientEval, EvalFilter } from '../services/EvalService';
-import CopilotService, { CopilotFeedback } from '@/modules/ai/CopilotService';
+import CopilotService from '@/modules/ai/CopilotService';
 import LangfuseLink from '@/modules/ai/components/LangfuseLink';
 import { es } from 'date-fns/locale';
-import type { AdaptedPatientEval } from '@/types/component-adapters';
 
 interface EvalTimelineProps {
   patientId: string;
@@ -31,11 +30,16 @@ const EvalTimeline: React.FC<EvalTimelineProps> = ({ patientId }) => {
 
   useEffect(() => {
     const applyFilters = async () => {
-      const newFilters: EvalFilter = {
-        ...filters,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-      };
+      const newFilters: EvalFilter = { ...filters };
+      
+      if (startDate !== null) {
+        newFilters.startDate = startDate;
+      }
+      
+      if (endDate !== null) {
+        newFilters.endDate = endDate;
+      }
+      
       const filtered = await EvalService.filterEvals(evals, newFilters);
       setFilteredEvals(filtered);
     };
@@ -43,10 +47,18 @@ const EvalTimeline: React.FC<EvalTimelineProps> = ({ patientId }) => {
   }, [filters, startDate, endDate, evals]);
 
   const handleFeedbackTypeChange = (type: 'alerta' | 'sugerencia' | 'test' | undefined) => {
-    setFilters({ ...filters, feedbackType: type });
+    if (type === undefined) {
+      // Si es undefined, creamos un nuevo objeto sin la propiedad feedbackType
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { feedbackType: _unused, ...rest } = filters;
+      setFilters(rest);
+    } else {
+      // Si tiene valor, lo asignamos
+      setFilters({ ...filters, feedbackType: type });
+    }
   };
 
-  const getFeedbackIcon = (type: CopilotFeedback['type']) => {
+  const getFeedbackIcon = (type: string): string => {
     switch (type) {
       case 'omission': return '⚠️';
       case 'suggestion': return '💡';
@@ -56,7 +68,7 @@ const EvalTimeline: React.FC<EvalTimelineProps> = ({ patientId }) => {
     }
   };
 
-  const getAlertSeverity = (severity: CopilotFeedback['severity']) => {
+  const getAlertSeverity = (severity: string): 'error' | 'warning' | 'info' => {
     switch (severity) {
       case 'error': return 'error';
       case 'warning': return 'warning';
@@ -98,7 +110,10 @@ const EvalTimeline: React.FC<EvalTimelineProps> = ({ patientId }) => {
               labelId="feedback-type-label"
               value={filters.feedbackType || ''}
               label="Tipo de feedback"
-              onChange={(e) => handleFeedbackTypeChange(e.target.value === '' ? undefined : e.target.value as 'alerta' | 'sugerencia' | 'test')}
+              onChange={(e) => {
+                const value = e.target.value as string;
+                handleFeedbackTypeChange(value === '' ? undefined : value as 'alerta' | 'sugerencia' | 'test');
+              }}
             >
               <MenuItem value="">Todos</MenuItem>
               <MenuItem value="alerta">Alertas</MenuItem>

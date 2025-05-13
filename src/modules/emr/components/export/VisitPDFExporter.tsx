@@ -4,28 +4,13 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ExportService from '@/core/services/export/ExportService';
-import type { Visit, Patient, User, PatientEval  } from '@/core/types';
+import { Visit, Patient, User, PatientEval } from '@/core/types';
 import { useSession } from '@/core/hooks/useSession';
 
-// Tipo más flexible para permitir compatibilidad entre diferentes versiones de Visit
-type VisitLike = {
-  id: string;
-  patientId: string;
-  date: string;
-  status: string;
-  [key: string]: unknown;
-};
-
-// Tipo más flexible para evaluaciones
-type EvaluationLike = {
-  patientId: string;
-  [key: string]: unknown;
-};
-
 interface VisitPDFExporterProps {
-  visit: VisitLike;
+  visit: Visit;
   patient: Patient;
-  evaluation?: EvaluationLike;
+  evaluation?: PatientEval;
   onExportStart?: () => void;
   onExportComplete?: () => void;
   onExportError?: (error: Error) => void;
@@ -88,8 +73,8 @@ const VisitPDFExporter: React.FC<VisitPDFExporterProps> = ({
       // Crear el profesional a partir de la sesión
       const professional: User = {
         id: session.user.id,
-        name: session.user.name,
-        email: session.user.email,
+        name: session.user.name || '',
+        email: session.user.email || '',
         role: session.user.role
       };
       
@@ -97,8 +82,8 @@ const VisitPDFExporter: React.FC<VisitPDFExporterProps> = ({
       const normalizedVisit: Visit = {
         id: visit.id,
         patientId: visit.patientId,
-        date: visit.date,
-        status: visit.status as 'scheduled' | 'completed' | 'cancelled',
+        date: visit.date || visit.visitDate || new Date().toISOString(),
+        status: visit.status,
         professionalId: visit.professionalId || professional.id,
         updatedAt: visit.updatedAt || new Date().toISOString(),
         createdAt: visit.createdAt || new Date().toISOString(),

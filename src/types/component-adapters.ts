@@ -181,4 +181,16 @@ export function adaptAuditLogEntry(entry: Record<string, unknown>): AdaptedAudit
     resourceType: String(entry.resourceType || ''),
     resourceId: String(entry.resourceId || '')
   };
+}
+
+/**
+ * Adapta un objeto de evaluación de paciente a la estructura AdaptedPatientEval
+ */
+export function adaptPatientEval(evaluation: Record<string, unknown>): AdaptedPatientEval {
+  return {
+    ...evaluation,
+    // Asegurar campos mínimos
+    patientId: String(evaluation.patientId || ''),
+    traceId: String(evaluation.traceId || ''),
+  };
 } 
