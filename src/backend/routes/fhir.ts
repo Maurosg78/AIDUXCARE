@@ -6,6 +6,48 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { createApiError } from '../middleware/errorHandler';
 import logger from '../utils/logger';
 
+// Definir tipos para los recursos FHIR
+type FHIRResourceType = 'Patient' | 'Observation' | 'Encounter';
+
+// Interfaces para los recursos FHIR
+interface FHIRResource {
+  id: string;
+  resourceType: FHIRResourceType;
+  [key: string]: unknown;
+}
+
+interface FHIRPatient extends FHIRResource {
+  resourceType: 'Patient';
+  name?: Array<{
+    family?: string;
+    given?: string[];
+  }>;
+  gender?: string;
+  birthDate?: string;
+}
+
+interface FHIRObservation extends FHIRResource {
+  resourceType: 'Observation';
+  status: string;
+  code: {
+    text: string;
+  };
+  subject: {
+    reference: string;
+  };
+}
+
+interface FHIREncounter extends FHIRResource {
+  resourceType: 'Encounter';
+  status: string;
+  class: {
+    code: string;
+  };
+  subject: {
+    reference: string;
+  };
+}
+
 // Crear el router para las rutas FHIR
 export const fhirRoutes = (): Router => {
   const router = Router();
@@ -13,10 +55,10 @@ export const fhirRoutes = (): Router => {
   // Obtener recursos FHIR por tipo
   router.get('/:resourceType', (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { resourceType } = req.params;
+      const resourceType = req.params.resourceType as FHIRResourceType;
       
       // Mock de datos para demostración
-      const mockResources = {
+      const mockResources: Record<FHIRResourceType, FHIRResource[]> = {
         Patient: [
           { id: 'patient-001', resourceType: 'Patient', name: [{ family: 'López', given: ['Ana'] }], gender: 'female' },
           { id: 'patient-002', resourceType: 'Patient', name: [{ family: 'Rodríguez', given: ['Carlos'] }], gender: 'male' }
@@ -30,7 +72,7 @@ export const fhirRoutes = (): Router => {
       };
       
       // Verificar si el tipo de recurso solicitado es válido
-      if (mockResources[resourceType]) {
+      if (Object.keys(mockResources).includes(resourceType)) {
         logger.info(`FHIR: Obteniendo recursos de tipo ${resourceType}`);
         res.json({
           resourceType: 'Bundle',
@@ -57,13 +99,14 @@ export const fhirRoutes = (): Router => {
       
       // Simulación de recurso encontrado (para demostración)
       if (resourceType === 'Patient' && id === 'patient-001') {
-        res.json({
+        const patient: FHIRPatient = {
           resourceType: 'Patient',
           id: 'patient-001',
           name: [{ family: 'López', given: ['Ana'] }],
           gender: 'female',
           birthDate: '1985-08-12'
-        });
+        };
+        res.json(patient);
       } else {
         // Recurso no encontrado
         throw createApiError(`Recurso FHIR ${resourceType}/${id} no encontrado`, 404);
@@ -76,8 +119,8 @@ export const fhirRoutes = (): Router => {
   // Crear un nuevo recurso FHIR
   router.post('/:resourceType', (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { resourceType } = req.params;
-      const resource = req.body;
+      const resourceType = req.params.resourceType as FHIRResourceType;
+      const resource = req.body as FHIRResource;
       
       // Verificar el tipo de recurso
       if (!resource || resource.resourceType !== resourceType) {

@@ -11,7 +11,7 @@ export const mcpRoutes = (): Router => {
   const router = Router();
 
   // Obtener lista de pacientes
-  router.get('/patients', (req: Request, res: Response, next: NextFunction) => {
+  router.get('/patients', (_req: Request, res: Response, next: NextFunction) => {
     try {
       logger.info('MCP: Obteniendo lista de pacientes');
       
@@ -143,7 +143,7 @@ export const mcpRoutes = (): Router => {
   });
 
   // Obtener información de contexto del MCP
-  router.get('/context', (req: Request, res: Response, next: NextFunction) => {
+  router.get('/context', (_req: Request, res: Response, next: NextFunction) => {
     try {
       logger.info('MCP: Obteniendo información de contexto');
       

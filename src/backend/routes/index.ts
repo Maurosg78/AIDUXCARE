@@ -20,7 +20,7 @@ export const setupRoutes = (app: Express): void => {
   app.use('/api/export', exportRoutes());
   
   // Ruta básica para verificar que el servidor está funcionando
-  app.get('/', (req, res) => {
+  app.get('/', (_req, res) => {
     res.json({
       status: 'online',
       version: process.env.npm_package_version || '1.0.0',

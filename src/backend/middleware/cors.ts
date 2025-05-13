@@ -44,7 +44,7 @@ const corsOptions: cors.CorsOptions = {
 export const corsMiddleware = cors(corsOptions);
 
 // Middleware para logging de CORS
-export const corsLogger = (req: Request, res: Response, next: NextFunction): void => {
+export const corsLogger = (req: Request, _res: Response, next: NextFunction): void => {
   const origin = req.headers.origin;
   if (origin) {
     logger.info(`CORS: Solicitud recibida desde ${origin}`);

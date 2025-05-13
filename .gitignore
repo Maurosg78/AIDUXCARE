@@ -8,15 +8,20 @@ build/
 # Local environment variables
 .env
 .env.local
-.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # IDE/editor folders
 .vscode/
 .idea/
 *.swp
+*.sublime-workspace
+*.sublime-project
 
 # MacOS system files
 .DS_Store
+Thumbs.db
 
 # Log files
 npm-debug.log*
@@ -29,6 +34,7 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
-.env
 .vercel
-.env*.local
+
+# Tests
+src/backend/tests/**/*
