@@ -1,9 +1,12 @@
-import { useState, useCallback, useEffect  } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 // Comentar temporalmente la importación de useLangfuse hasta que esté disponible
 // import { useLangfuse } from '@/core/hooks/useLangfuse';
 // Importamos los componentes
 import { Button, Card, Checkbox, Alert } from '@/components/ui';
 
+/**
+ * Representa una frase detectada durante la escucha activa
+ */
 interface DetectedPhrase {
   id: string;
   text: string;
@@ -11,19 +14,31 @@ interface DetectedPhrase {
   approved: boolean;
 }
 
-interface ActiveListeningPanelProps {
-  onPhrasesValidated: (result: {
-    approvedPhrases: string[];
-    rejectedPhrases: string[];
-    traceId: string;
-  }) => void;
+/**
+ * Resultado de la validación de frases en la escucha activa
+ */
+interface ValidationResult {
+  approvedPhrases: string[];
+  rejectedPhrases: string[];
+  traceId: string;
 }
 
+/**
+ * Props para el componente de escucha activa
+ */
+interface ActiveListeningPanelProps {
+  onPhrasesValidated: (result: ValidationResult) => void;
+}
+
+/**
+ * Panel de escucha activa que permite identificar y validar frases
+ * clínicamente relevantes durante una consulta
+ */
 export const ActiveListeningPanel: React.FC<ActiveListeningPanelProps> = ({
   onPhrasesValidated,
 }) => {
-  const [isListening, setIsListening] = useState(false);
-  const [hasConsent, setHasConsent] = useState(false);
+  const [isListening, setIsListening] = useState<boolean>(false);
+  const [hasConsent, setHasConsent] = useState<boolean>(false);
   const [detectedPhrases, setDetectedPhrases] = useState<DetectedPhrase[]>([]);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   // Comentar temporalmente hasta que tengamos una implementación real

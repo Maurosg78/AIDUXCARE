@@ -3,11 +3,15 @@ import { Paper, Typography, Box } from "@mui/material";
 import { getAssistantResponse } from "../services/assistantEngine";
 import type { AssistantContext } from "../models/AssistantContext";
 
-type Props = {
+interface AssistantPanelProps {
   context: AssistantContext;
-};
+}
 
-const AssistantPanel: React.FC<Props> = ({ context }) => {
+/**
+ * Panel que muestra respuestas generadas por el asistente clínico
+ * basadas en el contexto proporcionado.
+ */
+const AssistantPanel: React.FC<AssistantPanelProps> = ({ context }) => {
   const [response, setResponse] = useState<string>("...");
 
   useEffect(() => {

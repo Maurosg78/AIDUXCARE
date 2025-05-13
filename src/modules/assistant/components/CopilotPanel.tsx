@@ -1,7 +1,7 @@
-import React from 'react';
-import CopilotService from '../../ai/CopilotService';
-import { PatientEval } from '../../emr/services/EvalService';
-import { CopilotFeedback } from '../../ai/CopilotService';
+import React, { useState, useEffect } from 'react';
+import CopilotService from '@/modules/ai/CopilotService';
+import type { CopilotFeedback } from '@/modules/ai/CopilotService';
+import type { PatientEval } from '@/modules/emr/services/EvalService';
 import { Button } from '@mui/material';
 import { trackEvent } from '@/core/lib/langfuse.client';
 
@@ -10,10 +10,16 @@ interface CopilotPanelProps {
   onApplySuggestion?: (feedback: CopilotFeedback) => void;
 }
 
-const CopilotPanel: React.FC<CopilotPanelProps> = ({ formData, onApplySuggestion }) => {
-  const [feedback, setFeedback] = React.useState<CopilotFeedback[]>([]);
+/**
+ * Panel que muestra sugerencias y retroalimentación del Copilot de IA
+ */
+const CopilotPanel: React.FC<CopilotPanelProps> = ({ 
+  formData, 
+  onApplySuggestion 
+}) => {
+  const [feedback, setFeedback] = useState<CopilotFeedback[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const analyzeFeedback = async () => {
       const result = await CopilotService.analyzeEval(formData);
       setFeedback(result);
@@ -29,6 +35,7 @@ const CopilotPanel: React.FC<CopilotPanelProps> = ({ formData, onApplySuggestion
           diagnosis: formData.diagnosis
         })
       };
+      
       if (formData.traceId) {
         await trackEvent({
           name: 'copilot.feedback',
@@ -37,6 +44,7 @@ const CopilotPanel: React.FC<CopilotPanelProps> = ({ formData, onApplySuggestion
         });
       }
     };
+    
     analyzeFeedback();
   }, [formData]);
 
