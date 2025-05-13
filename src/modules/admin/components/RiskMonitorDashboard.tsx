@@ -4,17 +4,26 @@ import { supabase } from '@/core/lib/supabase';
 import { AlertCircle, Calendar, Filter, User, CheckCircle, XCircle, FileText, Mic, File as FilePdf, Database, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, subWeeks, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { UserRole } from '@/core/types/UserRoles';
 
-// Tipos de eventos
+/**
+ * Tipos de eventos que pueden ser monitorizados en el sistema
+ */
 type EventType = 'form.update' | 'audio.review' | 'pdf.export' | 'mcp.context.build';
 
-// Tipos de omisiones críticas
+/**
+ * Tipos de omisiones críticas que representan riesgos
+ */
 type OmissionType = 'checklist' | 'signature' | 'mcp' | 'export';
 
-// Períodos de tiempo para agrupación
+/**
+ * Períodos de tiempo para agrupación de reportes
+ */
 type TimePeriod = 'current-week' | 'last-week' | 'current-month' | 'all';
 
-// Estado para cada validación
+/**
+ * Estado para cada validación de un criterio
+ */
 interface ValidationStatus {
   checked: boolean;
   passed: boolean;
@@ -22,8 +31,30 @@ interface ValidationStatus {
 
 // Importación de adaptadores
 import type { AdaptedVisit, AdaptedPatient } from '@/types/component-adapters';
+import { adaptVisit, adaptPatient } from '@/types/component-adapters';
 
-// Estructura para una visita con información de riesgo
+/**
+ * Estructura de datos para una observación de Langfuse
+ */
+interface LangfuseObservation {
+  id: string;
+  type: string;
+  startTime?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Estructura de datos para una traza de Langfuse
+ */
+interface LangfuseTrace {
+  id: string;
+  startTime?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Estructura para una visita con información de riesgo
+ */
 interface RiskVisit {
   id: string;
   date: Date;
@@ -43,16 +74,35 @@ interface RiskVisit {
   patient?: AdaptedPatient;
 }
 
-// Agrupación de visitas por profesional
+/**
+ * Estructura para almacenar información del profesional
+ */
+interface Professional {
+  id: string;
+  name: string;
+  role?: UserRole;
+}
+
+/**
+ * Agrupación de visitas por profesional
+ */
 interface GroupedVisits {
   [professionalId: string]: RiskVisit[];
 }
 
-// Props para el dashboard
+/**
+ * Props para el dashboard de monitoreo de riesgos
+ */
 interface RiskMonitorDashboardProps {
   className?: string;
 }
 
+/**
+ * Dashboard para monitorear riesgos en visitas clínicas
+ * 
+ * Permite identificar visitas que no cumplen con los requisitos de calidad
+ * y auditoría, agrupándolas por profesional y nivel de riesgo.
+ */
 const RiskMonitorDashboard: React.FC<RiskMonitorDashboardProps> = ({ className }) => {
   // Estado para almacenar las visitas con riesgos
   const [visits, setVisits] = useState<RiskVisit[]>([]);
@@ -66,7 +116,7 @@ const RiskMonitorDashboard: React.FC<RiskMonitorDashboardProps> = ({ className }
   const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
   
   // Estados para la UI
-  const [professionals, setProfessionals] = useState<{ id: string; name: string }[]>([]);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [groupedVisits, setGroupedVisits] = useState<GroupedVisits>({});
 
@@ -104,13 +154,20 @@ const RiskMonitorDashboard: React.FC<RiskMonitorDashboardProps> = ({ className }
       try {
         const { data, error } = await supabase
           .from('users')
-          .select('id, name')
+          .select('id, name, role')
           .order('name');
           
         if (error) throw error;
         
-        setProfessionals(data || []);
-      } catch (err) {
+        // Convertir a array de profesionales
+        const professionalsData = (data || []).map(user => ({
+          id: user.id,
+          name: user.name || user.email || 'Sin nombre',
+          role: user.role as UserRole
+        }));
+        
+        setProfessionals(professionalsData);
+      } catch (err: unknown) {
         console.error('Error fetching professionals:', err);
         setError('No se pudieron cargar los profesionales');
       }
@@ -130,13 +187,14 @@ const RiskMonitorDashboard: React.FC<RiskMonitorDashboardProps> = ({ className }
         const langfuse = new Langfuse({
           publicKey: process.env.LANGFUSE_PUBLIC_KEY || '',
           secretKey: process.env.LANGFUSE_SECRET_KEY || '',
+          // Usando any como tipo temporal por incompatibilidad de tipado entre versiones
           baseUrl: process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
-        });
+        } as any);
         
         // Obtener trazas recientes (con un límite razonable)
-        const { data: traces } = await langfuse.trace.list({
+        const { data: traces = [] } = await (langfuse.trace as any).list({
           limit: 500, // Un número razonable para analizar
-        });
+        }) || { data: [] };
         
         if (!traces || traces.length === 0) {
           await tryLoadLocalVisits();
@@ -144,7 +202,7 @@ const RiskMonitorDashboard: React.FC<RiskMonitorDashboardProps> = ({ className }
         }
         
         // Mapeo para guardar información sobre visitas
-        const visitsMap = new Map<string, {
+        interface VisitInfo {
           visitId: string;
           patientId?: string;
           patientName?: string;
@@ -156,10 +214,12 @@ const RiskMonitorDashboard: React.FC<RiskMonitorDashboardProps> = ({ className }
           hasPdfExport: boolean;
           pdfSigned: boolean;
           hasMcpContext: boolean;
-        }>();
+        }
+        
+        const visitsMap = new Map<string, VisitInfo>();
         
         // Procesar cada traza para extraer información sobre visitas
-        for (const trace of traces) {
+        for (const trace of traces as LangfuseTrace[]) {
           const visitId = trace.metadata?.visitId;
           const patientId = trace.metadata?.patientId;
           const userId = trace.metadata?.userId;
@@ -168,7 +228,7 @@ const RiskMonitorDashboard: React.FC<RiskMonitorDashboardProps> = ({ className }
           
           // Determinar la fecha de la visita
           const visitDate = trace.metadata?.visitDate
-            ? new Date(trace.metadata.visitDate)
+            ? new Date(trace.metadata.visitDate as string)
             : new Date(trace.startTime || Date.now());
           
           // Inicializar visita si no existe
@@ -187,10 +247,10 @@ const RiskMonitorDashboard: React.FC<RiskMonitorDashboardProps> = ({ className }
           }
           
           // Obtener observaciones para cada traza
-          const { data: observations } = await langfuse.observation.list({
+          const { data: observations = [] } = await (langfuse.observation as any).list({
             traceId: trace.id,
             limit: 50
-          });
+          }) || { data: [] };
           
           if (!observations || observations.length === 0) continue;
           
@@ -198,15 +258,15 @@ const RiskMonitorDashboard: React.FC<RiskMonitorDashboardProps> = ({ className }
           const visit = visitsMap.get(visitId.toString());
           if (!visit) continue;
           
-          for (const obs of observations) {
+          for (const obs of observations as LangfuseObservation[]) {
             switch (obs.type) {
               case 'audio.review':
                 visit.hasChecklist = true;
-                visit.checklistApproved = !!obs.metadata?.approved;
+                visit.checklistApproved = !!(obs.metadata?.approved);
                 break;
               case 'pdf.export':
                 visit.hasPdfExport = true;
-                visit.pdfSigned = !!obs.metadata?.signed;
+                visit.pdfSigned = !!(obs.metadata?.signed);
                 break;
               case 'mcp.context.build':
                 visit.hasMcpContext = true;

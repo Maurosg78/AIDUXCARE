@@ -3,29 +3,73 @@ import { Langfuse } from 'langfuse';
 import { supabase } from '@/core/lib/supabase';
 import { User, FileText, Mic, File as FilePdf, Database, AlertCircle, Check, ChevronDown, ChevronUp } from 'lucide-react';
 
-// Tipos
+// Enumeración de roles de usuario
+enum UserRole {
+  ADMIN = 'admin',
+  PROFESSIONAL = 'professional', 
+  SECRETARY = 'secretary',
+  DEVELOPER = 'developer'
+}
+
+/**
+ * Tipos de eventos que pueden ser auditados
+ */
 type EventType = 'form.update' | 'audio.review' | 'pdf.export' | 'mcp.context.build';
 
+// Tipo para los objetos de observación de Langfuse
+interface Observation {
+  id: string;
+  type: string;
+  startTime?: string;
+  metadata?: Record<string, unknown>;
+}
+
+// Tipo para las trazas de Langfuse
+interface Trace {
+  id: string;
+  metadata?: Record<string, unknown>;
+}
+
+// Tipo para logs locales
+interface LogEntry {
+  type: string;
+  visitId?: string;
+  timestamp?: string;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Información básica del profesional
+ */
 interface Professional {
   id: string;
   name: string;
   email: string;
-  role?: string;
+  role?: UserRole;
   created_at?: string;
 }
 
+/**
+ * Resumen de eventos por tipo
+ */
 interface EventSummary {
   count: number;
   lastActivity: Date | null;
   pendingAudit: number;
 }
 
+/**
+ * Estadísticas completas de un profesional
+ */
 interface ProfessionalStats {
   totalVisits: number;
   events: Record<EventType, EventSummary>;
   incompleteVisits: number;
 }
 
+/**
+ * Dashboard para auditar la actividad de profesionales en el sistema
+ */
 const ProfessionalAuditDashboard: React.FC = () => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [selectedProId, setSelectedProId] = useState<string | null>(null);
@@ -53,7 +97,7 @@ const ProfessionalAuditDashboard: React.FC = () => {
         if (data && data.length > 0 && !selectedProId) {
           setSelectedProId(data[0].id);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error fetching professionals:', err);
         setError('No se pudieron cargar los profesionales del sistema');
       } finally {
@@ -73,18 +117,19 @@ const ProfessionalAuditDashboard: React.FC = () => {
       setError(null);
       
       try {
-        // Inicializar Langfuse
+        // Inicializar Langfuse (advertencia: esta inicialización puede variar según la versión de Langfuse)
         const langfuse = new Langfuse({
           publicKey: process.env.LANGFUSE_PUBLIC_KEY || '',
           secretKey: process.env.LANGFUSE_SECRET_KEY || '',
+          // Nota: baseUrl está marcado como error de Typescript pero se requiere para la funcionalidad
           baseUrl: process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
-        });
+        } as any); // Usando any aquí como última opción para el tipo de opciones de Langfuse
 
-        // Obtener trazas para este usuario
-        const { data: traces } = await langfuse.trace.list({
+        // Obtener trazas para este usuario (nota: método list puede variar según la versión de Langfuse)
+        const { data: traces = [] } = await (langfuse.trace as any).list({
           metadata: { userId: selectedProId },
           limit: 500, // Un número razonable para analizar
-        });
+        }) || { data: [] };
 
         // Si no hay trazas, intentar fallback local
         if (!traces || traces.length === 0) {
@@ -107,7 +152,7 @@ const ProfessionalAuditDashboard: React.FC = () => {
         const incompleteVisits = new Set<string>();
         
         // Procesar cada traza
-        for (const trace of traces) {
+        for (const trace of traces as Trace[]) {
           // Extraer visitId de los metadatos
           const visitId = trace.metadata?.visitId;
           if (visitId) {
@@ -115,14 +160,14 @@ const ProfessionalAuditDashboard: React.FC = () => {
           }
           
           // Obtener observaciones para esta traza
-          const { data: observations } = await langfuse.observation.list({
+          const { data: observations = [] } = await (langfuse.observation as any).list({
             traceId: trace.id,
             limit: 50
-          });
+          }) || { data: [] };
           
           // Procesar cada observación
-          if (observations) {
-            for (const obs of observations) {
+          if (observations && observations.length > 0) {
+            for (const obs of observations as Observation[]) {
               const type = obs.type as EventType;
               
               // Solo contar tipos que nos interesan
@@ -145,8 +190,8 @@ const ProfessionalAuditDashboard: React.FC = () => {
             
             // Verificar si la visita no tiene exportación PDF o review de audio
             if (visitId) {
-              const hasPdfExport = observations.some(obs => obs.type === 'pdf.export');
-              const hasAudioReview = observations.some(obs => obs.type === 'audio.review');
+              const hasPdfExport = (observations as Observation[]).some(obs => obs.type === 'pdf.export');
+              const hasAudioReview = (observations as Observation[]).some(obs => obs.type === 'audio.review');
               
               if (!hasPdfExport || !hasAudioReview) {
                 incompleteVisits.add(visitId.toString());
@@ -161,7 +206,7 @@ const ProfessionalAuditDashboard: React.FC = () => {
           events: eventStats,
           incompleteVisits: incompleteVisits.size
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error fetching user stats:', err);
         setError('No se pudieron cargar las estadísticas del profesional');
         
@@ -181,7 +226,7 @@ const ProfessionalAuditDashboard: React.FC = () => {
       const response = await fetch(`/logs/user-${userId}.json`);
       if (!response.ok) throw new Error('No local logs available');
       
-      const localLogs = await response.json();
+      const localLogs = await response.json() as LogEntry[];
       
       // Transformar logs locales a estadísticas
       const visitIds = new Set<string>();
@@ -233,7 +278,7 @@ const ProfessionalAuditDashboard: React.FC = () => {
         events: eventStats,
         incompleteVisits: incompleteVisits.size
       });
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error loading local stats:', err);
       // Si también fallan los logs locales, mostramos datos vacíos
       setStats({

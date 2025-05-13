@@ -6,17 +6,45 @@ import { useParams } from '@/core/utils/router';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-// Tipos
+/**
+ * Tipos de eventos que pueden ser auditados
+ */
 type EventType = 'form.update' | 'audio.review' | 'pdf.export' | 'mcp.context.build';
 
 // Usar adaptadores de tipos
 import type { AdaptedPatient } from '@/types/component-adapters';
+import { adaptPatient } from '@/types/component-adapters';
 
-// Definir interface local extendida
-interface Patient extends AdaptedPatient {
-  gender?: string;
+/**
+ * Estructura de observación de Langfuse
+ */
+interface LangfuseObservation {
+  id: string;
+  type: string;
+  startTime?: string;
+  metadata?: Record<string, unknown>;
 }
 
+/**
+ * Estructura de traza de Langfuse
+ */
+interface LangfuseTrace {
+  id: string;
+  startTime?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Paciente extendido con datos adicionales
+ */
+interface Patient extends AdaptedPatient {
+  gender?: string;
+  birthDate?: string;
+}
+
+/**
+ * Resumen de una visita para auditoría
+ */
 interface VisitSummary {
   id: string;
   date: Date;
@@ -28,6 +56,9 @@ interface VisitSummary {
   events: EventSummary[];
 }
 
+/**
+ * Resumen de un evento en una visita
+ */
 interface EventSummary {
   id: string;
   type: EventType;
@@ -35,11 +66,17 @@ interface EventSummary {
   details?: Record<string, unknown>;
 }
 
-// Agrupar visitas por año
+/**
+ * Agrupación de visitas por año
+ */
 interface VisitsByYear {
   [year: string]: VisitSummary[];
 }
 
+/**
+ * Dashboard que muestra la auditoría detallada de un paciente
+ * incluyendo todas sus visitas y eventos agrupados por año
+ */
 const PatientAuditDashboard: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -73,20 +110,20 @@ const PatientAuditDashboard: React.FC = () => {
           return;
         }
         
-        setPatient(patientData);
+        setPatient(adaptPatient(patientData) as Patient);
         
-        // Inicializar Langfuse
+        // Inicializar Langfuse (usando any temporalmente por incompatibilidades de tipo entre versiones)
         const langfuse = new Langfuse({
           publicKey: process.env.LANGFUSE_PUBLIC_KEY || '',
           secretKey: process.env.LANGFUSE_SECRET_KEY || '',
           baseUrl: process.env.LANGFUSE_HOST || 'https://cloud.langfuse.com'
-        });
+        } as any);
 
         // Obtener trazas relacionadas con el paciente
-        const { data: traces } = await langfuse.trace.list({
+        const { data: traces = [] } = await (langfuse.trace as any).list({
           metadata: { patientId },
           limit: 500, // Un número razonable para historial
-        });
+        }) || { data: [] };
 
         // Si no hay trazas, intentar fallback local
         if (!traces || traces.length === 0) {
@@ -97,14 +134,14 @@ const PatientAuditDashboard: React.FC = () => {
         // Procesar visitas desde las trazas
         const visitsMap = new Map<string, VisitSummary>();
         
-        for (const trace of traces) {
+        for (const trace of traces as LangfuseTrace[]) {
           // Extraer visitId de los metadatos
           const visitId = trace.metadata?.visitId;
           if (!visitId) continue;
           
           // Obtener fecha de la visita (del metadato o de la traza)
           const visitDate = trace.metadata?.visitDate
-            ? new Date(trace.metadata.visitDate)
+            ? new Date(trace.metadata.visitDate as string)
             : new Date(trace.startTime || Date.now());
           
           // Inicializar visita si no existe
@@ -122,15 +159,15 @@ const PatientAuditDashboard: React.FC = () => {
           }
           
           // Obtener observaciones para esta traza
-          const { data: observations } = await langfuse.observation.list({
+          const { data: observations = [] } = await (langfuse.observation as any).list({
             traceId: trace.id,
             limit: 100
-          });
+          }) || { data: [] };
           
-          if (!observations) continue;
+          if (!observations || observations.length === 0) continue;
           
           // Procesar observaciones
-          for (const obs of observations) {
+          for (const obs of observations as LangfuseObservation[]) {
             if (!obs.type) continue;
             
             const type = obs.type as EventType;
@@ -151,11 +188,11 @@ const PatientAuditDashboard: React.FC = () => {
               switch (type) {
                 case 'audio.review':
                   visitSummary.hasAudioReview = true;
-                  visitSummary.isAudioApproved = !!obs.metadata?.approved;
+                  visitSummary.isAudioApproved = !!(obs.metadata?.approved);
                   break;
                 case 'pdf.export':
                   visitSummary.hasPdfExport = true;
-                  visitSummary.isPdfSigned = !!obs.metadata?.signed;
+                  visitSummary.isPdfSigned = !!(obs.metadata?.signed);
                   break;
                 case 'mcp.context.build':
                   visitSummary.hasMcpContext = true;
@@ -198,21 +235,40 @@ const PatientAuditDashboard: React.FC = () => {
     fetchPatientData();
   }, [patientId]);
 
-  // Cargar visitas locales como fallback
+  /**
+   * Carga visitas desde archivos locales como fallback
+   * @param patientId ID del paciente para buscar datos locales
+   */
   const tryLoadLocalVisits = async (patientId: string): Promise<void> => {
     try {
       // Primero intentamos cargar los datos del paciente
       const patientResponse = await fetch(`/logs/patient-${patientId}.json`);
       if (patientResponse.ok) {
         const patientData = await patientResponse.json();
-        setPatient(patientData);
+        setPatient(patientData as Patient);
       }
       
       // Luego cargamos las visitas de logs locales
       const response = await fetch(`/logs/patient-visits-${patientId}.json`);
       if (!response.ok) throw new Error('No local logs available');
       
-      const localVisits = await response.json();
+      interface LocalVisit {
+        id: string;
+        date: string;
+        hasAudioReview?: boolean;
+        isAudioApproved?: boolean;
+        hasPdfExport?: boolean;
+        isPdfSigned?: boolean;
+        hasMcpContext?: boolean;
+        events?: Array<{
+          id: string;
+          type: string;
+          timestamp: string;
+          details?: Record<string, unknown>;
+        }>;
+      }
+      
+      const localVisits = await response.json() as LocalVisit[];
       
       // Procesamiento similar al flujo principal
       const groupedVisits: VisitsByYear = {};
@@ -228,11 +284,18 @@ const PatientAuditDashboard: React.FC = () => {
         }
         
         groupedVisits[year].push({
-          ...visit,
+          id: visit.id,
           date: visitDate,
-          events: (visit.events || []).map((event: Record<string, unknown>) => ({
-            ...event,
-            timestamp: new Date(event.timestamp)
+          hasAudioReview: visit.hasAudioReview || false,
+          isAudioApproved: visit.isAudioApproved || false,
+          hasPdfExport: visit.hasPdfExport || false,
+          isPdfSigned: visit.isPdfSigned || false,
+          hasMcpContext: visit.hasMcpContext || false,
+          events: (visit.events || []).map(event => ({
+            id: event.id,
+            type: event.type as EventType,
+            timestamp: new Date(event.timestamp),
+            details: event.details
           }))
         });
       }
@@ -243,7 +306,7 @@ const PatientAuditDashboard: React.FC = () => {
       });
       
       setVisitsByYear(groupedVisits);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error loading local visits:', err);
       
       // Si no hay datos locales, mostrar estado vacío

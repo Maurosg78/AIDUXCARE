@@ -13,14 +13,14 @@ export interface LangfuseObservation {
   name: string;
   startTime?: string;
   endTime?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface LangfuseTrace {
   id: string;
   name: string;
   userId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   observations?: LangfuseObservation[];
   startTime?: string;
   endTime?: string;
@@ -28,9 +28,16 @@ export interface LangfuseTrace {
 
 export interface TraceOptions {
   name: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   userId?: string;
   id?: string;
+}
+
+export interface ObservationOptions {
+  name: string;
+  metadata?: Record<string, unknown>;
+  startTime?: string;
+  endTime?: string;
 }
 
 // Soporte para eventos en la interfaz actual
@@ -79,7 +86,7 @@ export class LangfuseClient {
     return { id };
   }
   
-  async observation(traceId: string, options: any): Promise<{ id: string }> {
+  async observation(traceId: string, options: ObservationOptions): Promise<{ id: string }> {
     const id = `obs-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     // Crear observación simulada
@@ -87,7 +94,8 @@ export class LangfuseClient {
       id,
       name: options.name,
       metadata: options.metadata,
-      startTime: new Date().toISOString()
+      startTime: options.startTime || new Date().toISOString(),
+      endTime: options.endTime
     };
     
     // Buscar trace y añadir observación

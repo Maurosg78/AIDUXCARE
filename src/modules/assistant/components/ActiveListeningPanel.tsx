@@ -1,23 +1,29 @@
 import { useState, useCallback, useEffect } from 'react';
-// Comentar temporalmente la importación de useLangfuse hasta que esté disponible
-// import { useLangfuse } from '@/core/hooks/useLangfuse';
+// Nota: La integración con Langfuse se hará usando el cliente definido en src/core/lib/langfuse.client.ts
+import { trackEvent } from '@/core/lib/langfuse.client';
 // Importamos los componentes
 import { Button, Card, Checkbox, Alert } from '@/components/ui';
 
 /**
+ * Categorías para las frases detectadas
+ */
+export type PhraseCategory = 'Síntoma' | 'Diagnóstico' | 'Comentario';
+
+/**
  * Representa una frase detectada durante la escucha activa
  */
-interface DetectedPhrase {
+export interface DetectedPhrase {
   id: string;
   text: string;
-  category?: 'Síntoma' | 'Diagnóstico' | 'Comentario';
+  category?: PhraseCategory;
   approved: boolean;
+  timestamp?: string;
 }
 
 /**
  * Resultado de la validación de frases en la escucha activa
  */
-interface ValidationResult {
+export interface ValidationResult {
   approvedPhrases: string[];
   rejectedPhrases: string[];
   traceId: string;
@@ -26,8 +32,19 @@ interface ValidationResult {
 /**
  * Props para el componente de escucha activa
  */
-interface ActiveListeningPanelProps {
+export interface ActiveListeningPanelProps {
+  /**
+   * Callback invocado cuando el usuario valida las frases detectadas
+   */
   onPhrasesValidated: (result: ValidationResult) => void;
+  /**
+   * ID de la visita asociada a esta sesión de escucha
+   */
+  visitId?: string;
+  /**
+   * ID del paciente asociado a esta sesión de escucha
+   */
+  patientId?: string;
 }
 
 /**
@@ -36,37 +53,70 @@ interface ActiveListeningPanelProps {
  */
 export const ActiveListeningPanel: React.FC<ActiveListeningPanelProps> = ({
   onPhrasesValidated,
+  visitId,
+  patientId
 }) => {
   const [isListening, setIsListening] = useState<boolean>(false);
   const [hasConsent, setHasConsent] = useState<boolean>(false);
   const [detectedPhrases, setDetectedPhrases] = useState<DetectedPhrase[]>([]);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  // Comentar temporalmente hasta que tengamos una implementación real
-  // const { } = useLangfuse();
+  const [traceId, setTraceId] = useState<string>('');
 
   // Simulación de detección de frases clínicas
-  const mockPhrases = [
-    { text: "Me duele el brazo derecho desde hace dos semanas", category: "Síntoma" as const },
-    { text: "Tomo ibuprofeno dos veces al día", category: "Comentario" as const },
-    { text: "Soy alérgico a la penicilina", category: "Diagnóstico" as const },
+  const mockPhrases: Array<Omit<DetectedPhrase, 'id' | 'approved'>> = [
+    { text: "Me duele el brazo derecho desde hace dos semanas", category: "Síntoma" },
+    { text: "Tomo ibuprofeno dos veces al día", category: "Comentario" },
+    { text: "Soy alérgico a la penicilina", category: "Diagnóstico" },
   ];
 
-  const startListening = useCallback(async () => {
+  /**
+   * Iniciar la grabación de audio y detección de frases
+   */
+  const startListening = useCallback(async (): Promise<void> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMediaStream(stream);
       setIsListening(true);
       
+      // Crear un traceId para esta sesión de escucha
+      const newTraceId = `listen-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      setTraceId(newTraceId);
+      
+      // Trackear el inicio de la escucha
+      await trackEvent({
+        name: 'audio.session.start',
+        payload: {
+          patientId,
+          visitId,
+          deviceInfo: navigator.userAgent
+        },
+        traceId: newTraceId
+      });
+      
       // Simulación de detección de frases
       const interval = setInterval(() => {
         if (detectedPhrases.length < mockPhrases.length) {
           const newPhrase = mockPhrases[detectedPhrases.length];
-          setDetectedPhrases(prev => [...prev, {
-            id: Date.now().toString(),
+          const phrase: DetectedPhrase = {
+            id: `phrase-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
             text: newPhrase.text,
             category: newPhrase.category,
-            approved: true
-          }]);
+            approved: true,
+            timestamp: new Date().toISOString()
+          };
+          
+          setDetectedPhrases(prev => [...prev, phrase]);
+          
+          // Trackear la detección de frase
+          trackEvent({
+            name: 'audio.phrase.detected',
+            payload: {
+              phraseId: phrase.id,
+              text: phrase.text,
+              category: phrase.category
+            },
+            traceId: newTraceId
+          });
         } else {
           clearInterval(interval);
         }
@@ -76,18 +126,47 @@ export const ActiveListeningPanel: React.FC<ActiveListeningPanelProps> = ({
     } catch (error) {
       console.error('Error al acceder al micrófono:', error);
       setIsListening(false);
+      
+      // Trackear el error
+      trackEvent({
+        name: 'audio.session.error',
+        payload: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          patientId,
+          visitId
+        }
+      });
     }
-  }, [detectedPhrases.length]);
+  }, [detectedPhrases.length, patientId, visitId]);
 
-  const stopListening = useCallback(() => {
+  /**
+   * Detener la grabación de audio
+   */
+  const stopListening = useCallback((): void => {
     if (mediaStream) {
       mediaStream.getTracks().forEach(track => track.stop());
       setMediaStream(null);
     }
     setIsListening(false);
-  }, [mediaStream]);
+    
+    // Trackear el fin de la sesión
+    if (traceId) {
+      trackEvent({
+        name: 'audio.session.end',
+        payload: {
+          patientId,
+          visitId,
+          phraseCount: detectedPhrases.length
+        },
+        traceId
+      });
+    }
+  }, [mediaStream, traceId, detectedPhrases.length, patientId, visitId]);
 
-  const togglePhraseApproval = (phraseId: string) => {
+  /**
+   * Alternar la aprobación de una frase
+   */
+  const togglePhraseApproval = (phraseId: string): void => {
     setDetectedPhrases(prev =>
       prev.map(phrase =>
         phrase.id === phraseId
@@ -97,13 +176,19 @@ export const ActiveListeningPanel: React.FC<ActiveListeningPanelProps> = ({
     );
   };
 
-  const approveAllPhrases = () => {
+  /**
+   * Aprobar todas las frases detectadas
+   */
+  const approveAllPhrases = (): void => {
     setDetectedPhrases(prev =>
       prev.map(phrase => ({ ...phrase, approved: true }))
     );
   };
 
-  const handleValidation = () => {
+  /**
+   * Validar las frases y enviar a callback
+   */
+  const handleValidation = (): void => {
     const approvedPhrases = detectedPhrases
       .filter(phrase => phrase.approved)
       .map(phrase => phrase.text);
@@ -112,15 +197,31 @@ export const ActiveListeningPanel: React.FC<ActiveListeningPanelProps> = ({
       .filter(phrase => !phrase.approved)
       .map(phrase => phrase.text);
 
+    // Trackear la validación
+    if (traceId) {
+      trackEvent({
+        name: 'audio.review',
+        payload: {
+          patientId,
+          visitId,
+          approved: approvedPhrases.length > 0,
+          approvedCount: approvedPhrases.length,
+          rejectedCount: rejectedPhrases.length
+        },
+        traceId
+      });
+    }
+
     onPhrasesValidated({
       approvedPhrases,
       rejectedPhrases,
-      traceId: 'active-listening',
+      traceId
     });
 
     stopListening();
   };
 
+  // Limpieza al desmontar el componente
   useEffect(() => {
     return () => {
       if (mediaStream) {
@@ -129,6 +230,7 @@ export const ActiveListeningPanel: React.FC<ActiveListeningPanelProps> = ({
     };
   }, [mediaStream]);
 
+  // Pantalla de consentimiento
   if (!hasConsent) {
     return (
       <Card className="p-4">
