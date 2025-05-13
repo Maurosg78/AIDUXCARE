@@ -1,0 +1,12 @@
+export interface PatientEval {
+  patientId: string;
+  traceId?: string;
+  // Añade otros campos según sea necesario
+}
+
+export interface CopilotFeedback {
+  message: string;
+  severity: string;
+  type: 'suggestion' | 'error' | 'info';
+  // Añade otros campos según sea necesario
+} 

@@ -1,0 +1,61 @@
+{
+  "mcp": {
+    "page_title": "Contexto MCP",
+    "patient_info": {
+      "title": "Información del Paciente",
+      "age": "Edad",
+      "sex": "Sexo",
+      "sex_values": {
+        "M": "Masculino",
+        "F": "Femenino",
+        "O": "Otro"
+      },
+      "allergies": "Alergias",
+      "chronic_conditions": "Condiciones Crónicas",
+      "medications": "Medicamentos Actuales",
+      "clinical_history": "Historia Clínica Relevante"
+    },
+    "visit_history": {
+      "title": "Historial de Visitas",
+      "no_visits": "No hay visitas previas registradas",
+      "visit_type": "Tipo",
+      "professional": "Profesional"
+    },
+    "current_visit": {
+      "title": "Visita Actual",
+      "date_time": "Fecha y Hora",
+      "professional": "Profesional",
+      "visit_id": "ID de Visita"
+    },
+    "system_rules": {
+      "title": "Reglas y Restricciones",
+      "instructions": "Instrucciones del Sistema",
+      "active_rules": "Reglas Activas",
+      "info_note": "Estas reglas son aplicadas automáticamente por el sistema para garantizar la calidad y seguridad de la atención."
+    },
+    "errors": {
+      "loading": "Error al cargar el contexto MCP",
+      "not_found": "No se encontró el contexto MCP para esta visita",
+      "validation": "El contexto MCP no tiene el formato esperado",
+      "invalid_visit_id": "ID de visita inválido",
+      "visit_not_found": "No se ha encontrado una visita con ese identificador",
+      "boundary": {
+        "title": "Error en el Contexto MCP",
+        "message": "Ha ocurrido un error al procesar el contexto clínico. Por favor, intente recargar la página.",
+        "details": "Detalles"
+      }
+    },
+    "loading": "Cargando contexto MCP..."
+  },
+  "access": {
+    "denied": "Acceso denegado. Esta sección solo está disponible para profesionales de la salud.",
+    "unauthorized": "No tienes permiso para ver esta sección.",
+    "loading": "Verificando permisos...",
+    "roles": {
+      "admin": "Administrador",
+      "professional": "Profesional de la Salud",
+      "secretary": "Secretario/a",
+      "developer": "Desarrollador"
+    }
+  }
+} 

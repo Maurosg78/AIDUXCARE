@@ -1,0 +1,54 @@
+[
+  {
+    "id": "local-1",
+    "timestamp": "2023-11-10T08:30:00Z",
+    "type": "form.update",
+    "userId": "user123",
+    "userName": "Dr. Ejemplo",
+    "message": "2 campos actualizados",
+    "details": {
+      "fields": {
+        "diagnóstico": "Hipertensión esencial",
+        "tratamiento": "Enalapril 10mg"
+      }
+    }
+  },
+  {
+    "id": "local-2",
+    "timestamp": "2023-11-10T08:35:00Z",
+    "type": "audio.review",
+    "userId": "user123",
+    "userName": "Dr. Ejemplo",
+    "message": "Audio revisado y aprobado",
+    "details": {
+      "duration": 120,
+      "approved": true,
+      "checklist": ["sintomas", "diagnóstico", "tratamiento"]
+    }
+  },
+  {
+    "id": "local-3",
+    "timestamp": "2023-11-10T08:40:00Z",
+    "type": "pdf.export",
+    "userId": "user123",
+    "userName": "Dr. Ejemplo",
+    "message": "PDF exportado y firmado digitalmente",
+    "details": {
+      "filename": "resumen-clinico.pdf",
+      "signed": true,
+      "size": 245678
+    }
+  },
+  {
+    "id": "local-4",
+    "timestamp": "2023-11-10T08:45:00Z",
+    "type": "mcp.context.build",
+    "userId": "user456",
+    "userName": "Sistema",
+    "message": "Contexto MCP creado: 8 elementos",
+    "details": {
+      "contextSize": 8,
+      "elements": ["patientHistory", "allergies", "medications", "lastVisit", "labResults", "vitalSigns", "diagnoses", "procedures"]
+    }
+  }
+] 

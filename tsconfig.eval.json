@@ -1,0 +1,13 @@
+{
+  "extends": "./typescript/config/tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./dist",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "allowImportingTsExtensions": false
+  },
+  "include": ["src", "scripts", "evals"],
+  "exclude": ["node_modules"]
+}
+

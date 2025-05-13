@@ -1,0 +1,34 @@
+{
+  "patientId": "lucia-gomez-1982",
+  "visitDate": "2025-05-01T16:47:33.312Z",
+  "motivo": "diagnóstico",
+  "observaciones": "Paciente Lucía Gómez, nacido en 1982, con diagnóstico de Esclerosis Lateral Amiotrófica. Presenta debilidad muscular progresiva y dificultad para la deglución.",
+  "exploracionFisica": {
+    "inspeccion": "Inspección general del paciente",
+    "movilidad": "Rango de movimiento evaluado",
+    "hallazgos": [
+      "Debilidad muscular generalizada",
+      "Dificultad para la deglución"
+    ]
+  },
+  "escalasUtilizadas": [
+    "Escala Visual Analógica (VAS)"
+  ],
+  "diagnostico": "Esclerosis Lateral Amiotrófica",
+  "plan": "Plan de tratamiento genérico: seguimiento y revisiones periódicas",
+  "alertas": [
+    "Alerta: falta prueba complementaria recomendada"
+  ],
+  "copilotFeedback": [
+    {
+      "type": "suggestion",
+      "message": "Recomendado usar ALSFRS-R para seguimiento de ELA",
+      "severity": "warning"
+    },
+    {
+      "type": "diagnostic",
+      "message": "Considerar evaluación nutricional por dificultad de deglución",
+      "severity": "warning"
+    }
+  ]
+} 

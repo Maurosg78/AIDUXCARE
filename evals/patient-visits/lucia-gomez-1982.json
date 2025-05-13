@@ -1,0 +1,20 @@
+{
+  "patientId": "lucia-gomez-1982",
+  "visitDate": "2025-05-02T10:30:00.000Z",
+  "motivo": "seguimiento",
+  "observaciones": "Paciente Lucía Gómez, nacida en 1982, con diagnóstico de ELA en fase inicial.",
+  "exploracionFisica": {
+    "inspeccion": "Inspección general del paciente",
+    "movilidad": "Evaluación de movilidad y fuerza muscular",
+    "hallazgos": []
+  },
+  "escalasUtilizadas": [
+    "ALSFRS-R (Escala Funcional de ELA Revisada)"
+  ],
+  "diagnostico": "Esclerosis Lateral Amiotrófica (ELA)",
+  "plan": "Plan de tratamiento personalizado con seguimiento intensivo",
+  "alertas": [
+    "Alerta: programar evaluación respiratoria"
+  ],
+  "traceId": "trace_lucia_gomez_001"
+}

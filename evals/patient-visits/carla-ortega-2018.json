@@ -1,0 +1,21 @@
+{
+  "patientId": "carla-ortega-2018",
+  "visitDate": "2025-05-03T09:15:00.000Z",
+  "motivo": "dolor lumbar",
+  "observaciones": "Paciente Carla Ortega, nacida en 2018, presenta dolor lumbar tras caída.",
+  "exploracionFisica": {
+    "inspeccion": "Inspección general del paciente",
+    "movilidad": "Evaluación de movilidad y dolor",
+    "hallazgos": []
+  },
+  "escalasUtilizadas": [
+    "Escala Visual Analógica (VAS)",
+    "Escala de Wong-Baker (caras)"
+  ],
+  "diagnostico": "Dolor lumbar post-traumático",
+  "plan": "Plan de tratamiento pediátrico adaptado",
+  "alertas": [
+    "Alerta: considerar evaluación postural completa"
+  ],
+  "traceId": "trace_carla_ortega_001"
+}

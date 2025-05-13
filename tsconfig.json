@@ -1,0 +1,8 @@
+{
+  "extends": "./typescript/config/tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "lib": ["DOM", "ESNext"]
+  },
+  "include": ["src"]
+}

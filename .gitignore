@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+
+# Vite build output
+dist/
+build/
+
+# Local environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE/editor folders
+.vscode/
+.idea/
+*.swp
+
+# MacOS system files
+.DS_Store
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Coverage
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+.env
+.vercel
+.env*.local

@@ -1,0 +1,14 @@
+{
+  "extends": "./typescript/config/tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "isolatedModules": false,
+    "types": ["node", "express"]
+  },
+  "include": ["server.ts", "src/server/**/*"],
+  "exclude": ["src/client/**/*", "src/components/**/*"]
+} 

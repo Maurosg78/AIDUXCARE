@@ -1,0 +1,118 @@
+[
+  {
+    "id": "log1",
+    "type": "form.update",
+    "visitId": "visit123",
+    "userId": "user123",
+    "timestamp": "2023-12-10T10:05:00Z",
+    "details": {
+      "fields": {
+        "motivo": "Control de hipertensión",
+        "diagnóstico": "Hipertensión esencial"
+      }
+    }
+  },
+  {
+    "id": "log2",
+    "type": "audio.review",
+    "visitId": "visit123",
+    "userId": "user123",
+    "timestamp": "2023-12-10T10:15:00Z",
+    "details": {
+      "approved": true,
+      "reviewedBy": "Dr. García"
+    }
+  },
+  {
+    "id": "log3",
+    "type": "pdf.export",
+    "visitId": "visit123",
+    "userId": "user123",
+    "timestamp": "2023-12-10T10:20:00Z",
+    "details": {
+      "signed": true,
+      "filename": "resumen-visita-123.pdf"
+    }
+  },
+  {
+    "id": "log4",
+    "type": "mcp.context.build",
+    "visitId": "visit123",
+    "userId": "user123",
+    "timestamp": "2023-12-10T10:25:00Z",
+    "details": {
+      "contextSize": 8
+    }
+  },
+  {
+    "id": "log5",
+    "type": "form.update",
+    "visitId": "visit456",
+    "userId": "user123",
+    "timestamp": "2023-10-05T15:35:00Z",
+    "details": {
+      "fields": {
+        "motivo": "Dolor abdominal",
+        "diagnóstico": "Gastritis aguda"
+      }
+    }
+  },
+  {
+    "id": "log6",
+    "type": "audio.review",
+    "visitId": "visit456",
+    "userId": "user123",
+    "timestamp": "2023-10-05T15:45:00Z",
+    "details": {
+      "approved": false,
+      "reviewedBy": "Dr. García",
+      "comments": "Falta incluir indicaciones de medicación"
+    }
+  },
+  {
+    "id": "log7",
+    "type": "pdf.export",
+    "visitId": "visit456",
+    "userId": "user123",
+    "timestamp": "2023-10-05T15:50:00Z",
+    "details": {
+      "signed": false,
+      "filename": "resumen-visita-456.pdf"
+    }
+  },
+  {
+    "id": "log8",
+    "type": "form.update",
+    "visitId": "visit789",
+    "userId": "user456",
+    "timestamp": "2022-08-15T09:05:00Z",
+    "details": {
+      "fields": {
+        "motivo": "Chequeo anual",
+        "diagnóstico": "Paciente sano"
+      }
+    }
+  },
+  {
+    "id": "log9",
+    "type": "audio.review",
+    "visitId": "visit789",
+    "userId": "user123",
+    "timestamp": "2022-08-15T09:15:00Z",
+    "details": {
+      "approved": true,
+      "reviewedBy": "Dr. García"
+    }
+  },
+  {
+    "id": "log10",
+    "type": "pdf.export",
+    "visitId": "visit789",
+    "userId": "user123",
+    "timestamp": "2022-08-15T09:20:00Z",
+    "details": {
+      "signed": true,
+      "filename": "resumen-visita-789.pdf"
+    }
+  }
+] 
