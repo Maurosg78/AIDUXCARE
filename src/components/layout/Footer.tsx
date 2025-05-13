@@ -1,6 +1,9 @@
-import { FC } from 'react';
+import React from 'react';
 
-export const Footer: FC = () => {
+/**
+ * Componente de pie de página que muestra información de copyright
+ */
+export function Footer(): React.ReactElement {
   return (
     <footer className="bg-white border-t border-aidux-gray/20 py-4 mt-auto text-aidux-slate">
       <div className="container mx-auto px-4">
@@ -16,4 +19,4 @@ export const Footer: FC = () => {
       </div>
     </footer>
   );
-}; 
+} 

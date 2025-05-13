@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/core/context/AuthContext';
 import { Bell, Menu, X } from 'lucide-react';
+import type { UserRole } from '@/core/types/UserRoles';
 
 interface HeaderProps {
   isSidebarOpen: boolean;
@@ -69,11 +70,10 @@ export function Header({ isSidebarOpen, setIsSidebarOpen }: HeaderProps) {
 
 function getReadableRole(role: string): string {
   const roleMap: Record<string, string> = {
-    professional: 'Profesional',
-    fisioterapeuta: 'Fisioterapeuta',
-    admin: 'Administrador',
-    secretary: 'Secretario/a',
-    developer: 'Desarrollador'
+    [UserRole.PROFESSIONAL]: 'Profesional',
+    [UserRole.ADMIN]: 'Administrador',
+    [UserRole.SECRETARY]: 'Secretario/a',
+    [UserRole.DEVELOPER]: 'Desarrollador'
   };
 
   return roleMap[role] || role;

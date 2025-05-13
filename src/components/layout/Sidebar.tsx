@@ -12,6 +12,17 @@ import {
   LogOut,
   AlertTriangle
 } from 'lucide-react';
+import type { UserRole } from '@/core/types/UserRoles';
+import { isValidRole } from '@/core/types/UserRoles';
+
+// Tipo del elemento de menú
+interface MenuItem {
+  name: string;
+  href: string;
+  icon: React.FC<{ className?: string }>;
+  roles: UserRole[];
+  hidden?: boolean;
+}
 
 interface SidebarProps {
   isOpen: boolean;
@@ -22,48 +33,50 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       name: 'Pacientes',
       href: '/patients',
       icon: Users,
-      roles: ['professional', 'secretary', 'admin', 'fisioterapeuta'],
+      roles: [UserRole.PROFESSIONAL, UserRole.SECRETARY, UserRole.ADMIN],
     },
     {
       name: 'Visitas',
       href: '/visits',
       icon: Calendar,
-      roles: ['professional', 'fisioterapeuta'],
+      roles: [UserRole.PROFESSIONAL],
     },
     {
       name: 'Registros médicos',
       href: '/records',
       icon: ClipboardCheck,
-      roles: ['professional', 'fisioterapeuta'],
+      roles: [UserRole.PROFESSIONAL],
     },
     {
       name: 'Panel IA',
       href: '/mcp',
       icon: Brain,
-      roles: ['professional', 'fisioterapeuta', 'admin'],
+      roles: [UserRole.PROFESSIONAL, UserRole.ADMIN],
     },
     {
       name: 'Monitoreo de Riesgos',
       href: '/admin/risk-monitor',
       icon: AlertTriangle,
-      roles: ['admin'],
+      roles: [UserRole.ADMIN],
     },
     {
       name: 'Configuración',
       href: '/settings',
       icon: Settings,
-      roles: ['admin'],
+      roles: [UserRole.ADMIN],
       hidden: true,
     },
   ];
 
+  // Verificar si el role del usuario es válido y filtrar elementos de menú
+  const userRole = user?.role && isValidRole(user.role) ? user.role : undefined;
   const filteredItems = menuItems.filter(
-    item => !item.hidden && user?.role && item.roles.includes(user.role)
+    item => !item.hidden && userRole && item.roles.includes(userRole)
   );
 
   return (
@@ -159,11 +172,10 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
 function getReadableRole(role: string): string {
   const roleMap: Record<string, string> = {
-    professional: 'Profesional',
-    fisioterapeuta: 'Fisioterapeuta',
-    admin: 'Administrador',
-    secretary: 'Secretario/a',
-    developer: 'Desarrollador'
+    [UserRole.PROFESSIONAL]: 'Profesional',
+    [UserRole.ADMIN]: 'Administrador',
+    [UserRole.SECRETARY]: 'Secretario/a',
+    [UserRole.DEVELOPER]: 'Desarrollador'
   };
 
   return roleMap[role] || role;

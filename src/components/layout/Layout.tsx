@@ -7,8 +7,11 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+/**
+ * Componente principal de layout que contiene el sidebar, header, footer y el contenido
+ */
 export function Layout({ children }: LayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
 
   return (
     <div className="flex h-screen bg-aidux-bone overflow-hidden font-sans">
