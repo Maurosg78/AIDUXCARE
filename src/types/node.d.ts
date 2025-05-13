@@ -1,16 +1,18 @@
 // Declaración para tipos de Node que faltan
-declare namespace NodeJS {
-  interface ProcessEnv {
-    NODE_ENV: 'development' | 'production' | 'test';
-    VITE_SUPABASE_URL: string;
-    VITE_SUPABASE_KEY: string;
-    VITE_LANGFUSE_PUBLIC_KEY: string;
-    VITE_LANGFUSE_SECRET_KEY: string;
-    LANGFUSE_SECRET_KEY: string;
-    VITE_LANGFUSE_BASE_URL: string;
-    VITE_LANGFUSE_HOST: string;
-    PORT?: string;
-    [key: string]: string | undefined;
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      NODE_ENV: 'development' | 'production' | 'test';
+      VITE_SUPABASE_URL: string;
+      VITE_SUPABASE_KEY: string;
+      VITE_LANGFUSE_PUBLIC_KEY: string;
+      VITE_LANGFUSE_SECRET_KEY: string;
+      LANGFUSE_SECRET_KEY: string;
+      VITE_LANGFUSE_BASE_URL: string;
+      VITE_LANGFUSE_HOST: string;
+      PORT?: string;
+      [key: string]: string | undefined;
+    }
   }
 }
 
@@ -28,4 +30,6 @@ declare module 'path' {
     basename,
     extname
   };
-} 
+}
+
+export {}; 

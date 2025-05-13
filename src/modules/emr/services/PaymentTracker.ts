@@ -1,82 +1,77 @@
-import { z } from '@/types/zod-utils';
 
-// Definición de estados de pago
-const PaymentStatusSchema = z.enumValues([
-  'pending',
-  'completed',
-  'cancelled',
-  'refunded'
-] as const);
 
-type PaymentStatus = 'pending' | 'completed' | 'cancelled' | 'refunded';
+// Definición de estados de pago usando enum para type-safety
+export type PaymentStatus = 'pending' | 'paid' | 'overdue' | 'refunded' | 'canceled';
 
 // Modelo de pago
 export interface Payment {
   id: string;
+  patientId: string;
   visitId: string;
   amount: number;
   status: PaymentStatus;
-  paidAt?: string;
   method?: string;
-  metadata?: Record<string, any>;
-  createdAt: string;
-  updatedAt: string;
+  date: string;
+  dueDate?: string;
+  notes?: string;
 }
 
 /**
  * Servicio para gestionar pagos asociados a visitas médicas
  */
 export class PaymentTracker {
-  /**
-   * Crear un nuevo registro de pago
-   */
-  async createPayment(payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>): Promise<Payment> {
-    const now = new Date().toISOString();
-    const newPayment: Payment = {
-      id: Math.random().toString(36).substr(2, 9),
-      ...payment,
-      createdAt: now,
-      updatedAt: now
-    };
-    
-    // Aquí iría la lógica de persistencia en BD
-    
-    return newPayment;
+  private payments: Payment[] = [];
+
+  constructor() {
+    // Inicialización del tracker
   }
-  
-  /**
-   * Actualizar el estado de un pago
-   */
-  async updatePaymentStatus(visitId: string, status: PaymentStatus): Promise<Payment> {
-    // Simulación para desarrollo
-    const updatedPayment: Payment = {
-      id: Math.random().toString(36).substr(2, 9),
-      visitId,
-      amount: 0,
-      status,
-      updatedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString()
-    };
-    
-    // Aquí iría la lógica de actualización en BD
-    
-    return updatedPayment;
+
+  addPayment(payment: Payment): void {
+    // Validación básica
+    if (!payment.id || !payment.patientId || !payment.visitId) {
+      throw new Error('Datos de pago incompletos');
+    }
+    this.payments.push(payment);
   }
-  
-  /**
-   * Obtener el pago de una visita
-   */
-  async getPaymentByVisitId(visitId: string): Promise<Payment | null> {
-    // Simulación para desarrollo
-    return null;
+
+  updatePaymentStatus(paymentId: string, newStatus: PaymentStatus): boolean {
+    const index = this.payments.findIndex(p => p.id === paymentId);
+    if (index === -1) return false;
+    
+    // Asegurarnos de que el elemento existe antes de actualizar
+    const payment = this.payments[index];
+    if (payment) {
+      payment.status = newStatus;
+      return true;
+    }
+    return false;
   }
-  
-  /**
-   * Verificar si una visita tiene pago pendiente
-   */
-  async hasPaymentPending(visitId: string): Promise<boolean> {
-    const payment = await this.getPaymentByVisitId(visitId);
-    return payment?.status === 'pending';
+
+  getPatientPayments(patientId: string): Payment[] {
+    return this.payments.filter(p => p.patientId === patientId);
+  }
+
+  getVisitPayment(visitId: string): Payment | undefined {
+    return this.payments.find(p => p.visitId === visitId);
+  }
+
+  getOverduePayments(): Payment[] {
+    const today = new Date();
+    return this.payments.filter(p => 
+      p.status === 'pending' && 
+      p.dueDate && 
+      new Date(p.dueDate) < today
+    );
+  }
+
+  calculateTotalRevenue(): number {
+    return this.payments
+      .filter(p => p.status === 'paid')
+      .reduce((sum, p) => sum + p.amount, 0);
+  }
+
+  getPaymentsByStatus(status: PaymentStatus): Payment[] {
+    return this.payments.filter(p => p.status === status);
   }
 }
 

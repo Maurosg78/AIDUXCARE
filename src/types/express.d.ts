@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRole } from '@/core/types';
+import type { UserRole  } from '@/core/types';
 
 // Amplía la definición Request para incluir propiedades adicionales
 declare namespace Express {

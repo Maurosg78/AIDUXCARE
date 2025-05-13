@@ -1,5 +1,5 @@
 import { NextApiRequest as NextApiReq, NextApiResponse as NextApiRes } from 'next';
-import { UserRole } from '@/core/types';
+import type { UserRole  } from '@/core/types';
 
 // Extender NextApiRequest para incluir el usuario autenticado
 declare module 'next' {
@@ -12,12 +12,22 @@ declare module 'next' {
       role: UserRole;
     };
   }
-  
+}
+
+// Extender NextRequest para incluir nextUrl
+declare module 'next/server' {
   interface NextRequest {
-    nextUrl: {
-      pathname: string;
-      searchParams: URLSearchParams;
+    nextUrl: URL;
+    url: string;
+    cookies: Map<string, string>;
+    geo?: {
+      city?: string;
+      country?: string;
+      region?: string;
     };
+    ip?: string;
+    method: string;
+    headers: Headers;
   }
 }
 

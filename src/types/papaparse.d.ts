@@ -60,7 +60,7 @@ declare module 'papaparse' {
   ): ParseResult<T>;
 
   export function unparse(
-    data: Array<Object> | Array<Array<any>> | UnparseObject,
+    data: Array<object> | Array<Array<any>> | UnparseObject,
     config?: UnparseConfig
   ): string;
 

@@ -1,12 +1,22 @@
-// Utilidades y tipos para trabajar con zod
-import * as realZod from 'zod';
+/**
+ * Utilidades minimalistas para esquemas de validación
+ * Versión simul-compatible sin dependencias de Zod
+ */
 
-// Re-exportar la versión original de zod 
-export const z = realZod.z;
+// Tipos básicos para esquemas
+export interface Schema<T> {
+  _type: T;
+  optional(): Schema<T | undefined>;
+  nullable(): Schema<T | null>;
+  parse(data: unknown): T;
+  uuid(): Schema<string>;
+  email(): Schema<string>;
+  datetime(): Schema<string>;
+}
 
-// Namespace para simular el comportamiento de zod para validaciones de tipos
-export namespace zMock {
-  export interface ZodType<T = any> {
+// Espacio de nombres para tipos compatibles con zod
+export namespace ZodSchema {
+  export interface ZodType<T> {
     _type: T;
   }
   
@@ -15,49 +25,125 @@ export namespace zMock {
   export interface ZodBoolean extends ZodType<boolean> {}
   export interface ZodArray<T> extends ZodType<T[]> {}
   export interface ZodObject<T> extends ZodType<T> {}
-  export interface ZodEnum<T extends readonly [string, ...string[]]> extends ZodType<T[number]> {}
-  export interface ZodUnion<T> extends ZodType<T> {}
-  export interface ZodNullable<T> extends ZodType<T | null> {}
+  export interface ZodEnum<T> extends ZodType<T> {}
   export interface ZodOptional<T> extends ZodType<T | undefined> {}
+  export interface ZodNullable<T> extends ZodType<T | null> {}
   
-  // Función para simular la inferencia de tipos
-  export type infer<T extends ZodType> = T['_type'];
+  export type infer<T> = T extends ZodType<infer R> ? R : never;
+}
+
+// Simulación de error de Zod
+export class ZodError {
+  errors: Array<{path: string[], message: string}>;
   
-  // Funciones de creación de esquemas básicas
-  export function string(): ZodString {
-    return { _type: '' as any };
+  constructor(errors: Array<{path: string[], message: string}>) {
+    this.errors = errors;
   }
+}
+
+// Funciones de creación de esquemas
+function createSchema<T>(): Schema<T> {
+  return {
+    _type: {} as T,
+    optional: function() { return createSchema<T | undefined>(); },
+    nullable: function() { return createSchema<T | null>(); },
+    parse: function(data: unknown) { return data as T; },
+    uuid: function() { return this as Schema<string>; },
+    email: function() { return this as Schema<string>; },
+    datetime: function() { return this as Schema<string>; }
+  };
+}
+
+// Crea un esquema para strings
+export function string(): Schema<string> {
+  const schema = createSchema<string>();
   
-  export function number(): ZodNumber {
-    return { _type: 0 as any };
-  }
+  // Métodos de validación específicos para string
+  const extendedSchema = {
+    ...schema,
+    uuid: () => {
+      return schema;
+    },
+    email: () => {
+      return schema;
+    },
+    datetime: () => {
+      return schema;
+    }
+  };
   
-  export function boolean(): ZodBoolean {
-    return { _type: false as any };
-  }
-  
-  export function array<T>(schema: ZodType<T>): ZodArray<T> {
-    return { _type: [] as any };
-  }
-  
-  export function object<T>(shape: Record<string, ZodType>): ZodObject<T> {
-    return { _type: {} as any };
-  }
-  
-  // Usamos enumValues en lugar de enum que es palabra reservada
-  export function enumValues<T extends readonly [string, ...string[]]>(values: T): ZodEnum<T> {
-    return { _type: values[0] as any };
-  }
-  
-  export function union<T>(types: ZodType[]): ZodUnion<T> {
-    return { _type: undefined as any };
-  }
-  
-  export function nullable<T>(schema: ZodType<T>): ZodNullable<T> {
-    return { _type: null as any };
-  }
-  
-  export function optional<T>(schema: ZodType<T>): ZodOptional<T> {
-    return { _type: undefined as any };
-  }
-} 
+  return extendedSchema;
+}
+
+export function number(): Schema<number> {
+  return createSchema<number>();
+}
+
+export function boolean(): Schema<boolean> {
+  return createSchema<boolean>();
+}
+
+export function array<T>(schema: Schema<T>): Schema<T[]> {
+  return createSchema<T[]>();
+}
+
+export function object<T extends Record<string, any>>(shape: { [K in keyof T]: Schema<T[K]> }): Schema<T> {
+  return createSchema<T>();
+}
+
+export function record<K extends string, V>(keyType: Schema<K>, valueType: Schema<V>): Schema<Record<K, V>> {
+  return createSchema<Record<K, V>>();
+}
+
+export function enumValues<T extends readonly [string, ...string[]]>(values: T): Schema<T[number]> {
+  return createSchema<T[number]>();
+}
+
+export function literal<T extends string | number | boolean>(value: T): Schema<T> {
+  return createSchema<T>();
+}
+
+export function optional<T>(schema: Schema<T>): Schema<T | undefined> {
+  return schema.optional();
+}
+
+export function union<T extends Array<Schema<any>>>(...schemas: T): Schema<T[number]['_type']> {
+  return createSchema<T[number]['_type']>();
+}
+
+export function discriminatedUnion<
+  K extends string,
+  T extends Array<Schema<{ [P in K]: string }>>
+>(key: K, schemas: T): Schema<T[number]['_type']> {
+  return createSchema<T[number]['_type']>();
+}
+
+export function any(): Schema<any> {
+  return createSchema<any>();
+}
+
+// Función para inferir el tipo
+export function infer<T>(schema: Schema<T>): T {
+  return {} as T;
+}
+
+// Tipo para inferir el tipo de un esquema
+export type Infer<T extends Schema<any>> = T['_type'];
+
+// Re-exportamos todo como 'z'
+export const z = {
+  string,
+  number,
+  boolean,
+  array,
+  object,
+  record,
+  literal,
+  optional,
+  union,
+  enumValues: enumValues,  // Usamos enumValues en lugar de enum (palabra reservada)
+  discriminatedUnion,
+  any,
+  ZodError,
+  infer
+}; 

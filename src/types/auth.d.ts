@@ -83,4 +83,25 @@ export const authOptions: NextAuthOptions = {
       return token;
     }
   },
-}; 
+};
+
+export type UserRole = 'admin' | 'professional' | 'patient';
+
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+  name?: string;
+  profilePicture?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  register: (userData: Partial<User> & { password: string }) => Promise<void>;
+} 

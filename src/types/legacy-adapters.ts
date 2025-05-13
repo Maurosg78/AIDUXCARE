@@ -5,7 +5,7 @@
  * la transición entre las interfaces antiguas y nuevas del proyecto.
  */
 
-import { Patient, Visit } from '@/core/types';
+import type { Patient, Visit  } from '@/core/types';
 
 /**
  * Tipo que representa un paciente compatible con código legacy
