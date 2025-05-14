@@ -3,11 +3,11 @@
  */
 
 import { Express } from 'express';
-import { fhirRoutes } from './fhir';
-import { mcpRoutes } from './mcp';
-import { exportRoutes } from './export';
-import { notFoundHandler } from '../middleware/errorHandler';
-import logger from '../utils/logger';
+import { fhirRoutes } from './fhir.js';
+import { mcpRoutes } from './mcp.js';
+import { exportRoutes } from './export.js';
+import { notFoundHandler } from '../middleware/errorHandler.js';
+import logger from '../utils/logger.js';
 
 /**
  * Configura todas las rutas de la aplicación

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "axios.js";
 
 const API_URL = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium";
 

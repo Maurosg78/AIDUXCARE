@@ -3,8 +3,8 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { createNotFoundError } from '../middleware/errorHandler';
-import logger from '../utils/logger';
+import { createNotFoundError } from '../middleware/errorHandler.js';
+import logger from '../utils/logger.js';
 import { 
   z, 
   validateBody, 

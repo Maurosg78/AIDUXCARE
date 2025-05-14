@@ -1,4 +1,4 @@
-import { PatientVisit } from "@/modules/emr/models/PatientVisit";
+import { PatientVisit } from "@/modules/emr/models/PatientVisit.js";
 
 export type Suggestion = {
   type: "alert" | "recommendation";

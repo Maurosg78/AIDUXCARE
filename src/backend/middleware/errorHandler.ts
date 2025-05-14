@@ -3,7 +3,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 
 // Tipos de error discriminados
 export type BackendErrorType = 

@@ -3,9 +3,9 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { createApiError } from '../middleware/errorHandler';
-import logger from '../utils/logger';
-import { z, validateBody, validateQuery, ExportPayload } from '../utils/zod-utils';
+import { createApiError } from '../middleware/errorHandler.js';
+import logger from '../utils/logger.js';
+import { z, validateBody, validateQuery } from '../utils/zod-utils.js';
 
 // Esquemas de validación Zod
 const ExportPatientParamsSchema = z.object({

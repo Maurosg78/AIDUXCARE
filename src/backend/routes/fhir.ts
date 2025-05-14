@@ -3,10 +3,10 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { createApiError, createNotFoundError } from '../middleware/errorHandler';
-import logger from '../utils/logger';
-import { z, validateParams, validateBody, FHIRPatientSchema } from '../utils/zod-utils';
-import { AdaptedFHIRPatient } from '@/types/backend-adapters';
+import { createApiError, createNotFoundError } from '../middleware/errorHandler.js';
+import logger from '../utils/logger.js';
+import { z, validateParams, validateBody, FHIRPatientSchema } from '../utils/zod-utils.js';
+import { AdaptedFHIRPatient } from '@/types/backend-adapters.js';
 
 // Definir tipos para los recursos FHIR
 export type FHIRResourceType = 'Patient' | 'Observation' | 'Encounter';

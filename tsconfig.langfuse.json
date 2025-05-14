@@ -1,0 +1,12 @@
+{
+  "extends": "./typescript/config/tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": []      /* Evitamos cargar automáticamente @types existentes */
+  },
+  "include": [
+    "src/backend/routes/langfuse.ts",
+    "src/types/langfuse-events.ts"
+  ]
+}

@@ -1,4 +1,4 @@
-import type { AssistantContext } from "../models/AssistantContext";
+import type { AssistantContext } from "../models/AssistantContext.js";
 
 export const getAssistantResponse = async (context: AssistantContext): Promise<string> => {
   if (!context.patientName) return "No se ha cargado un paciente.";

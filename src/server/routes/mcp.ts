@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import VisitService from "@/core/services/visit/VisitService";
+import VisitService from "@/core/services/visit/VisitService.js";
 import { trackEvent } from '../../core/lib/langfuse.client';
 
 const router = Router();

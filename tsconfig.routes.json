@@ -1,0 +1,19 @@
+
+{
+"extends": "./tsconfig.json",
+"compilerOptions": {
+  "exclude": ["src/types","src/components","src/core","src/pages","src/tests","src/server","src/modules","src/lib"],    "skipLibCheck": true,
+    "skipLibCheck": true,
+"outDir": "./dist",
+"module": "node16",
+"moduleResolution": "node16",
+"esModuleInterop": true,
+"resolveJsonModule": true,
+"allowJs": true,
+"checkJs": false,
+"target": "ES2022",
+"types": ["node"],
+"noEmit": true
+},
+"include": ["src/backend/routes", "src/backend/utils", "src/types"]
+}
